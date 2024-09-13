@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      width: 300px;
+      text-align: center;
+    }
+    .login-container h2 {
+      margin-bottom: 20px;
+    }
+    .login-container select, 
+    .login-container input[type="password"],
+    .login-container input[type="submit"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .login-container input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    .login-container input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>Login</h2>
+  <form id="loginForm">
+    <select id="userName" required>
+      <option value="" disabled selected>Select Translator</option>
+      <option value="Som san">Som san</option>
+      <option value="Gook san">Gook san</option>
+      <option value="Pooky san">Pooky san</option>
+      <option value="L san">L san</option>
+    </select>
+    <input type="password" id="password" placeholder="Password" required>
+    <input type="submit" value="Login">
+    <div id="errorMessage" class="error"></div>
+  </form>
+</div>
+
+<script>
+  const loginForm = document.getElementById('loginForm');
+  const errorMessage = document.getElementById('errorMessage');
+  const passwordInput = document.getElementById('password');
+
+  loginForm.onsubmit = function(event) {
+    event.preventDefault();
+    const userName = document.getElementById('userName').value;
+    const password = passwordInput.value;
+    let redirectUrl = '';
+
+    if (userName === 'Som san' && password === 'som1234') {
+      redirectUrl = 'somsanv2.html';
+    } else if (userName === 'Gook san' && password === 'gook1234') {
+      redirectUrl = 'gooksan.html';
+    } else if (userName === 'Pooky san' && password === 'pooky1234') {
+      redirectUrl = 'pookysan.html';
+    } else if (userName === 'L san' && password === 'l1234') {
+      redirectUrl = 'lsan.html';
+    } else {
+      errorMessage.textContent = 'Password incorrect';
+      return;
+    }
+
+    // Redirect to the URL and clear the form
+    window.location.href = redirectUrl;
+    loginForm.reset(); // Clear the form
+  }
+
+  passwordInput.addEventListener('input', function() {
+    errorMessage.textContent = '';
+  });
+</script>
+
+</body>
+</html>
