@@ -123,7 +123,7 @@
 
     loadingText.style.display = 'block'; // Show loading text
 
-    const requestUrl = `https://script.google.com/macros/s/AKfycbxhVD0_-g7VKhYcOKMRTCaRx_OmoxgTCoIactfbWBRvL7v-MOXKlOabsXkF40Jd263B/exec?page=gooksan&date=${searchDate}`;
+    const requestUrl = `https://script.google.com/macros/s/AKfycbyHILu3V2tHjjWzBTHxOf0iLYUl7lJPEdP0VmaSWgeQv98L7mStw12Hz4_wAvt6IC-I/exec?page=gooksan&date=${searchDate}`;
 
     fetch(requestUrl)
       .then(response => response.json())
@@ -193,7 +193,7 @@
       formData.append('bookingBy', bookingByInput.value);
       formData.append('work', forWorkInput.value);
 
-      fetch('https://script.google.com/macros/s/AKfycbxhVD0_-g7VKhYcOKMRTCaRx_OmoxgTCoIactfbWBRvL7v-MOXKlOabsXkF40Jd263B/exec', {
+      fetch('https://script.google.com/macros/s/AKfycbyHILu3V2tHjjWzBTHxOf0iLYUl7lJPEdP0VmaSWgeQv98L7mStw12Hz4_wAvt6IC-I/exec', {
         method: 'POST',
         mode: 'cors',
         body: formData
@@ -218,7 +218,7 @@
       const formData = new FormData();
       formData.append('row', row.row);
 
-      const deleteUrl = `https://script.google.com/macros/s/AKfycbxhVD0_-g7VKhYcOKMRTCaRx_OmoxgTCoIactfbWBRvL7v-MOXKlOabsXkF40Jd263B/exec?page=deleteBooking`;
+      const deleteUrl = `https://script.google.com/macros/s/AKfycbyHILu3V2tHjjWzBTHxOf0iLYUl7lJPEdP0VmaSWgeQv98L7mStw12Hz4_wAvt6IC-I/exec?page=deleteBooking`;
 
       fetch(deleteUrl, {
         method: 'POST',
