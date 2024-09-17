@@ -137,7 +137,14 @@
       });
   }
 
-  function populateTable(data) {
+function populateTable(data) {
+    // เรียงลำดับข้อมูลตามเวลา
+    data.sort((a, b) => {
+        const timeA = a.timeFrom.split(':').map(Number);
+        const timeB = b.timeFrom.split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+    });
+
     data.forEach((row, index) => {
       const newRow = resultTable.insertRow();
       newRow.insertCell(0).textContent = row.date;
@@ -174,7 +181,7 @@
       deleteButton.onclick = () => deleteRow(row, index);
       actionsCell.appendChild(deleteButton);
     });
-  }
+}
 
   function toggleEdit(forWorkInput, bookingByInput, editButton, row, index) {
     if (forWorkInput.disabled && bookingByInput.disabled) {
