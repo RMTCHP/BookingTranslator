@@ -40,6 +40,12 @@
     #todayButton:hover {
       background-color: #fdd835;
     }
+     .time-slot {
+      font-size: 11px; /* ลดขนาดฟอนต์ที่นี่ */
+    }
+    .bold-text {
+      font-weight: bold;
+    }
     .calendar-days {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -216,90 +222,188 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>08:00-09:00</td>
-          <td id="somSan_0800"></td>
-          <td id="gookSan_0800"></td>
-          <td id="pookySan_0800"></td>
-          <td id="lSan_0800"></td>
-        </tr>
-        <tr>
-          <td>09:00-10:00</td>
-          <td id="somSan_0900"></td>
-          <td id="gookSan_0900"></td>
-          <td id="pookySan_0900"></td>
-          <td id="lSan_0900"></td>
-        </tr>
-        <tr>
-          <td>10:00-11:00</td>
-          <td id="somSan_1000"></td>
-          <td id="gookSan_1000"></td>
-          <td id="pookySan_1000"></td>
-          <td id="lSan_1000"></td>
-        </tr>
-        <tr>
-          <td>11:00-12:00</td>
-          <td id="somSan_1100"></td>
-          <td id="gookSan_1100"></td>
-          <td id="pookySan_1100"></td>
-          <td id="lSan_1100"></td>
-        </tr>
-        <tr>
-          <td>12:00-13:00</td>
-          <td id="somSan_1200"></td>
-          <td id="gookSan_1200"></td>
-          <td id="pookySan_1200"></td>
-          <td id="lSan_1200"></td>
-        </tr>
-        <tr>
-          <td>13:00-14:00</td>
-          <td id="somSan_1300"></td>
-          <td id="gookSan_1300"></td>
-          <td id="pookySan_1300"></td>
-          <td id="lSan_1300"></td>
-        </tr>
-        <tr>
-          <td>14:00-15:00</td>
-          <td id="somSan_1400"></td>
-          <td id="gookSan_1400"></td>
-          <td id="pookySan_1400"></td>
-          <td id="lSan_1400"></td>
-        </tr>
-        <tr>
-          <td>15:00-16:00</td>
-          <td id="somSan_1500"></td>
-          <td id="gookSan_1500"></td>
-          <td id="pookySan_1500"></td>
-          <td id="lSan_1500"></td>
-        </tr>
-        <tr>
-          <td>16:00-17:00</td>
-          <td id="somSan_1600"></td>
-          <td id="gookSan_1600"></td>
-          <td id="pookySan_1600"></td>
-          <td id="lSan_1600"></td>
-        </tr>
-        <tr>
-          <td>17:00-18:00</td>
-          <td id="somSan_1700"></td>
-          <td id="gookSan_1700"></td>
-          <td id="pookySan_1700"></td>
-          <td id="lSan_1700"></td>
-        </tr>
-        <tr>
-          <td>18:00-19:00</td>
-          <td id="somSan_1800"></td>
-          <td id="gookSan_1800"></td>
-          <td id="pookySan_1800"></td>
-          <td id="lSan_1800"></td>
-        </tr>
-        <tr>
-          <td>19:00-20:00</td>
-          <td id="somSan_1900"></td>
-          <td id="gookSan_1900"></td>
-          <td id="pookySan_1900"></td>
-          <td id="lSan_1900"></td>
-        </tr>
+    <tr>
+      <td class="time-slot bold-text">07:00 - 07:30</td>
+      <td id="somSan_0700_0730" class="time-slot"></td>
+      <td id="gookSan_0700_0730" class="time-slot"></td>
+      <td id="pookySan_0700_0730" class="time-slot"></td>
+      <td id="lSan_0700_0730" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">07:30 - 08:00</td>
+      <td id="somSan_0730_0800" class="time-slot"></td>
+      <td id="gookSan_0730_0800" class="time-slot"></td>
+      <td id="pookySan_0730_0800" class="time-slot"></td>
+      <td id="lSan_0730_0800" class="time-slot"></td>
+    </tr>
+      <tr>
+      <td class="time-slot bold-text">08:00 - 08:30</td>
+      <td id="somSan_0800_0830" class="time-slot"></td>
+      <td id="gookSan_0800_0830" class="time-slot"></td>
+      <td id="pookySan_0800_0830" class="time-slot"></td>
+      <td id="lSan_0800_0830" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">08:30 - 09:00</td>
+      <td id="somSan_0830_0900" class="time-slot"></td>
+      <td id="gookSan_0830_0900" class="time-slot"></td>
+      <td id="pookySan_0830_0900" class="time-slot"></td>
+      <td id="lSan_0830_0900" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">09:00 - 09:30</td>
+      <td id="somSan_0900_0930" class="time-slot"></td>
+      <td id="gookSan_0900_0930" class="time-slot"></td>
+      <td id="pookySan_0900_0930" class="time-slot"></td>
+      <td id="lSan_0900_0930" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">09:30 - 10:00</td>
+      <td id="somSan_0930_1000" class="time-slot"></td>
+      <td id="gookSan_0930_1000" class="time-slot"></td>
+      <td id="pookySan_0930_1000" class="time-slot"></td>
+      <td id="lSan_0930_1000" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">10:00 - 10:30</td>
+      <td id="somSan_1000_1030" class="time-slot"></td>
+      <td id="gookSan_1000_1030" class="time-slot"></td>
+      <td id="pookySan_1000_1030" class="time-slot"></td>
+      <td id="lSan_1000_1030" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">10:30 - 11:00</td>
+      <td id="somSan_1030_1100" class="time-slot"></td>
+      <td id="gookSan_1030_1100" class="time-slot"></td>
+      <td id="pookySan_1030_1100" class="time-slot"></td>
+      <td id="lSan_1030_1100" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">11:00 - 11:30</td>
+      <td id="somSan_1100_1130" class="time-slot"></td>
+      <td id="gookSan_1100_1130" class="time-slot"></td>
+      <td id="pookySan_1100_1130" class="time-slot"></td>
+      <td id="lSan_1100_1130" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">11:30 - 12:00</td>
+      <td id="somSan_1130_1200" class="time-slot"></td>
+      <td id="gookSan_1130_1200" class="time-slot"></td>
+      <td id="pookySan_1130_1200" class="time-slot"></td>
+      <td id="lSan_1130_1200" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">12:00 - 12:30</td>
+      <td id="somSan_1200_1230" class="time-slot"></td>
+      <td id="gookSan_1200_1230" class="time-slot"></td>
+      <td id="pookySan_1200_1230" class="time-slot"></td>
+      <td id="lSan_1200_1230" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">12:30 - 13:00</td>
+      <td id="somSan_1230_1300" class="time-slot"></td>
+      <td id="gookSan_1230_1300" class="time-slot"></td>
+      <td id="pookySan_1230_1300" class="time-slot"></td>
+      <td id="lSan_1230_1300" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">13:00 - 13:30</td>
+      <td id="somSan_1300_1330" class="time-slot"></td>
+      <td id="gookSan_1300_1330" class="time-slot"></td>
+      <td id="pookySan_1300_1330" class="time-slot"></td>
+      <td id="lSan_1300_1330" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">13:30 - 14:00</td>
+      <td id="somSan_1330_1400" class="time-slot"></td>
+      <td id="gookSan_1330_1400" class="time-slot"></td>
+      <td id="pookySan_1330_1400" class="time-slot"></td>
+      <td id="lSan_1330_1400" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">14:00 - 14:30</td>
+      <td id="somSan_1400_1430" class="time-slot"></td>
+      <td id="gookSan_1400_1430" class="time-slot"></td>
+      <td id="pookySan_1400_1430" class="time-slot"></td>
+      <td id="lSan_1400_1430" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">14:30 - 15:00</td>
+      <td id="somSan_1430_1500" class="time-slot"></td>
+      <td id="gookSan_1430_1500" class="time-slot"></td>
+      <td id="pookySan_1430_1500" class="time-slot"></td>
+      <td id="lSan_1430_1500" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">15:00 - 15:30</td>
+      <td id="somSan_1500_1530" class="time-slot"></td>
+      <td id="gookSan_1500_1530" class="time-slot"></td>
+      <td id="pookySan_1500_1530" class="time-slot"></td>
+      <td id="lSan_1500_1530" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">15:30 - 16:00</td>
+      <td id="somSan_1530_1600" class="time-slot"></td>
+      <td id="gookSan_1530_1600" class="time-slot"></td>
+      <td id="pookySan_1530_1600" class="time-slot"></td>
+      <td id="lSan_1530_1600" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">16:00 - 16:30</td>
+      <td id="somSan_1600_1630" class="time-slot"></td>
+      <td id="gookSan_1600_1630" class="time-slot"></td>
+      <td id="pookySan_1600_1630" class="time-slot"></td>
+      <td id="lSan_1600_1630" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">16:30 - 17:00</td>
+      <td id="somSan_1630_1700" class="time-slot"></td>
+      <td id="gookSan_1630_1700" class="time-slot"></td>
+      <td id="pookySan_1630_1700" class="time-slot"></td>
+      <td id="lSan_1630_1700" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">17:00 - 17:30</td>
+      <td id="somSan_1700_1730" class="time-slot"></td>
+      <td id="gookSan_1700_1730" class="time-slot"></td>
+      <td id="pookySan_1700_1730" class="time-slot"></td>
+      <td id="lSan_1700_1730" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">17:30 - 18:00</td>
+      <td id="somSan_1730_1800" class="time-slot"></td>
+      <td id="gookSan_1730_1800" class="time-slot"></td>
+      <td id="pookySan_1730_1800" class="time-slot"></td>
+      <td id="lSan_1730_1800" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">18:00 - 18:30</td>
+      <td id="somSan_1800_1830" class="time-slot"></td>
+      <td id="gookSan_1800_1830" class="time-slot"></td>
+      <td id="pookySan_1800_1830" class="time-slot"></td>
+      <td id="lSan_1800_1830" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">18:30 - 19:00</td>
+      <td id="somSan_1830_1900" class="time-slot"></td>
+      <td id="gookSan_1830_1900" class="time-slot"></td>
+      <td id="pookySan_1830_1900" class="time-slot"></td>
+      <td id="lSan_1830_1900" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">19:00 - 19:30</td>
+      <td id="somSan_1900_1930" class="time-slot"></td>
+      <td id="gookSan_1900_1930" class="time-slot"></td>
+      <td id="pookySan_1900_1930" class="time-slot"></td>
+      <td id="lSan_1900_1930" class="time-slot"></td>
+    </tr>
+    <tr>
+      <td class="time-slot bold-text">19:30 - 20:00</td>
+      <td id="somSan_1930_2000" class="time-slot"></td>
+      <td id="gookSan_1930_2000" class="time-slot"></td>
+      <td id="pookySan_1930_2000" class="time-slot"></td>
+      <td id="lSan_1930_2000" class="time-slot"></td>
+    </tr>
       </tbody>
     </table>
   </div>
@@ -317,7 +421,12 @@
   const spinner = document.getElementById('spinner');
   const refreshButton = document.querySelector('.refresh');
 
-  const timeSlots = ['0800', '0900', '1000', '1100', '1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900'];
+  const timeSlots = [
+  '0700_0730', '0730_0800', '0800_0830', '0830_0900', '0900_0930', '0930_1000', '1000_1030', '1030_1100', 
+  '1100_1130', '1130_1200', '1200_1230', '1230_1300', '1300_1330', '1330_1400', 
+  '1400_1430', '1430_1500', '1500_1530', '1530_1600', '1600_1630', '1630_1700', 
+  '1700_1730', '1730_1800', '1800_1830', '1830_1900', '1900_1930', '1930_2000'
+];
 
   const date = new Date();
   let currentMonth = date.getMonth();
@@ -380,70 +489,87 @@
     }
   }
 
-  function loadEventsForDay(year, month, day) {
+function loadEventsForDay(year, month, day) {
     spinner.style.display = 'block';
     const requestUrl = `https://script.google.com/macros/s/AKfycbwzFXSq1cWuTMrEPzzKSsztUa2Ql6rRPc7zGunqTINMObAOxyOFUjn9YlGLg1HmUOao/exec?page=calendar&date=${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`;
 
     fetch(requestUrl)
-      .then(response => response.json())
-      .then(events => {
-        spinner.style.display = 'none';
-        timeSlots.forEach(time => {
-          document.getElementById(`somSan_${time}`).textContent = '';
-          document.getElementById(`gookSan_${time}`).textContent = '';
-          document.getElementById(`pookySan_${time}`).textContent = '';
-          document.getElementById(`lSan_${time}`).textContent = '';
-        });
+        .then(response => response.json())
+        .then(events => {
+            spinner.style.display = 'none';
+            timeSlots.forEach(time => {
+                document.getElementById(`somSan_${time}`).textContent = '';
+                document.getElementById(`gookSan_${time}`).textContent = '';
+                document.getElementById(`pookySan_${time}`).textContent = '';
+                document.getElementById(`lSan_${time}`).textContent = '';
+            });
 
-        if (events.length === 0) {
-          modalText.textContent = "No events for this day.";
-          document.getElementById('eventTable').style.display = 'none';
-        } else {
-          document.getElementById('eventTable').style.display = '';
-          events.forEach(event => {
-            const timeFromSlot = event.timeFrom.replace(':', '');
-            const timeToSlot = event.timeTo.replace(':', '');
+            if (events.length === 0) {
+                modalText.textContent = "No events for this day.";
+                document.getElementById('eventTable').style.display = 'none';
+            } else {
+                document.getElementById('eventTable').style.display = '';
+                events.forEach(event => {
+                    let timeFromSlot = event.timeFrom.replace(':', '');
+                    let timeToSlot = event.timeTo.replace(':', '');
 
-            let timeSlot = timeFromSlot;
-            while (timeSlot < timeToSlot) {
-              if (event.translator === 'SOM SAN') {
-                document.getElementById(`somSan_${timeSlot}`).textContent = event.work;
-              } else if (event.translator === 'GOOK SAN') {
-                document.getElementById(`gookSan_${timeSlot}`).textContent = event.work;
-              } else if (event.translator === 'POOKY SAN') {
-                document.getElementById(`pookySan_${timeSlot}`).textContent = event.work;
-              } else if (event.translator === 'L SAN') {
-                document.getElementById(`lSan_${timeSlot}`).textContent = event.work;
-              }
-              timeSlot = incrementTimeSlot(timeSlot);
+                    while (timeFromSlot < timeToSlot) {
+                        let slot = getTimeSlot(timeFromSlot);
+
+                        if (slot) {
+                            if (event.translator === 'SOM SAN') {
+                                document.getElementById(`somSan_${slot}`).textContent = event.work;
+                            } else if (event.translator === 'GOOK SAN') {
+                                document.getElementById(`gookSan_${slot}`).textContent = event.work;
+                            } else if (event.translator === 'POOKY SAN') {
+                                document.getElementById(`pookySan_${slot}`).textContent = event.work;
+                            } else if (event.translator === 'L SAN') {
+                                document.getElementById(`lSan_${slot}`).textContent = event.work;
+                            }
+                        }
+
+                        // Increment timeFromSlot by 30 minutes
+                        timeFromSlot = incrementTimeSlotBy30Minutes(timeFromSlot);
+                    }
+                });
+                modalText.textContent = `Details for ${months[month - 1]} ${day}, ${year}`;
             }
-          });
-          modalText.textContent = `Details for ${months[month - 1]} ${day}, ${year}`;
-        }
 
-        modal.style.display = "block";
-      })
-      .catch(error => {
-        spinner.style.display = 'none';
-        modalText.textContent = "An error occurred while fetching data.";
-        modal.style.display = "block";
-        console.error(error);
-      });
-  }
+            modal.style.display = "block";
+        })
+        .catch(error => {
+            spinner.style.display = 'none';
+            modalText.textContent = "An error occurred while fetching data.";
+            modal.style.display = "block";
+            console.error(error);
+        });
+}
 
-  function incrementTimeSlot(timeSlot) {
-    const hour = parseInt(timeSlot.slice(0, 2));
-    const minute = parseInt(timeSlot.slice(2));
-    let newHour = hour;
-    let newMinute = minute + 60;
+function getTimeSlot(timeFrom) {
+    const slots = {
+        '0700': '0700_0730', '0730': '0730_0800', '0800': '0800_0830', '0830': '0830_0900', '0900': '0900_0930', '0930': '0930_1000',
+        '1000': '1000_1030', '1030': '1030_1100', '1100': '1100_1130', '1130': '1130_1200',
+        '1200': '1200_1230', '1230': '1230_1300', '1300': '1300_1330', '1330': '1330_1400',
+        '1400': '1400_1430', '1430': '1430_1500', '1500': '1500_1530', '1530': '1530_1600',
+        '1600': '1600_1630', '1630': '1630_1700', '1700': '1700_1730', '1730': '1730_1800',
+        '1800': '1800_1830', '1830': '1830_1900', '1900': '1900_1930', '1930': '1930_2000'
+    };
 
-    if (newMinute >= 60) {
-      newMinute = newMinute % 60;
-      newHour += 1;
+    return slots[timeFrom] || null;
+}
+
+function incrementTimeSlotBy30Minutes(timeSlot) {
+    let hour = parseInt(timeSlot.slice(0, 2));
+    let minute = parseInt(timeSlot.slice(2));
+
+    minute += 30;
+    if (minute >= 60) {
+        minute = 0;
+        hour += 1;
     }
 
-    return ('0' + newHour).slice(-2) + ('0' + newMinute).slice(-2);
-  }
+    return ('0' + hour).slice(-2) + ('0' + minute).slice(-2);
+}
 
   function changeMonth(offset) {
     currentMonth += offset;
