@@ -243,35 +243,63 @@
       <label for="timeFrom">Time From:</label>
       <select id="timeFrom" name="timeFrom" required>
         <option value="" disabled selected>HH:MM</option>
+        <option value="07:00">07:00</option>
+        <option value="07:30">07:30</option>
         <option value="08:00">08:00</option>
+        <option value="08:30">08:30</option>
         <option value="09:00">09:00</option>
+        <option value="09:30">09:30</option>
         <option value="10:00">10:00</option>
+        <option value="10:30">10:30</option>
         <option value="11:00">11:00</option>
+        <option value="11:30">11:30</option>
         <option value="12:00">12:00</option>
+        <option value="12:30">12:30</option>
         <option value="13:00">13:00</option>
+        <option value="13:30">13:30</option>
         <option value="14:00">14:00</option>
+        <option value="14:30">14:30</option>
         <option value="15:00">15:00</option>
+        <option value="15:30">15:30</option>
         <option value="16:00">16:00</option>
+        <option value="16:30">16:30</option>
         <option value="17:00">17:00</option>
+        <option value="17:30">17:30</option>
         <option value="18:00">18:00</option>
+        <option value="18:30">18:30</option>
         <option value="19:00">19:00</option>
+        <option value="19:30">19:30</option>
         <option value="20:00">20:00</option>
       </select>
 
       <label for="timeTo">Time To:</label>
       <select id="timeTo" name="timeTo" required>
         <option value="" disabled selected>HH:MM</option>
+        <option value="07:29">07:30</option>
+        <option value="07:59">08:00</option>
+        <option value="08:29">08:30</option>
         <option value="08:59">09:00</option>
+        <option value="09:29">09:30</option>
         <option value="09:59">10:00</option>
+        <option value="10:29">10:30</option>
         <option value="10:59">11:00</option>
+        <option value="11:29">11:30</option>
         <option value="11:59">12:00</option>
+        <option value="12:29">12:30</option>
         <option value="12:59">13:00</option>
+        <option value="13:29">13:30</option>
         <option value="13:59">14:00</option>
+        <option value="14:29">14:30</option>
         <option value="14:59">15:00</option>
+        <option value="15:29">15:30</option>
         <option value="15:59">16:00</option>
+        <option value="16:29">16:30</option>
         <option value="16:59">17:00</option>
+        <option value="17:29">17:30</option>
         <option value="17:59">18:00</option>
+        <option value="18:29">18:30</option>
         <option value="18:59">19:00</option>
+        <option value="18:29">19:30</option>
         <option value="19:59">20:00</option>
       </select>
 
@@ -281,8 +309,8 @@
       <input type="submit" value="Submit">
     </form>
 
-    <a href="calendar2.html" class="calendar-btn" target="_blank">View Calendar</a>
-    <a href="login.html" class="translator-btn" target="_blank">Translator Only</a>
+    <a href="calendar.html" class="calendar-btn" target="_blank">View Calendar</a>
+    <a href="loginv2.html" class="translator-btn" target="_blank">Translator Only</a>
   </div>
 
   <!-- Spinner modal -->
@@ -309,7 +337,7 @@ form.onsubmit = function(event) {
   var formData = new FormData(form);
 
       // เปลี่ยน 'YOUR_WEB_APP_URL' เป็น URL ของ Web App ที่คุณได้จากการ Deploy Google Apps Script
-      fetch('https://script.google.com/macros/s/AKfycbyHILu3V2tHjjWzBTHxOf0iLYUl7lJPEdP0VmaSWgeQv98L7mStw12Hz4_wAvt6IC-I/exec', {
+      fetch('https://script.google.com/macros/s/AKfycbxhVD0_-g7VKhYcOKMRTCaRx_OmoxgTCoIactfbWBRvL7v-MOXKlOabsXkF40Jd263B/exec', {
         method: 'POST',
         mode: 'cors',
         body: formData
