@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Calendar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+    }
+    .calendar {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .calendar-header h2 {
+      margin: 0;
+      color: #333;
+    }
+    .calendar-header button {
+      padding: 8px 12px;
+      cursor: pointer;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+    #todayButton {
+      background-color: #ffeb3b;
+      color: black;
+    }
+    #todayButton:hover {
+      background-color: #fdd835;
+    }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-gap: 5px;
+    }
+    .calendar-day, .day-header {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      border-radius: 4px;
+    }
+    .calendar-day:hover {
+      background-color: #e3f2fd;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .today {
+      background-color: #ffeb3b;
+      color: #000;
+      font-weight: bold;
+    }
+    .day-header {
+      background-color: #ddd;
+      font-weight: bold;
+      cursor: default;
+    }
+    .has-event::after {
+      content: '\1F4D6'; /* ไอคอนหนังสือ */
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px; /* ขนาดของไอคอนหนังสือ */
+      color: #4CAF50; /* สีเขียว */
+    }
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 1; 
+      left: 0;
+      top: 0;
+      width: 100%; 
+      height: 100%; 
+      overflow: auto; 
+      background-color: rgba(0, 0, 0, 0.6); 
+      padding-top: 0px;
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 1% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%; 
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .refresh {
+      color: #aaa;
+      font-size: 28px;
+      cursor: pointer;
+      margin-left: 80px; /* เว้นระยะห่างจากปุ่มปิด */
+      vertical-align: middle;
+      float: right; /* จัดปุ่มรีเฟรชให้อยู่ทางขวาเหมือนปุ่มปิด */
+    }
+    .refresh:hover,
+    .refresh:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #2196F3;
+      color: white;
+    }
+    td {
+      background-color: #fff;
+      color: #333;
+    }
+    tr:nth-child(even) td {
+      background-color: #f9f9f9;
+    }
+    /* Loading Spinner Styles */
+    .spinner {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 50%;
+      left: 50%;
+      margin-top: -60px; /* Half of the height */
+      margin-left: -60px; /* Half of the width */
+      border: 16px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 16px solid #3498db;
+      width: 120px;
+      height: 120px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="calendar">
+  <div class="calendar-header">
+    <button id="prevMonth">Previous</button>
+    <h2 id="monthYear"></h2>
+    <div>
+      <button id="todayButton">Today</button> <!-- ปุ่ม Today -->
+      <button id="nextMonth">Next</button>
+    </div>
+  </div>
+  <div class="calendar-days">
+    <div class="day-header">SUNDAY</div>
+    <div class="day-header">MONDAY</div>
+    <div class="day-header">TUESDAY</div>
+    <div class="day-header">WEDNESDAY</div>
+    <div class="day-header">THURSDAY</div>
+    <div class="day-header">FRIDAY</div>
+    <div class="day-header">SATURDAY</div>
+  </div>
+  <div class="calendar-days" id="calendarDays">
+    <!-- Calendar days will be generated here by JavaScript -->
+  </div>
+</div>
+
+<!-- Loading spinner element -->
+<div class="spinner" id="spinner"></div>
+
+<!-- The Modal -->
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <span class="refresh">&#x21bb;</span>
+    <h3 id="modalText">Details</h3>
+    <table id="eventTable">
+      <thead>
+        <tr>
+          <th>TIME</th>
+          <th>SOM SAN</th>
+          <th>GOOK SAN</th>
+          <th>POOKY SAN</th>
+          <th>L SAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>08:00-09:00</td>
+          <td id="somSan_0800"></td>
+          <td id="gookSan_0800"></td>
+          <td id="pookySan_0800"></td>
+          <td id="lSan_0800"></td>
+        </tr>
+        <tr>
+          <td>09:00-10:00</td>
+          <td id="somSan_0900"></td>
+          <td id="gookSan_0900"></td>
+          <td id="pookySan_0900"></td>
+          <td id="lSan_0900"></td>
+        </tr>
+        <tr>
+          <td>10:00-11:00</td>
+          <td id="somSan_1000"></td>
+          <td id="gookSan_1000"></td>
+          <td id="pookySan_1000"></td>
+          <td id="lSan_1000"></td>
+        </tr>
+        <tr>
+          <td>11:00-12:00</td>
+          <td id="somSan_1100"></td>
+          <td id="gookSan_1100"></td>
+          <td id="pookySan_1100"></td>
+          <td id="lSan_1100"></td>
+        </tr>
+        <tr>
+          <td>12:00-13:00</td>
+          <td id="somSan_1200"></td>
+          <td id="gookSan_1200"></td>
+          <td id="pookySan_1200"></td>
+          <td id="lSan_1200"></td>
+        </tr>
+        <tr>
+          <td>13:00-14:00</td>
+          <td id="somSan_1300"></td>
+          <td id="gookSan_1300"></td>
+          <td id="pookySan_1300"></td>
+          <td id="lSan_1300"></td>
+        </tr>
+        <tr>
+          <td>14:00-15:00</td>
+          <td id="somSan_1400"></td>
+          <td id="gookSan_1400"></td>
+          <td id="pookySan_1400"></td>
+          <td id="lSan_1400"></td>
+        </tr>
+        <tr>
+          <td>15:00-16:00</td>
+          <td id="somSan_1500"></td>
+          <td id="gookSan_1500"></td>
+          <td id="pookySan_1500"></td>
+          <td id="lSan_1500"></td>
+        </tr>
+        <tr>
+          <td>16:00-17:00</td>
+          <td id="somSan_1600"></td>
+          <td id="gookSan_1600"></td>
+          <td id="pookySan_1600"></td>
+          <td id="lSan_1600"></td>
+        </tr>
+        <tr>
+          <td>17:00-18:00</td>
+          <td id="somSan_1700"></td>
+          <td id="gookSan_1700"></td>
+          <td id="pookySan_1700"></td>
+          <td id="lSan_1700"></td>
+        </tr>
+        <tr>
+          <td>18:00-19:00</td>
+          <td id="somSan_1800"></td>
+          <td id="gookSan_1800"></td>
+          <td id="pookySan_1800"></td>
+          <td id="lSan_1800"></td>
+        </tr>
+        <tr>
+          <td>19:00-20:00</td>
+          <td id="somSan_1900"></td>
+          <td id="gookSan_1900"></td>
+          <td id="pookySan_1900"></td>
+          <td id="lSan_1900"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const calendarDays = document.getElementById('calendarDays');
+  const monthYear = document.getElementById('monthYear');
+  const prevMonth = document.getElementById('prevMonth');
+  const nextMonth = document.getElementById('nextMonth');
+  const todayButton = document.getElementById('todayButton'); 
+  const modal = document.getElementById("myModal");
+  const modalText = document.getElementById("modalText");
+  const span = document.getElementsByClassName("close")[0];
+  const spinner = document.getElementById('spinner');
+  const refreshButton = document.querySelector('.refresh');
+
+  const timeSlots = ['0800', '0900', '1000', '1100', '1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900'];
+
+  const date = new Date();
+  let currentMonth = date.getMonth();
+  let currentYear = date.getFullYear();
+  let currentDay = null;
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  function renderCalendar(month, year) {
+    calendarDays.innerHTML = '';
+    monthYear.textContent = `${months[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const today = new Date();
+    const todayDate = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    for (let i = 0; i < firstDay; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.classList.add('calendar-day');
+      calendarDays.appendChild(emptyCell);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayCell = document.createElement('div');
+      dayCell.classList.add('calendar-day');
+
+      if (day === todayDate && month === todayMonth && year === todayYear) {
+        dayCell.classList.add('today');
+      }
+
+      dayCell.innerHTML = `<p>${day}</p>`;
+
+      dayCell.addEventListener('click', () => {
+        currentDay = day; // บันทึกวันที่ปัจจุบันที่เลือก
+        loadEventsForDay(year, month + 1, day);
+      });
+
+      // ตรวจสอบว่ามีการจองหรือไม่
+      const requestUrl = `https://script.google.com/macros/s/AKfycbwzFXSq1cWuTMrEPzzKSsztUa2Ql6rRPc7zGunqTINMObAOxyOFUjn9YlGLg1HmUOao/exec?page=calendar&date=${year}-${('0' + (month + 1)).slice(-2)}-${('0' + day).slice(-2)}`;
+
+      fetch(requestUrl)
+        .then(response => response.json())
+        .then(events => {
+          if (events.length > 0) {
+            dayCell.classList.add('has-event'); // เพิ่มคลาส has-event หากมีการจองในวันนั้น
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        });
+
+      calendarDays.appendChild(dayCell);
+    }
+  }
+
+  function loadEventsForDay(year, month, day) {
+    spinner.style.display = 'block';
+    const requestUrl = `https://script.google.com/macros/s/AKfycbwzFXSq1cWuTMrEPzzKSsztUa2Ql6rRPc7zGunqTINMObAOxyOFUjn9YlGLg1HmUOao/exec?page=calendar&date=${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`;
+
+    fetch(requestUrl)
+      .then(response => response.json())
+      .then(events => {
+        spinner.style.display = 'none';
+        timeSlots.forEach(time => {
+          document.getElementById(`somSan_${time}`).textContent = '';
+          document.getElementById(`gookSan_${time}`).textContent = '';
+          document.getElementById(`pookySan_${time}`).textContent = '';
+          document.getElementById(`lSan_${time}`).textContent = '';
+        });
+
+        if (events.length === 0) {
+          modalText.textContent = "No events for this day.";
+          document.getElementById('eventTable').style.display = 'none';
+        } else {
+          document.getElementById('eventTable').style.display = '';
+          events.forEach(event => {
+            const timeFromSlot = event.timeFrom.replace(':', '');
+            const timeToSlot = event.timeTo.replace(':', '');
+
+            let timeSlot = timeFromSlot;
+            while (timeSlot < timeToSlot) {
+              if (event.translator === 'SOM SAN') {
+                document.getElementById(`somSan_${timeSlot}`).textContent = event.work;
+              } else if (event.translator === 'GOOK SAN') {
+                document.getElementById(`gookSan_${timeSlot}`).textContent = event.work;
+              } else if (event.translator === 'POOKY SAN') {
+                document.getElementById(`pookySan_${timeSlot}`).textContent = event.work;
+              } else if (event.translator === 'L SAN') {
+                document.getElementById(`lSan_${timeSlot}`).textContent = event.work;
+              }
+              timeSlot = incrementTimeSlot(timeSlot);
+            }
+          });
+          modalText.textContent = `Details for ${months[month - 1]} ${day}, ${year}`;
+        }
+
+        modal.style.display = "block";
+      })
+      .catch(error => {
+        spinner.style.display = 'none';
+        modalText.textContent = "An error occurred while fetching data.";
+        modal.style.display = "block";
+        console.error(error);
+      });
+  }
+
+  function incrementTimeSlot(timeSlot) {
+    const hour = parseInt(timeSlot.slice(0, 2));
+    const minute = parseInt(timeSlot.slice(2));
+    let newHour = hour;
+    let newMinute = minute + 60;
+
+    if (newMinute >= 60) {
+      newMinute = newMinute % 60;
+      newHour += 1;
+    }
+
+    return ('0' + newHour).slice(-2) + ('0' + newMinute).slice(-2);
+  }
+
+  function changeMonth(offset) {
+    currentMonth += offset;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear -= 1;
+    } else if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear += 1;
+    }
+    renderCalendar(currentMonth, currentYear);
+  }
+
+  refreshButton.addEventListener('click', () => {
+    if (currentDay) {
+      loadEventsForDay(currentYear, currentMonth + 1, currentDay);
+    }
+  });
+
+  todayButton.addEventListener('click', () => {
+    const today = new Date();
+    currentMonth = today.getMonth();
+    currentYear = today.getFullYear();
+    renderCalendar(currentMonth, currentYear);
+  });
+
+  prevMonth.addEventListener('click', () => changeMonth(-1));
+  nextMonth.addEventListener('click', () => changeMonth(1));
+
+  span.onclick = function() {
+    modal.style.display = "none";
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  renderCalendar(currentMonth, currentYear);
+</script>
+
+</body>
+</html>
