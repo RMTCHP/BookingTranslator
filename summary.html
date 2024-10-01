@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summary Calendar Mouthly</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+    }
+    .calendar {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .navigation-buttons {
+      display: flex;
+      gap: 5px; /* ปรับเพิ่มช่องว่างระหว่างปุ่ม */
+    }
+    .navigation-buttons button {
+      margin-right: 2px; /* ปรับค่าลบให้ปุ่มติดกัน */
+    }
+    .calendar-header h2 {
+      margin: 0;
+      color: #333;
+      text-align: right;
+      flex-grow: 1; /* ขยายพื้นที่สำหรับ monthYear ไปทางขวา */
+    }
+    .calendar-header button {
+      padding: 8px 12px;
+      cursor: pointer;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+    #todayButton {
+      background-color: #ffeb3b;
+      color: black;
+    }
+    #todayButton:hover {
+      background-color: #fdd835;
+    }
+
+    /* เพิ่มหัววันที่ด้านบน */
+    .day-header {
+      background-color: #2196F3;
+      color: white;
+      padding: 8px;
+      text-align: center;
+      font-weight: bold;
+      border-radius: 4px;
+      width: 315px;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr); /* 7 วัน */
+      grid-gap: 8px;
+    }
+    .calendar-day {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 4px;
+      text-align: center;
+      height: 495px;
+      width: 300px;
+      position: relative;
+      overflow-y: auto;
+    }
+    .today {
+      background-color: #ffeb3b;
+      color: black;
+      font-weight: bold;
+    }
+    .event-list table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 9px; /* ลดขนาดฟอนต์ */
+    }
+    .event-list th, .event-list td {
+      border: 1px solid #ddd;
+      padding: 2px; /* ลดขนาด padding */
+      text-align: center;
+    }
+    .event-list th {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    /* จุดสีแดง */
+    .red-dot {
+      height: 10px;
+      width: 10px;
+      background-color: red;
+      border-radius: 50%;
+      display: inline-block;
+      position: relative;
+    }
+
+    /* Tooltip */
+    .red-dot:hover::after {
+      content: attr(data-tooltip); /* ข้อมูลจะมาจาก data-tooltip */
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calendar">
+  <div class="calendar-header">
+    <button id="prevMonth">Previous</button>
+    <button id="nextMonth">Next</button>
+    <button id="todayButton">Today</button>
+    <button id="refreshButton">Refresh</button> <!-- ปุ่ม Refresh -->
+    <h2 id="monthYear">September 2024</h2>
+  </div>
+
+  <!-- เพิ่มส่วนหัวของวัน -->
+  <div class="calendar-days">
+    <div class="day-header">Sunday</div>
+    <div class="day-header">Monday</div>
+    <div class="day-header">Tuesday</div>
+    <div class="day-header">Wednesday</div>
+    <div class="day-header">Thursday</div>
+    <div class="day-header">Friday</div>
+    <div class="day-header">Saturday</div>
+  </div>
+
+  <div class="calendar-days" id="calendarDays"></div>
+</div>
+
+<!-- Modal for loading -->
+<div class="modal" id="loadingModal">
+  <div class="modal-content">
+    <p>Loading, please wait...</p>
+  </div>
+</div>
+
+<script>
+  // โค้ดส่วนของการแสดงปฏิทินและดึงข้อมูล
+  const calendarDays = document.getElementById('calendarDays');
+  const monthYear = document.getElementById('monthYear');
+  const prevMonth = document.getElementById('prevMonth');
+  const nextMonth = document.getElementById('nextMonth');
+  const todayButton = document.getElementById('todayButton');
+  const loadingModal = document.getElementById('loadingModal');
+
+  let currentMonth = new Date().getMonth();
+  let currentYear = new Date().getFullYear();
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const timeSlots = [
+    '07:00 - 07:30', '07:30 - 08:00', '08:00 - 08:30', '08:30 - 09:00',
+    '09:00 - 09:30', '09:30 - 10:00', '10:00 - 10:30', '10:30 - 11:00',
+    '11:00 - 11:30', '11:30 - 12:00', '12:00 - 12:30', '12:30 - 13:00',
+    '13:00 - 13:30', '13:30 - 14:00', '14:00 - 14:30', '14:30 - 15:00',
+    '15:00 - 15:30', '15:30 - 16:00', '16:00 - 16:30', '16:30 - 17:00',
+    '17:00 - 17:30', '17:30 - 18:00', '18:00 - 18:30', '18:30 - 19:00',
+    '19:00 - 19:30', '19:30 - 20:00'
+  ];
+  
+// ฟังก์ชันเพื่อ refresh หน้า
+document.getElementById('refreshButton').addEventListener('click', () => {
+  location.reload(); // รีเฟรชหน้าเว็บ
+});
+  // Function เพิ่ม 1 นาที
+  function addOneMinute(time) {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newMinutes = minutes + 1;
+
+    if (newMinutes >= 60) {
+      return `${('0' + (hours + 1)).slice(-2)}:00`;
+    } else {
+      return `${('0' + hours).slice(-2)}:${('0' + newMinutes).slice(-2)}`;
+    }
+  }
+
+  // Convert เวลาเป็นนาที
+  function timeToMinutes(time) {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  function matchTimeToSlot(timeFrom, timeTo) {
+    const startMinutes = timeToMinutes(timeFrom);
+    const endMinutes = timeToMinutes(timeTo);
+
+    return timeSlots.filter(slot => {
+      const [start, end] = slot.split(' - ');
+      const slotStartMinutes = timeToMinutes(start);
+      const slotEndMinutes = timeToMinutes(end);
+
+      return (slotStartMinutes >= startMinutes && slotEndMinutes <= endMinutes);
+    });
+  }
+
+  function loadEventDataForDay(date) {
+    const [day, month, year] = date.split('/');
+    const formattedDate = `${month}/${day}/${year}`;
+    const requestUrl = `https://script.google.com/macros/s/AKfycbyHILu3V2tHjjWzBTHxOf0iLYUl7lJPEdP0VmaSWgeQv98L7mStw12Hz4_wAvt6IC-I/exec?page=calendar&date=${formattedDate}`;
+
+    return fetch(requestUrl)
+      .then(response => response.json())
+      .then(data => {
+        console.log("Fetched data:", data);
+        return data;
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  }
+
+  function showLoadingModal() {
+    loadingModal.style.display = 'flex';
+  }
+
+  function hideLoadingModal() {
+    loadingModal.style.display = 'none';
+  }
+
+  function renderCalendar(month, year) {
+    showLoadingModal();
+    calendarDays.innerHTML = '';
+    monthYear.textContent = `${months[month]} ${year}`;
+
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.classList.add('calendar-day');
+      emptyCell.innerHTML = '';
+      calendarDays.appendChild(emptyCell);
+    }
+
+    let promises = [];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const day = new Date(year, month, i);
+      const dayCell = document.createElement('div');
+      dayCell.classList.add('calendar-day');
+      
+      if (i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()) {
+        dayCell.classList.add('today');
+      }
+
+      const formattedDate = `${('0' + i).slice(-2)}/${('0' + (month + 1)).slice(-2)}/${year}`;
+      dayCell.innerHTML = `<p>${i}</p><div class="event-list" id="events_${formattedDate}">Loading...</div>`;
+
+      promises.push(loadEventDataForDay(formattedDate).then(data => {
+        const eventList = document.getElementById(`events_${formattedDate}`);
+        
+        eventList.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Time</th><th>SOM</th><th>GOOK</th><th>POOKY</th><th>L</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        `;
+
+        const tbody = eventList.querySelector('tbody');
+
+        timeSlots.forEach(slot => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${slot}</td><td></td><td></td><td></td><td></td>`;
+          tbody.appendChild(row);
+        });
+
+        data.forEach(event => {
+          const timeFrom = event.timeFrom.replace("'", "").trim();
+          const timeTo = addOneMinute(event.timeTo.replace("'", "").trim());
+
+          const matchingSlots = matchTimeToSlot(timeFrom, timeTo);
+
+          matchingSlots.forEach(slot => {
+            const row = Array.from(tbody.querySelectorAll('tr')).find(row => row.cells[0].textContent === slot);
+            if (row) {
+              const index = event.translator === 'SOM SAN' ? 1 :
+                            event.translator === 'GOOK SAN' ? 2 :
+                            event.translator === 'POOKY SAN' ? 3 :
+                            event.translator === 'L SAN' ? 4 : -1;
+              if (index > -1) {
+                row.cells[index].innerHTML = `<span class="red-dot" data-tooltip="${event.work}"></span>`;
+              }
+            }
+          });
+        });
+
+      }));
+
+      calendarDays.appendChild(dayCell);
+    }
+
+    Promise.all(promises).then(() => {
+      hideLoadingModal();
+    });
+  }
+
+  prevMonth.addEventListener('click', () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    renderCalendar(currentMonth, currentYear);
+  });
+
+  nextMonth.addEventListener('click', () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    renderCalendar(currentMonth, currentYear);
+  });
+
+  todayButton.addEventListener('click', () => {
+    currentMonth = new Date().getMonth();
+    currentYear = new Date().getFullYear();
+    renderCalendar(currentMonth, currentYear);
+  });
+
+  renderCalendar(currentMonth, currentYear);
+</script>
+
+</body>
+</html>
