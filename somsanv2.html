@@ -18,6 +18,11 @@
       text-align: center;
       color: #333;
     }
+    .form-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     .container input[type="date"],
     .container input[type="submit"] {
       padding: 10px;
@@ -34,6 +39,18 @@
     }
     .container input[type="submit"]:hover {
       background-color: #45a049;
+    }
+    .view-month-button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .view-month-button:hover {
+      background-color: #1976D2;
     }
     table {
       width: 100%;
@@ -85,8 +102,11 @@
 <div class="container">
   <h2>SOM SAN JOB LIST</h2>
   <form id="searchForm">
-    <label for="searchDate">Select Date:</label>
-    <input type="date" id="searchDate" name="searchDate" required>
+    <div class="form-group">
+      <label for="searchDate">Select Date:</label>
+      <input type="date" id="searchDate" name="searchDate" required>
+      <button class="view-month-button" onclick="viewMonth()">View Full Month</button>
+    </div>
     <input type="submit" value="Search">
   </form>
   <table id="resultTable">
@@ -182,7 +202,9 @@ function populateTable(data) {
       actionsCell.appendChild(deleteButton);
     });
 }
-
+  function viewMonth() {
+    window.location.href = 'summary.html'; // เปลี่ยนหน้าไปยัง summary.html
+  }
   function toggleEdit(forWorkInput, bookingByInput, editButton, row, index) {
     if (forWorkInput.disabled && bookingByInput.disabled) {
       forWorkInput.disabled = false;
