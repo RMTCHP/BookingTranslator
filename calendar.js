@@ -10,7 +10,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzs7NdZGjjZTivIBIqR0OKRciTADISJGxQ9pGuriuwzmjaUaBng9HZfYSiqxFBQnUk/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxnQJvTRZ_v0o61cuolA9rGR7bFRZugexZ4sYseibwL3dcjUbOb2yzPakC9I2nssw/exec";
 
 const INTERPRETER_MAP = {
   i001: "somSan",
