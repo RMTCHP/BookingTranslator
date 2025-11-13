@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Resonac Interpreter Booking System</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      font-size: 14px;
+    }
+
+    .navbar {
+      background: #007bff;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .navbar .title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .navbar .user-info {
+      font-size: 13px;
+    }
+
+    .navbar button {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.25s ease-in-out;
+    }
+.navbar button:hover {
+  background: #c82333;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .mybooking {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .mybooking h3 {
+      margin-top: 0;
+    }
+
+    .booking-item {
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+      font-size: 13px;
+    }
+
+    .booking-item:last-child {
+      border-bottom: none;
+    }
+
+    .booking-item b {
+      color: #333;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .status-badge.booked {
+      background: #28a745;
+    }
+
+    .status-badge.canceled {
+      background: #dc3545;
+    }
+
+    .see-more {
+      display: block;
+      margin-top: 10px;
+      text-align: right;
+      font-size: 13px;
+      color: #007bff;
+      cursor: pointer;
+    }
+
+    .new-booking-btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .calendar-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #loader {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.7);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #loader div {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8f9fa;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background: #fff;
+      margin: 1% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 95%;
+      max-width: 1200px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+       background: #28a745; /* สี default = green */
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 8px 8px 0 0;
+      transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+    }
+
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    .swal2-container {
+      z-index: 30000 !important;
+      position: fixed !important;
+    }
+
+    /* ✅ เพิ่ม Scroll Bar ให้กับรายการจอง */
+#myBookingList {
+  max-height: 420px;       /* กำหนดความสูงสูงสุด */
+  overflow-y: auto;        /* ให้เลื่อนลงได้ */
+  padding-right: 6px;
+}
+
+/* ✅ scrollbar ดีไซน์เรียบหรู */
+#myBookingList::-webkit-scrollbar {
+  width: 6px;
+}
+
+#myBookingList::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
+}
+
+#myBookingList::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+    /* ✅ จัด layout ฟอร์มใน modal ให้เรียงเป็นแนวตั้ง */
+#newBookingModal form {
+  display: flex;
+  flex-direction: column;
+}
+
+#newBookingModal label {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+#newBookingModal input,
+#newBookingModal select {
+  margin-top: 5px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* ✅ ปรับขนาดและ spacing ของปุ่ม Submit */
+#newBookingModal button[type="submit"] {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-end;
+}
+    .today-btn {
+  background: #ffc107;
+  border: none;
+  color: #000;
+  padding: 3px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 8px;
+  font-weight: bold;
+}
+.today-btn:hover {
+  background: #ffca2c;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.nav-btn {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.nav-btn:hover {
+  background: #0056b3;
+}
+.mybooking-header {
+  display: flex;
+  justify-content: space-between;  /* แยก My Bookings กับปุ่มไปสุดขวา */
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+  .booking-item button {
+  transition: all 0.2s ease-in-out;
+}
+.booking-item button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+.new-booking-btn {
+  transition: all 0.25s ease-in-out;
+}
+.new-booking-btn:hover {
+  background: #218838;
+  transform: scale(1.03);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+#loader { display: none; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="title">🗓️ Resonac Interpreter Booking System</div>
+    <div class="navbar-right">
+      <div class="user-info" id="userInfo"></div>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- My Bookings -->
+    <div class="mybooking">
+      <button class="new-booking-btn" onclick="openNewBookingModal()">+ New Booking</button>
+<div class="mybooking-header">
+  <h3 id="myBookingTitle" style="color:#007bff; margin:0;">My Bookings (<span id="currentDate"></span>)</h3>
+ <div class="nav-buttons">
+  <button onclick="prevDate()" class="nav-btn">&lt;</button>
+  <select id="viewMode" class="nav-btn" onchange="changeViewMode()">
+    <option value="today" selected>Today</option>
+    <option value="monthly">Monthly</option>
+  </select>
+  <button onclick="nextDate()" class="nav-btn">&gt;</button>
+</div>
+</div>
+
+
+      <div id="myBookingList"></div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-box">
+      <iframe id="calendarFrame" src="calendar.html" style="width:100%; height:600px; border:none; border-radius:10px;"></iframe>
+    </div>
+  </div>
+
+  <div id="loader"><div></div></div>
+
+  <!-- Modal All Bookings -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>My All Bookings</h3>
+        <span class="close" onclick="closeModal()">&times;</span>
+      </div>
+      <table id="myBookingTable">
+        <thead>
+          <tr>
+            <th>Title Meeting</th>
+            <th>Time</th>
+            <th>Interpreter</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- New Booking Modal -->
+  <div id="newBookingModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h3>New Booking</h3>
+        <span class="close" onclick="closeNewBookingModal()">&times;</span>
+      </div>
+      <form id="bookingForm">
+        <label>Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <label>Interpreter:</label>
+        <select id="interpreterId" name="interpreterId" required>
+          <option value="" disabled selected>Select Interpreter</option>
+          <option value="i001">SOM SAN</option>
+          <option value="i002">GOOK SAN</option>
+          <option value="i003">POOKY SAN</option>
+          <option value="i004">L SAN</option>
+        </select>
+
+        <label for="timeFrom">Time From:</label>
+        <select id="timeFrom" name="startTime" required>
+          <option value="" disabled selected>HH:MM</option>
+          <option value="07:00">07:00</option>
+          <option value="07:30">07:30</option>
+          <option value="08:00">08:00</option>
+          <option value="08:30">08:30</option>
+          <option value="09:00">09:00</option>
+          <option value="09:30">09:30</option>
+          <option value="10:00">10:00</option>
+          <option value="10:30">10:30</option>
+          <option value="11:00">11:00</option>
+          <option value="11:30">11:30</option>
+          <option value="12:00">12:00</option>
+          <option value="12:30">12:30</option>
+          <option value="13:00">13:00</option>
+          <option value="13:30">13:30</option>
+          <option value="14:00">14:00</option>
+          <option value="14:30">14:30</option>
+          <option value="15:00">15:00</option>
+          <option value="15:30">15:30</option>
+          <option value="16:00">16:00</option>
+          <option value="16:30">16:30</option>
+          <option value="17:00">17:00</option>
+          <option value="17:30">17:30</option>
+          <option value="18:00">18:00</option>
+          <option value="18:30">18:30</option>
+          <option value="19:00">19:00</option>
+          <option value="19:30">19:30</option>
+          <option value="20:00">20:00</option>
+        </select>
+
+        <label for="timeTo">Time To:</label>
+        <select id="timeTo" name="endTime" required>
+          <option value="" disabled selected>HH:MM</option>
+          <option value="07:29">07:30</option>
+          <option value="07:59">08:00</option>
+          <option value="08:29">08:30</option>
+          <option value="08:59">09:00</option>
+          <option value="09:29">09:30</option>
+          <option value="09:59">10:00</option>
+          <option value="10:29">10:30</option>
+          <option value="10:59">11:00</option>
+          <option value="11:29">11:30</option>
+          <option value="11:59">12:00</option>
+          <option value="12:29">12:30</option>
+          <option value="12:59">13:00</option>
+          <option value="13:29">13:30</option>
+          <option value="13:59">14:00</option>
+          <option value="14:29">14:30</option>
+          <option value="14:59">15:00</option>
+          <option value="15:29">15:30</option>
+          <option value="15:59">16:00</option>
+          <option value="16:29">16:30</option>
+          <option value="16:59">17:00</option>
+          <option value="17:29">17:30</option>
+          <option value="17:59">18:00</option>
+          <option value="18:29">18:30</option>
+          <option value="18:59">19:00</option>
+          <option value="19:29">19:30</option>
+          <option value="19:59">20:00</option>
+        </select>
+
+        <!-- ✅ เพิ่ม Title Meeting -->
+        <label for="title">Title Meeting:</label>
+        <input type="text" id="title" name="title" required>
+        
+        <label>Location:</label>
+        <select id="location" name="location" required>
+          <option value="" disabled selected>Select Location</option>
+          <option>MS-Team</option>
+          <option>CHP-M201-Rajapruek</option>
+          <option>CHP-M202-Fuengfah</option>
+          <option>CHP-M203-Koson</option>
+          <option>CHP-M204-Lilawadee</option>
+          <option>CHP-M205-Training Center</option>
+          <option>CHP-M301-Anchan</option>
+          <option>CHP-M302-Supanniga</option>
+          <option>CHP-M303-Bualuang</option>
+          <option>CHP-M304-Puang Sad</option>
+          <option>CHP-M305-Parichat</option>
+          <option>G1P-Guest-Room</option>
+          <option>G1P-Meeting1</option>
+          <option>G1P-Meeting2</option>
+          <option>G1P-Meeting3</option>
+          <option>G1P-Meeting4</option>
+          <option>G1P-Meeting5</option>
+        </select>
+
+        <button type="submit" style="margin-top:15px;padding:8px 16px;background:#28a745;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+          Submit
+        </button>
+      </form>
+    </div>
+  </div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzs7NdZGjjZTivIBIqR0OKRciTADISJGxQ9pGuriuwzmjaUaBng9HZfYSiqxFBQnUk/exec"; 
+
+function showLoader(){ document.getElementById("loader").style.display="flex"; }
+function hideLoader(){ document.getElementById("loader").style.display="none"; }
+function logout(){ localStorage.removeItem("loggedInUser"); window.location.href="login.html"; }
+
+// ================= MODAL CONTROL =================
+function openModal(){ document.getElementById("myModal").style.display="block"; renderAllMyBookings(); }
+function closeModal(){ document.getElementById("myModal").style.display="none"; }
+function openNewBookingModal(){ 
+  const modal = document.getElementById("newBookingModal");
+  const header = modal.querySelector(".modal-header");
+  const title = header.querySelector("h3");
+  const form = document.getElementById("bookingForm");
+
+  // ✅ รีเซ็ตฟอร์มและโหมด
+  form.reset();
+  form.setAttribute("data-mode", "new");
+  form.removeAttribute("data-id");
+
+  // ✅ ลบปุ่ม Save/Edit ออกถ้ามี
+  const oldButtons = document.getElementById("editButtons");
+  if (oldButtons) oldButtons.remove();
+
+  // ✅ ตั้งหัว modal เป็นสีเขียวและชื่อ New Booking
+  header.style.background = "#28a745";
+  header.style.color = "#fff";
+  title.innerText = "New Booking";
+
+  modal.style.display = "block";
+}
+  
+function closeNewBookingModal(){ 
+  const modal = document.getElementById("newBookingModal");
+  const header = modal.querySelector(".modal-header");
+  const title = header.querySelector("h3");
+  const submitBtn = modal.querySelector("button[type='submit']");
+
+  // ✅ คืนค่า default
+  header.style.background = "#28a745";
+  header.style.color = "#fff";
+  title.innerText = "New Booking";
+
+  // ✅ แสดงปุ่ม Submit กลับมา
+  if (submitBtn) submitBtn.style.display = "inline-block";
+
+  // ✅ ลบปุ่ม edit ด้านล่างถ้ามี
+  const oldButtons = document.getElementById("editButtons");
+  if (oldButtons) oldButtons.remove();
+
+  modal.style.display = "none"; 
+}
+
+
+// ================= LOAD MY BOOKINGS =================
+async function loadMyBookings(){
+  const user=JSON.parse(localStorage.getItem("loggedInUser"));
+  if(!user){
+    Swal.fire("กรุณา Login ก่อน","","warning").then(()=>window.location.href="login.html");
+    return;
+  }
+  document.getElementById("userInfo").innerText=`👤 ${user.username} (${user.role})`;
+
+  try{
+    showLoader();
+    const res=await fetch(API_URL+"?page=listBookings");
+    const bookings=await res.json();
+    hideLoader();
+
+    const today=new Date().toISOString().split("T")[0];
+    const myBookings=bookings
+      .filter(b=>b.userId===user.id&&b.date===today&&b.status!=="CANCELED")
+      .sort((a,b)=>{
+        const [ah,am]=a.startTime.split(":").map(Number);
+        const [bh,bm]=b.startTime.split(":").map(Number);
+        return ah*60+am-(bh*60+bm);
+      });
+    renderMyBookings(myBookings);
+    window.allMyBookings=bookings.filter(b=>b.userId===user.id);
+  }catch(err){
+    hideLoader();
+    Swal.fire("Error",err.message,"error");
+  }
+}
+  
+let viewMode = "today"; // "today" หรือ "monthly"
+
+function changeViewMode() {
+  const select = document.getElementById("viewMode");
+  viewMode = select.value;
+  goToday(); // รีเฟรชข้อมูลตามโหมดใหม่
+}
+
+  
+// ================= TIME FORMAT =================
+function parseDatePart(dateVal){
+  if (!dateVal) return null;
+  const s = String(dateVal).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function parseTimePart(timeVal){
+  if (!timeVal) return null;
+  const s = String(timeVal).trim();
+  let m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (m) return { hh: parseInt(m[1],10), mm: parseInt(m[2],10) };
+  const d = new Date(s);
+  if (!isNaN(d)) return { hh: d.getHours(), mm: d.getMinutes() };
+  return null;
+}
+
+function formatRange(dateVal, startTime, endTime){
+  const d  = parseDatePart(dateVal);
+  const st = parseTimePart(startTime);
+  const et = parseTimePart(endTime);
+  if (!d || !st || !et) return `${dateVal} ${startTime} - ${endTime}`;
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), st.hh, st.mm);
+  const end   = new Date(d.getFullYear(), d.getMonth(), d.getDate(), et.hh, et.mm);
+  const dateStr  = start.toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" });
+  const startStr = start.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", hour12:false });
+  const endStr   = end.toLocaleTimeString("en-GB",   { hour:"2-digit", minute:"2-digit", hour12:false });
+  return `${dateStr}, ${startStr} - ${endStr}`;
+}
+
+// ================= INTERPRETER MAP =================
+const INTERPRETERS = {
+  i001: { name: "SOM SAN",  email: "teeraporn.sanyaprachasakul.xijqx@resonac.com" },
+  i002: { name: "GOOK SAN", email: "boonnak.songnok.xijmk@resonac.com" },
+  i003: { name: "POOKY SAN",email: "waraporn.yokao.xlbmb@resonac.com" },
+  i004: { name: "L SAN",    email: "prataksara.poolsawad.xmpuh@resonac.com" }
+};
+function getInterpreterEmail(id){ return (INTERPRETERS[id] && INTERPRETERS[id].email) || ""; }
+function getInterpreterName(id){ return (INTERPRETERS[id] && INTERPRETERS[id].name) || id; }
+
+// ================= RENDER =================
+function renderMyBookings(list){
+  const c = document.getElementById("myBookingList");
+  c.innerHTML = "";
+if (list.length === 0) {
+  c.innerHTML = viewMode === "monthly" 
+    ? "<p>No bookings this month</p>" 
+    : "<p>No bookings today</p>";
+  return;
+}
+
+  list.forEach(b => {
+    const badgeClass = b.status === "BOOKED" ? "booked" : "canceled";
+    c.innerHTML += `
+      <div class="booking-item" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div>
+          <div style="font-weight:bold;color:#007bff;font-size:15px;margin-bottom:2px;">${b.title}</div>
+          <div><b>Time:</b> ${formatRange(b.date, b.startTime, addOneMinute(b.endTime))}</div>
+
+          <div><b>Interpreter:</b> ${getInterpreterName(b.interpreterId)}</div>
+          <div><b>Location:</b> ${b.location}</div>
+          <div><b>Status:</b> <span class="status-badge ${badgeClass}">${b.status}</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button style="background:#ffc107;border:none;color:#000;padding:4px 8px;border-radius:5px;cursor:pointer;"
+            onclick="openEditBooking('${b.bookingId}')">✏️ Edit</button>
+          <button style="background:#dc3545;border:none;color:#fff;padding:4px 8px;border-radius:5px;cursor:pointer;"
+            onclick="cancelBooking('${b.bookingId}')">❌ Cancel</button>
+        </div>
+      </div>`;
+  });
+}
+
+
+function renderAllMyBookings(){
+  const tbody=document.querySelector("#myBookingTable tbody");
+  tbody.innerHTML="";
+  if(!window.allMyBookings||window.allMyBookings.length===0){
+    tbody.innerHTML="<tr><td colspan='6'>No bookings</td></tr>";return;
+  }
+  window.allMyBookings.forEach(b=>{
+    const badgeClass=b.status==="BOOKED"?"booked":"canceled";
+    tbody.innerHTML+=`
+      <tr>
+        <td>${b.title||"-"}</td>
+        <td>${formatRange(b.date, b.startTime, b.endTime)}</td>
+        <td>${getInterpreterName(b.interpreterId)}</td>
+        <td>${b.location||""}</td>
+        <td><span class="status-badge ${badgeClass}">${b.status}</span></td>
+        <td><button class="cancel-btn" onclick="cancelBooking('${b.bookingId}')">Cancel</button></td>
+      </tr>`;
+  });
+}
+
+// ---------------------- 🔹 NAVIGATION DATE CONTROL 🔹 ----------------------
+let currentViewDate = new Date();
+
+function updateBookingHeader() {
+  const h = document.getElementById("myBookingTitle");
+  if (viewMode === "today") {
+    const dateStr = currentViewDate.toISOString().split("T")[0];
+    h.innerHTML = `My Bookings (<span id="currentDate">${dateStr}</span>)`;
+  } else {
+    const monthStr = currentViewDate.toLocaleDateString("en-GB", {
+      month: "long", year: "numeric"
+    });
+    h.innerHTML = `My Bookings (<span id="currentDate">${monthStr}</span>)`;
+  }
+}
+
+function prevDate() {
+  if (viewMode === "today") {
+    currentViewDate.setDate(currentViewDate.getDate() - 1);
+  } else {
+    currentViewDate.setMonth(currentViewDate.getMonth() - 1);
+  }
+  updateBookingHeader();
+  loadMyBookingsForDate(currentViewDate);
+}
+
+function nextDate() {
+  if (viewMode === "today") {
+    currentViewDate.setDate(currentViewDate.getDate() + 1);
+  } else {
+    currentViewDate.setMonth(currentViewDate.getMonth() + 1);
+  }
+  updateBookingHeader();
+  loadMyBookingsForDate(currentViewDate);
+}
+
+function goToday() {
+  currentViewDate = new Date();
+  updateBookingHeader();
+  loadMyBookingsForDate(currentViewDate);
+}
+
+
+async function loadMyBookingsForDate(dateObj){
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  if(!user) return;
+
+  try {
+    showLoader();
+    const res = await fetch(API_URL+"?page=listBookings");
+    const bookings = await res.json();
+    hideLoader();
+
+    let filtered = [];
+    if (viewMode === "today") {
+      const dateStr = dateObj.toISOString().split("T")[0];
+      filtered = bookings.filter(
+        b => b.userId === user.id && b.date === dateStr && b.status !== "CANCELED"
+      );
+    } else if (viewMode === "monthly") {
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      filtered = bookings.filter(b => {
+        if (b.userId !== user.id || b.status === "CANCELED") return false;
+        const [y,m] = b.date.split("-").map(Number);
+        return y === year && m === month;
+      });
+    }
+
+    // เรียงเวลา
+    filtered.sort((a,b)=>{
+      const [ah,am]=a.startTime.split(":").map(Number);
+      const [bh,bm]=b.startTime.split(":").map(Number);
+      return ah*60+am - (bh*60+bm);
+    });
+
+    renderMyBookings(filtered);
+  } catch (err) {
+    hideLoader();
+    Swal.fire("Error", err.message, "error");
+  }
+}
+
+updateBookingHeader(); // ✅ เรียกตอนโหลด
+
+function openEditBooking(id){
+  const data = window.allMyBookings.find(x => x.bookingId === id);
+  if(!data) return;
+
+  const modal = document.getElementById("newBookingModal");
+  const header = modal.querySelector(".modal-header");
+  const title = header.querySelector("h3");
+  const f = document.getElementById("bookingForm");
+
+  // ✅ ลบปุ่มเดิมก่อนเพิ่มใหม่
+  const oldButtons = document.getElementById("editButtons");
+  if (oldButtons) oldButtons.remove();
+
+  // ✅ ตั้งหัว modal เป็นสีส้มและชื่อ Edit Booking
+  header.style.background = "#ff9800";
+  header.style.color = "#fff";
+  title.innerText = "Edit Booking";
+
+  // ✅ ซ่อนปุ่ม Submit ตอนเป็นโหมด Edit
+  const submitBtn = f.querySelector("button[type='submit']");
+  if (submitBtn) submitBtn.style.display = "none";
+
+  // ✅ ใส่ค่าเดิมในช่อง
+  f.setAttribute("data-mode","edit");
+  f.setAttribute("data-id", id);
+  f.date.value = data.date;
+  f.interpreterId.value = data.interpreterId;
+  f.timeFrom.value = data.startTime;
+  f.timeTo.value = data.endTime;
+  f.title.value = data.title;
+  f.location.value = data.location;
+
+  // ✅ เพิ่มเฉพาะปุ่ม Save Edit เท่านั้น
+  const div = document.createElement("div");
+  div.id = "editButtons";
+  div.style.marginTop = "15px";
+  div.style.display = "flex";
+  div.style.justifyContent = "flex-end";
+  div.innerHTML = `
+    <button id="saveEditBtn"
+      style="background:#ff9800;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">
+      💾 Save Edit
+    </button>
+  `;
+  f.appendChild(div);
+
+  document.getElementById("saveEditBtn").onclick = () => saveEditBooking(id);
+
+  modal.style.display = "block";
+}
+
+// ✅ ล้าง email ไม่ให้มี ' หรือช่องว่าง
+function sanitizeEmail(email) {
+  if (!email) return "";
+  return String(email).replace(/^'/, "").replace(/'$/, "").trim();
+}
+
+// ---------------------- 🔹 SAVE EDIT (Final Clean Version) 🔹 ----------------------
+async function saveEditBooking(bookingId){
+  const f = document.getElementById("bookingForm");
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  if(!user) return;
+
+  const saveBtn = document.getElementById("saveEditBtn");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.style.background = "#999";
+    saveBtn.style.cursor = "not-allowed";
+    saveBtn.innerText = "Saving...";
+  }
+
+  // ✅ ตรวจสอบค่าว่าง
+  const dateVal = f.date.value;
+  const interpreterVal = f.interpreterId.value;
+  const startVal = f.timeFrom.value;
+  const endVal = f.timeTo.value;
+  const titleVal = f.title.value.trim();
+  const locationVal = f.location.value;
+
+  if(!dateVal || !interpreterVal || !startVal || !endVal || !titleVal || !locationVal){
+    Swal.fire("⚠️ Warning","Please fill in all required fields.","warning");
+    resetSaveButton();
+    return;
+  }
+
+  // ✅ ตรวจสอบเวลาเริ่ม < เวลาสิ้นสุด
+  const startMins = parseInt(startVal.split(":")[0]) * 60 + parseInt(startVal.split(":")[1]);
+  const endMins   = parseInt(endVal.split(":")[0]) * 60 + parseInt(endVal.split(":")[1]);
+  if (startMins >= endMins) {
+    Swal.fire("⚠️ Warning", "Start time must be less than end time", "warning");
+    resetSaveButton();
+    return;
+  }
+
+  // ✅ เตรียมข้อมูลส่งแก้ไข
+  const form = new URLSearchParams();
+  form.append("page","editBooking");
+  form.append("bookingId", bookingId);
+  form.append("userId", user.id);
+  form.append("userEmail", sanitizeEmail(user.email));
+  form.append("interpreterId", interpreterVal);
+  form.append("interpreterEmail", sanitizeEmail(getInterpreterEmail(interpreterVal)));
+  form.append("date", dateVal);
+  form.append("startTime", startVal);
+  form.append("endTime", endVal);
+  form.append("title", titleVal);
+  form.append("location", locationVal);
+
+  try {
+    showLoader();
+    const res = await fetch(API_URL, { method:"POST", body:form });
+    const data = await res.json();
+    hideLoader();
+
+    if(data.success){
+      Swal.fire("✅ Updated","Booking updated successfully!","success").then(()=>{
+        closeNewBookingModal();
+        loadMyBookings();
+        const iframe=document.getElementById("calendarFrame");
+        if(iframe) iframe.src="calendar.html?v="+new Date().getTime();
+      });
+    } else if (data.message && data.message.includes("Duplicate")) {
+      Swal.fire({
+        title: "⚠️ Duplicate Booking",
+        text: data.message,
+        icon: "warning",
+        didOpen: () => { document.querySelector('.swal2-container').style.zIndex = 30000; }
+      });
+    } else {
+      Swal.fire("❌ Error", data.message, "error");
+    }
+  } catch(err) {
+    hideLoader();
+    Swal.fire("Error", err.message, "error");
+  } finally {
+    resetSaveButton();
+  }
+
+  function resetSaveButton(){
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.style.background = "#ff9800";
+      saveBtn.style.cursor = "pointer";
+      saveBtn.innerText = "💾 Save Edit";
+    }
+  }
+}
+
+
+// ---------------------- 🔹 SUBMIT NEW BOOKING (FINAL VERSION) 🔹 ----------------------
+document.getElementById("bookingForm").addEventListener("submit", async function(e){ 
+  e.preventDefault();
+  const mode = this.getAttribute("data-mode");
+  if(mode === "edit") return;
+
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  const submitBtn = this.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+  submitBtn.style.background = "#999";   // ✅ เปลี่ยนเป็นเทา
+  submitBtn.style.cursor = "not-allowed";
+  submitBtn.innerText = "Submitting...";
+
+  const startVal = this.timeFrom.value;
+  const endVal   = this.timeTo.value;
+
+  // ✅ ตรวจสอบเวลา
+  if (!startVal || !endVal){
+    Swal.fire("⚠️ Warning","Please select time range","warning");
+    submitBtn.disabled=false;
+    submitBtn.style.background="#28a745";
+    submitBtn.style.cursor="pointer";
+    submitBtn.innerText="Submit";
+    return;
+  }
+  const startMins = parseInt(startVal.split(":")[0])*60+parseInt(startVal.split(":")[1]);
+  const endMins = parseInt(endVal.split(":")[0])*60+parseInt(endVal.split(":")[1]);
+  if(startMins>=endMins){
+    Swal.fire("⚠️ Warning","Start time must be less than end time","warning");
+    submitBtn.disabled=false;
+    submitBtn.style.background="#28a745";
+    submitBtn.style.cursor="pointer";
+    submitBtn.innerText="Submit";
+    return;
+  }
+
+  // ✅ เตรียมข้อมูลส่งไป backend
+  const form = new URLSearchParams();
+  form.append("page","newBooking");
+  form.append("userId", user.id);
+  form.append("userEmail", user.email);
+  form.append("interpreterId", this.interpreterId.value);
+  form.append("interpreterEmail", getInterpreterEmail(this.interpreterId.value));
+  form.append("date", this.date.value);
+  form.append("startTime", startVal);
+  form.append("endTime", endVal);
+  form.append("title", this.title.value);
+  form.append("location", this.location.value);
+  form.append("status", "BOOKED");
+  form.append("createdAt", new Date().toISOString());
+
+  try {
+    showLoader();
+    const res = await fetch(API_URL, { method:"POST", body:form });
+    const data = await res.json();
+    hideLoader();
+
+    // ✅ ตรวจสอบผลลัพธ์จาก backend
+    if (data.success){
+      // ✅ คืนค่าปุ่มกลับก่อนปิด modal
+      submitBtn.disabled = false;
+      submitBtn.style.background = "#28a745";
+      submitBtn.style.cursor = "pointer";
+      submitBtn.innerText = "Submit";
+
+      closeNewBookingModal();
+      this.reset();
+      Swal.fire("✅ Success", data.message,"success").then(()=>{
+        loadMyBookings();
+        const iframe=document.getElementById("calendarFrame");
+        if(iframe) iframe.src="calendar.html?v="+new Date().getTime();
+      });
+
+    } else if (data.message && data.message.includes("Duplicate")) {
+      // ⚠️ กรณี Booking ซ้ำ
+      Swal.fire({
+        title: "⚠️ Duplicate Booking",
+        text: data.message,
+        icon: "warning",
+        didOpen: () => { document.querySelector('.swal2-container').style.zIndex = 30000; }
+      });
+
+    } else {
+      // ❌ กรณี Error อื่น ๆ
+      Swal.fire("❌ Error", data.message,"error");
+    }
+
+  } catch(err) {
+    hideLoader();
+    Swal.fire("Error", err.message,"error");
+
+  } finally {
+    // ✅ คืนปุ่มกลับสู่สถานะปกติ (กันกรณี error หรือ modal ปิดก่อน)
+    submitBtn.disabled = false;
+    submitBtn.style.background = "#28a745";
+    submitBtn.style.cursor = "pointer";
+    submitBtn.innerText = "Submit";
+  }
+});
+
+function addOneMinute(timeStr) {
+  const [h,m] = timeStr.split(":").map(Number);
+  let total = h * 60 + m + 1;
+  const hh = String(Math.floor(total / 60)).padStart(2,"0");
+  const mm = String(total % 60).padStart(2,"0");
+  return `${hh}:${mm}`;
+}
+
+// ---------------------- 🔹 CANCEL BOOKING 🔹 ----------------------
+async function cancelBooking(bookingId) {
+  const confirmResult = await Swal.fire({
+    title: "Are you sure?",
+    text: "Do you want to cancel this booking?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, cancel it",
+    cancelButtonText: "No, keep it"
+  });
+  if (!confirmResult.isConfirmed) return;
+
+  const form = new URLSearchParams();
+  form.append("page", "cancelBooking");
+  form.append("bookingId", bookingId);
+
+  try {
+    showLoader();
+    const res = await fetch(API_URL, { method: "POST", body: form });
+    const data = await res.json();
+    hideLoader();
+
+    if (data.success) {
+      Swal.fire("✅ Canceled", data.message, "success").then(() => {
+        loadMyBookings();
+        renderAllMyBookings();
+        const iframe = document.getElementById("calendarFrame");
+        if (iframe) iframe.src = `calendar.html?v=${new Date().getTime()}`;
+        document.getElementById("myModal").style.display = "none";
+        closeNewBookingModal();
+      });
+    } else {
+      Swal.fire("Error", data.message, "error");
+    }
+  } catch (err) {
+    hideLoader();
+    Swal.fire("Error", err.message, "error");
+  }
+}
+
+loadMyBookings();
+console.log("✅ Booking System Loaded:", new Date().toLocaleString());
+</script>
+
+</body>
+</html>
