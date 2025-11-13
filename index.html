@@ -1,376 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
+  <meta charset="UTF-8">
+  <title>Login - Interpreter Booking</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: url("images/login-bg2.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
     }
 
-    .form-container {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-      max-width: 400px;
-      width: 100%;
+    /* Overlay มืดบาง ๆ */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 0;
     }
 
-    .form-container h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
-      font-size: 24px;
+/* 🔹 Header Zone (Logo + Title) */
+.top-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  z-index: 2;
+}
+.top-bar img {
+  height: 45px;
+  width: auto;
+}
+.top-bar .system-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: #0a2344; /* ✅ สีน้ำเงินเข้มจากภาพ */
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* ✨ เงาเบา ๆ สไตล์ corporate */
+}
+
+
+    .login-box {
       position: relative;
-      padding-bottom: 10px;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      width: 350px;
+      backdrop-filter: blur(5px);
+      transition: transform 0.2s ease;
     }
 
-    .form-container h2::before {
-      content: '\1F4C5';
-      font-size: 30px;
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #4CAF50;
+    h2 { margin-top: 0; text-align: center; color: #333; }
+    label { display: block; margin: 10px 0 5px; font-weight: bold; color: #333; }
+    input {
+      width: 100%; padding: 10px; margin-bottom: 15px;
+      border-radius: 6px; border: 1px solid #ccc; font-size: 14px;
     }
-
-    .form-container h2::after {
-      content: '';
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 0;
-      width: 200px;
-      height: 4px;
-      background-color: #2196F3;
-      border-radius: 2px;
+    button {
+      width: 100%; padding: 12px; background: #28a745; color: white;
+      border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
     }
+    button:hover { background: #218838; }
+    .link { text-align:center; margin-top:10px; color: #333; }
+    .link a { color:#007bff; text-decoration:none; }
+    .link a:hover { text-decoration:underline; }
 
-  label {
-    font-weight: bold;
-    margin-top: 10px;
-    display: block;
-    color: #333;
-  }
+    /* Loader */
+    #loader {
+      display:none;
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(255,255,255,0.7);
+      z-index:9999;
+      align-items:center; justify-content:center;
+    }
+    #loader div {
+      border:6px solid #f3f3f3;
+      border-top:6px solid #3498db;
+      border-radius:50%; width:60px; height:60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
 
-  input[type="date"],
-  input[type="text"],
-  select,
-  textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-  }
+    .swal2-container { position: fixed !important; }
+    body.swal2-shown { overflow-y: auto !important; height: 100vh !important; }
 
-  textarea {
-    resize: vertical;
-  }
-
-  input[type="submit"],
-  .calendar-btn,
-  .translator-btn {
-    font-size: 16px;
-  }
-
-  input[type="submit"] {
-    width: 100%;
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 20px;
-  }
-
-  input[type="submit"]:hover {
-    background-color: #45a049;
-  }
-
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-    justify-content: center;
-    align-items: center;
-  }
-
-  .modal-content {
-    background-color: white;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 300px;
-    border-radius: 10px;
-    text-align: center;
-  }
-
-  .modal-content p {
-    margin: 0;
-    padding: 10px 0;
-  }
-
-  .close-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .close-btn:hover {
-    background-color: #45a049;
-  }
-
-  .calendar-btn {
-    background-color: #2196F3;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-    display: block;
-    text-align: center;
-    text-decoration: none;
-  }
-
-  .calendar-btn:hover {
-    background-color: #0b7dda;
-  }
-
-  .translator-btn {
-    background-color: #ffeb3b;
-    color: black;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    display: block;
-    text-align: center;
-    margin-top: 10px;
-  }
-
-  .translator-btn:hover {
-    background-color: #fdd835;
-  }
-
-  .spinner-modal {
-    display: none;
-    position: fixed;
-    z-index: 2;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-    justify-content: center;
-    align-items: center;
-  }
-
-  .spinner {
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #3498db;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .alert-icon {
-    font-weight: bold;
-    margin-right: 10px;
-  }
-
-  .alert-error {
-    color: red;
-  }
-
-  .alert-success {
-    color: green;
-  }
-</style>
-
+    /* 📱 Responsive */
+    @media (max-width: 480px) {
+      .top-bar { padding: 10px 15px; }
+      .top-bar .system-title { font-size: 16px; }
+      .login-box { width: 85%; padding: 25px; }
+    }
+  </style>
 </head>
 <body>
-
-  <div class="form-container">
-    <h2>Booking Form</h2>
-    <form id="myForm">
-      <!-- Form Fields -->
-      <label for="date">Date:</label>
-      <input type="date" id="date" name="date" required>
-
-      <label for="translatorName">Translator Name:</label>
-      <select id="translatorName" name="translatorName" required>
-        <option value="" disabled selected>Select Translator</option>
-        <option value="SOM SAN">SOM SAN</option>
-        <option value="GOOK SAN">GOOK SAN</option>
-        <option value="POOKY SAN">POOKY SAN</option>
-        <option value="L SAN">L SAN</option>
-      </select>
-
-      <label for="bookingBy">Booking By:</label>
-      <input type="text" id="bookingBy" name="bookingBy" required>
-
-      <label for="timeFrom">Time From:</label>
-      <select id="timeFrom" name="timeFrom" required>
-        <option value="" disabled selected>HH:MM</option>
-        <option value="07:00">07:00</option>
-        <option value="07:30">07:30</option>
-        <option value="08:00">08:00</option>
-        <option value="08:30">08:30</option>
-        <option value="09:00">09:00</option>
-        <option value="09:30">09:30</option>
-        <option value="10:00">10:00</option>
-        <option value="10:30">10:30</option>
-        <option value="11:00">11:00</option>
-        <option value="11:30">11:30</option>
-        <option value="12:00">12:00</option>
-        <option value="12:30">12:30</option>
-        <option value="13:00">13:00</option>
-        <option value="13:30">13:30</option>
-        <option value="14:00">14:00</option>
-        <option value="14:30">14:30</option>
-        <option value="15:00">15:00</option>
-        <option value="15:30">15:30</option>
-        <option value="16:00">16:00</option>
-        <option value="16:30">16:30</option>
-        <option value="17:00">17:00</option>
-        <option value="17:30">17:30</option>
-        <option value="18:00">18:00</option>
-        <option value="18:30">18:30</option>
-        <option value="19:00">19:00</option>
-        <option value="19:30">19:30</option>
-        <option value="20:00">20:00</option>
-      </select>
-
-      <label for="timeTo">Time To:</label>
-      <select id="timeTo" name="timeTo" required>
-        <option value="" disabled selected>HH:MM</option>
-        <option value="07:29">07:30</option>
-        <option value="07:59">08:00</option>
-        <option value="08:29">08:30</option>
-        <option value="08:59">09:00</option>
-        <option value="09:29">09:30</option>
-        <option value="09:59">10:00</option>
-        <option value="10:29">10:30</option>
-        <option value="10:59">11:00</option>
-        <option value="11:29">11:30</option>
-        <option value="11:59">12:00</option>
-        <option value="12:29">12:30</option>
-        <option value="12:59">13:00</option>
-        <option value="13:29">13:30</option>
-        <option value="13:59">14:00</option>
-        <option value="14:29">14:30</option>
-        <option value="14:59">15:00</option>
-        <option value="15:29">15:30</option>
-        <option value="15:59">16:00</option>
-        <option value="16:29">16:30</option>
-        <option value="16:59">17:00</option>
-        <option value="17:29">17:30</option>
-        <option value="17:59">18:00</option>
-        <option value="18:29">18:30</option>
-        <option value="18:59">19:00</option>
-        <option value="18:29">19:30</option>
-        <option value="19:59">20:00</option>
-      </select>
-
-      <label for="forWork">For work?</label>
-      <textarea id="forWork" name="forWork" required></textarea>
-
-      <input type="submit" value="Submit">
+  <!-- 🔹 Header -->
+  <div class="top-bar">
+    <img src="images/company-logo.png" alt="Company Logo">
+    <div class="system-title">Interpreter Booking System</div>
+  </div>
+  <!-- 🔸 Login Box -->
+  <div class="login-box">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <label for="username">Username</label>
+      <input type="text" id="username" required>
+      <label for="password">Password</label>
+      <input type="password" id="password" required>
+      <button type="submit">Login</button>
     </form>
-
-    <a href="calendar2.html" class="calendar-btn" target="_blank">View Calendar</a>
-    <a href="login.html" class="translator-btn" target="_blank">Translator Only</a>
-  </div>
-
-  <!-- Spinner modal -->
-  <div id="spinnerModal" class="spinner-modal">
-    <div class="spinner"></div>
-  </div>
-
-  <div id="myModal" class="modal">
-    <div class="modal-content">
-      <p id="modalMessage"></p>
-      <button class="close-btn" onclick="closeModal()">Close</button>
+    <div class="link">
+      Don't have an account? <a href="register.html">Register</a>
     </div>
   </div>
 
+  <!-- Loader -->
+  <div id="loader"><div></div></div>
+
   <script>
-    var form = document.getElementById('myForm');
-    var modal = document.getElementById('myModal');
-    var modalMessage = document.getElementById('modalMessage');
-    var spinnerModal = document.getElementById('spinnerModal');
+    const API_URL = "https://script.google.com/macros/s/AKfycbxnQJvTRZ_v0o61cuolA9rGR7bFRZugexZ4sYseibwL3dcjUbOb2yzPakC9I2nssw/exec";
 
-form.onsubmit = function(event) {
-  event.preventDefault();
+    function showLoader(){ document.getElementById("loader").style.display="flex"; }
+    function hideLoader(){ document.getElementById("loader").style.display="none"; }
 
-  var formData = new FormData(form);
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-      // เปลี่ยน 'YOUR_WEB_APP_URL' เป็น URL ของ Web App ที่คุณได้จากการ Deploy Google Apps Script
-      fetch('https://script.google.com/macros/s/AKfycbxhVD0_-g7VKhYcOKMRTCaRx_OmoxgTCoIactfbWBRvL7v-MOXKlOabsXkF40Jd263B/exec', {
-        method: 'POST',
-        mode: 'cors',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data); // เพิ่มเพื่อดูข้อมูลที่ได้รับจาก Google Apps Script
-        spinnerModal.style.display = 'none'; // ซ่อน spinner modal
+      const msgUint8 = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const passwordHash = hashArray.map(b=>b.toString(16).padStart(2,"0")).join("");
+
+      const form = new URLSearchParams();
+      form.append("page","loginUser");
+      form.append("username",username);
+      form.append("passwordHash",passwordHash);
+
+      try {
+        showLoader();
+        const res = await fetch(API_URL, { method:"POST", body:form });
+        const data = await res.json();
+        hideLoader();
 
         if (data.success) {
-          modalMessage.innerHTML = '<span class="alert-icon alert-success">&#x2714;</span> Booking successfully saved!';
+          Swal.fire("Success", data.message, "success").then(()=>{
+            localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+            const role = (data.user.role || "").toLowerCase();
+            if (role === "admin") window.location.href = "dashboard_admin.html";
+            else if (role === "interpreter") window.location.href = "dashboardInterpreter.html";
+            else window.location.href = "dashboard.html";
+          });
         } else {
-          modalMessage.innerHTML = '<span class="alert-icon alert-error">&#x2716;</span> ' + data.message;
+          Swal.fire("Error", data.message, "error");
         }
-
-        modal.style.display = "flex";
-
-        if (data.success) {
-          form.reset(); // ล้างฟอร์มหลังจากการจองสำเร็จ
-        }
-      })
-      .catch(error => {
-        spinnerModal.style.display = 'none'; // ซ่อน spinner modal
-        modalMessage.innerHTML = '<span class="alert-icon alert-error">&#x2716;</span> There was an error.';
-        modal.style.display = "flex";
-      });
-
-      spinnerModal.style.display = 'flex'; // แสดง spinner modal ขณะกำลังส่งข้อมูล
-    }
-
-    function closeModal() {
-      modal.style.display = "none";
-    }
+      } catch(err){
+        hideLoader();
+        Swal.fire("Error", err.message, "error");
+      }
+    });
   </script>
 </body>
 </html>
