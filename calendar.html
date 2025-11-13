@@ -1,228 +1,360 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Booking Calendar</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-    }
-    .calendar {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .calendar-header h2 {
-      margin: 0;
-      color: #333;
-    }
-    .calendar-header button {
-      padding: 8px 12px;
-      cursor: pointer;
-      background-color: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      transition: background-color 0.3s ease;
-    }
-    #todayButton {
-      background-color: #ffeb3b;
-      color: black;
-    }
-    #todayButton:hover {
-      background-color: #fdd835;
-    }
-     .time-slot {
-      font-size: 11px; /* ลดขนาดฟอนต์ที่นี่ */
-    }
-    .bold-text {
-      font-weight: bold;
-    }
-    .calendar-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      grid-gap: 5px;
-    }
-    .calendar-day, .day-header {
-      background-color: #fff;
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-      position: relative;
-      cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      border-radius: 4px;
-    }
-    .calendar-day:hover {
-      background-color: #e3f2fd;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .today {
-      background-color: #ffeb3b;
-      color: #000;
-      font-weight: bold;
-    }
-    .day-header {
-      background-color: #ddd;
-      font-weight: bold;
-      cursor: default;
-    }
-    .has-event::after {
-      content: '\1F4D6'; /* ไอคอนหนังสือ */
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 16px; /* ขนาดของไอคอนหนังสือ */
-      color: #4CAF50; /* สีเขียว */
-    }
-    .modal {
-      display: none; 
-      position: fixed; 
-      z-index: 1; 
-      left: 0;
-      top: 0;
-      width: 100%; 
-      height: 100%; 
-      overflow: auto; 
-      background-color: rgba(0, 0, 0, 0.6); 
-      padding-top: 0px;
-    }
-    .modal-content {
-      background-color: #fefefe;
-      margin: 1% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%; 
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    }
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-    }
-    .close:hover,
-    .close:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .refresh {
-      color: #aaa;
-      font-size: 28px;
-      cursor: pointer;
-      margin-left: 80px; /* เว้นระยะห่างจากปุ่มปิด */
-      vertical-align: middle;
-      float: right; /* จัดปุ่มรีเฟรชให้อยู่ทางขวาเหมือนปุ่มปิด */
-    }
-    .refresh:hover,
-    .refresh:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    table, th, td {
-      border: 1px solid #ddd;
-    }
-    th, td {
-      padding: 12px;
-      text-align: center;
-    }
-    th {
-      background-color: #2196F3;
-      color: white;
-    }
-    td {
-      background-color: #fff;
-      color: #333;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9f9f9;
-    }
-    /* Loading Spinner Styles */
-    .spinner {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      top: 50%;
-      left: 50%;
-      margin-top: -60px; /* Half of the height */
-      margin-left: -60px; /* Half of the width */
-      border: 16px solid #f3f3f3;
-      border-radius: 50%;
-      border-top: 16px solid #3498db;
-      width: 120px;
-      height: 120px;
-      animation: spin 2s linear infinite;
+ <style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+  }
+
+  .calendar {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .calendar-header h2 {
+    margin: 0;
+    color: #333;
+  }
+
+  .calendar-header button {
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+
+  #todayButton {
+    background-color: #ffeb3b;
+    color: black;
+  }
+
+  #todayButton:hover {
+    background-color: #fdd835;
+  }
+
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 5px;
+  }
+
+  .calendar-day,
+  .day-header {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 4px;
+  }
+
+  .calendar-day:hover {
+    background-color: #e3f2fd;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .today {
+    background-color: #ffeb3b;
+    color: #000;
+    font-weight: bold;
+  }
+
+  .day-header {
+    background-color: #ddd;
+    font-weight: bold;
+    cursor: default;
+  }
+
+  /* แสดงไอคอนหนังสือเมื่อมีงาน */
+  .has-event::after {
+    content: '\1F4D6';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    color: #4CAF50;
+  }
+
+  /* สีพื้นหลังของวัน Unavailable */
+  .unavailable-day {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+  }
+
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 1% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .refresh {
+    color: #aaa;
+    font-size: 28px;
+    cursor: pointer;
+    margin-left: 80px;
+    vertical-align: middle;
+    float: right;
+  }
+
+  .refresh:hover,
+  .refresh:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  table,
+  th,
+  td {
+    border: 1px solid #ddd;
+  }
+
+  th,
+  td {
+    padding: 12px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #2196F3;
+    color: white;
+  }
+
+  td {
+    background-color: #fff;
+    color: #333;
+  }
+
+  tr:nth-child(even) td {
+    background-color: #f9f9f9;
+  }
+
+  /* Loading Spinner Styles */
+  .spinner {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    top: 50%;
+    left: 50%;
+    margin-top: -60px;
+    margin-left: -60px;
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #3498db;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    100% {
+      transform: rotate(360deg);
     }
-  </style>
+  }
+
+  /* ลดขนาดฟอนต์เฉพาะ modal ตาราง */
+  #eventTable th,
+  #eventTable td {
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  #myModal .modal-content h3 {
+    font-size: 14px;
+  }
+
+  /* จุดสถานะในตาราง */
+  .blue-dot,
+  .orange-dot {
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    margin: 0 2px;
+  }
+
+  /* 💙 Booked */
+  .blue-dot {
+    background-color: #2196F3;
+    box-shadow: 0 0 3px rgba(33, 150, 243, 0.7);
+  }
+
+  /* 🟠 Unavailable */
+  .orange-dot {
+    background-color: #ff9800;
+    box-shadow: 0 0 3px rgba(255, 152, 0, 0.7);
+  }
+
+  /* Tooltip */
+  .blue-dot:hover::after,
+  .orange-dot:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 140%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: block;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-line;
+    text-align: left;
+    min-width: 200px;
+    max-width: 280px;
+    word-wrap: break-word;
+    z-index: 20000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .blue-dot:hover::before,
+  .orange-dot:hover::before {
+    content: "";
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+  }
+
+  /* Legend ใต้ตาราง */
+  .legend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #333;
+  }
+
+  .legend span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+</style>
+
 </head>
+
 <body>
 
-<div class="calendar">
-  <div class="calendar-header">
-    <button id="prevMonth">Previous</button>
-    <h2 id="monthYear"></h2>
-    <div>
-      <button id="todayButton">Today</button> <!-- ปุ่ม Today -->
-      <button id="nextMonth">Next</button>
+  <div class="calendar">
+    <div class="calendar-header">
+      <button id="prevMonth">Previous</button>
+      <h2 id="monthYear"></h2>
+      <div>
+        <button id="todayButton">Today</button>
+        <button id="nextMonth">Next</button>
+      </div>
     </div>
-  </div>
-  <div class="calendar-days">
-    <div class="day-header">SUNDAY</div>
-    <div class="day-header">MONDAY</div>
-    <div class="day-header">TUESDAY</div>
-    <div class="day-header">WEDNESDAY</div>
-    <div class="day-header">THURSDAY</div>
-    <div class="day-header">FRIDAY</div>
-    <div class="day-header">SATURDAY</div>
-  </div>
-  <div class="calendar-days" id="calendarDays">
-    <!-- Calendar days will be generated here by JavaScript -->
-  </div>
+
+    <div class="calendar-days">
+      <div class="day-header">SUNDAY</div>
+      <div class="day-header">MONDAY</div>
+      <div class="day-header">TUESDAY</div>
+      <div class="day-header">WEDNESDAY</div>
+      <div class="day-header">THURSDAY</div>
+      <div class="day-header">FRIDAY</div>
+      <div class="day-header">SATURDAY</div>
+    </div>
+    <div class="calendar-days" id="calendarDays"></div>
+
+    <!-- Legend -->
+<div class="legend">
+  <span><span class="blue-dot"></span> Booked</span>
+  <!-- <span><span class="orange-dot"></span> Unavailable</span> -->
 </div>
+  </div>
 
-<!-- Loading spinner element -->
-<div class="spinner" id="spinner"></div>
+  <div class="spinner" id="spinner"></div>
 
-<!-- The Modal -->
-<div id="myModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <span class="refresh">&#x21bb;</span>
-    <h3 id="modalText">Details</h3>
-    <table id="eventTable">
-      <thead>
-        <tr>
-          <th>TIME</th>
-          <th>SOM SAN</th>
-          <th>GOOK SAN</th>
-          <th>POOKY SAN</th>
-          <th>L SAN</th>
-        </tr>
-      </thead>
-      <tbody>
-    <tr>
+  <!-- Modal ตาราง -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <span class="refresh">&#x21bb;</span>
+      <h3 id="modalText">Details</h3>
+      <table id="eventTable">
+        <thead>
+          <tr>
+            <th>TIME</th>
+            <th>SOM SAN</th>
+            <th>GOOK SAN</th>
+            <th>POOKY SAN</th>
+            <th>L SAN</th>
+          </tr>
+        </thead>
+        <tbody>
+      <tr>
       <td class="time-slot bold-text">07:00 - 07:30</td>
       <td id="somSan_0700_0730" class="time-slot"></td>
       <td id="gookSan_0700_0730" class="time-slot"></td>
@@ -404,213 +536,13 @@
       <td id="pookySan_1930_2000" class="time-slot"></td>
       <td id="lSan_1930_2000" class="time-slot"></td>
     </tr>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
 
-<script>
-  const calendarDays = document.getElementById('calendarDays');
-  const monthYear = document.getElementById('monthYear');
-  const prevMonth = document.getElementById('prevMonth');
-  const nextMonth = document.getElementById('nextMonth');
-  const todayButton = document.getElementById('todayButton'); 
-  const modal = document.getElementById("myModal");
-  const modalText = document.getElementById("modalText");
-  const span = document.getElementsByClassName("close")[0];
-  const spinner = document.getElementById('spinner');
-  const refreshButton = document.querySelector('.refresh');
-
-  const timeSlots = [
-  '0700_0730', '0730_0800', '0800_0830', '0830_0900', '0900_0930', '0930_1000', '1000_1030', '1030_1100', 
-  '1100_1130', '1130_1200', '1200_1230', '1230_1300', '1300_1330', '1330_1400', 
-  '1400_1430', '1430_1500', '1500_1530', '1530_1600', '1600_1630', '1630_1700', 
-  '1700_1730', '1730_1800', '1800_1830', '1830_1900', '1900_1930', '1930_2000'
-];
-
-  const date = new Date();
-  let currentMonth = date.getMonth();
-  let currentYear = date.getFullYear();
-  let currentDay = null;
-
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  function renderCalendar(month, year) {
-    calendarDays.innerHTML = '';
-    monthYear.textContent = `${months[month]} ${year}`;
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const today = new Date();
-    const todayDate = today.getDate();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
-
-    for (let i = 0; i < firstDay; i++) {
-      const emptyCell = document.createElement('div');
-      emptyCell.classList.add('calendar-day');
-      calendarDays.appendChild(emptyCell);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayCell = document.createElement('div');
-      dayCell.classList.add('calendar-day');
-
-      if (day === todayDate && month === todayMonth && year === todayYear) {
-        dayCell.classList.add('today');
-      }
-
-      dayCell.innerHTML = `<p>${day}</p>`;
-
-      dayCell.addEventListener('click', () => {
-        currentDay = day; // บันทึกวันที่ปัจจุบันที่เลือก
-        loadEventsForDay(year, month + 1, day);
-      });
-
-      // ตรวจสอบว่ามีการจองหรือไม่
-      const requestUrl = `https://script.google.com/macros/s/AKfycbwzFXSq1cWuTMrEPzzKSsztUa2Ql6rRPc7zGunqTINMObAOxyOFUjn9YlGLg1HmUOao/exec?page=calendar&date=${year}-${('0' + (month + 1)).slice(-2)}-${('0' + day).slice(-2)}`;
-
-      fetch(requestUrl)
-        .then(response => response.json())
-        .then(events => {
-          if (events.length > 0) {
-            dayCell.classList.add('has-event'); // เพิ่มคลาส has-event หากมีการจองในวันนั้น
-          }
-        })
-        .catch(error => {
-          console.error(error);
-        });
-
-      calendarDays.appendChild(dayCell);
-    }
-  }
-
-function loadEventsForDay(year, month, day) {
-    spinner.style.display = 'block';
-    const requestUrl = `https://script.google.com/macros/s/AKfycbwzFXSq1cWuTMrEPzzKSsztUa2Ql6rRPc7zGunqTINMObAOxyOFUjn9YlGLg1HmUOao/exec?page=calendar&date=${year}-${('0' + month).slice(-2)}-${('0' + day).slice(-2)}`;
-
-    fetch(requestUrl)
-        .then(response => response.json())
-        .then(events => {
-            spinner.style.display = 'none';
-            timeSlots.forEach(time => {
-                document.getElementById(`somSan_${time}`).textContent = '';
-                document.getElementById(`gookSan_${time}`).textContent = '';
-                document.getElementById(`pookySan_${time}`).textContent = '';
-                document.getElementById(`lSan_${time}`).textContent = '';
-            });
-
-            if (events.length === 0) {
-                modalText.textContent = "No events for this day.";
-                document.getElementById('eventTable').style.display = 'none';
-            } else {
-                document.getElementById('eventTable').style.display = '';
-                events.forEach(event => {
-                    let timeFromSlot = event.timeFrom.replace(':', '');
-                    let timeToSlot = event.timeTo.replace(':', '');
-
-                    while (timeFromSlot < timeToSlot) {
-                        let slot = getTimeSlot(timeFromSlot);
-
-                        if (slot) {
-                            if (event.translator === 'SOM SAN') {
-                                document.getElementById(`somSan_${slot}`).textContent = event.work;
-                            } else if (event.translator === 'GOOK SAN') {
-                                document.getElementById(`gookSan_${slot}`).textContent = event.work;
-                            } else if (event.translator === 'POOKY SAN') {
-                                document.getElementById(`pookySan_${slot}`).textContent = event.work;
-                            } else if (event.translator === 'L SAN') {
-                                document.getElementById(`lSan_${slot}`).textContent = event.work;
-                            }
-                        }
-
-                        // Increment timeFromSlot by 30 minutes
-                        timeFromSlot = incrementTimeSlotBy30Minutes(timeFromSlot);
-                    }
-                });
-                modalText.textContent = `Details for ${months[month - 1]} ${day}, ${year}`;
-            }
-
-            modal.style.display = "block";
-        })
-        .catch(error => {
-            spinner.style.display = 'none';
-            modalText.textContent = "An error occurred while fetching data.";
-            modal.style.display = "block";
-            console.error(error);
-        });
-}
-
-function getTimeSlot(timeFrom) {
-    const slots = {
-        '0700': '0700_0730', '0730': '0730_0800', '0800': '0800_0830', '0830': '0830_0900', '0900': '0900_0930', '0930': '0930_1000',
-        '1000': '1000_1030', '1030': '1030_1100', '1100': '1100_1130', '1130': '1130_1200',
-        '1200': '1200_1230', '1230': '1230_1300', '1300': '1300_1330', '1330': '1330_1400',
-        '1400': '1400_1430', '1430': '1430_1500', '1500': '1500_1530', '1530': '1530_1600',
-        '1600': '1600_1630', '1630': '1630_1700', '1700': '1700_1730', '1730': '1730_1800',
-        '1800': '1800_1830', '1830': '1830_1900', '1900': '1900_1930', '1930': '1930_2000'
-    };
-
-    return slots[timeFrom] || null;
-}
-
-function incrementTimeSlotBy30Minutes(timeSlot) {
-    let hour = parseInt(timeSlot.slice(0, 2));
-    let minute = parseInt(timeSlot.slice(2));
-
-    minute += 30;
-    if (minute >= 60) {
-        minute = 0;
-        hour += 1;
-    }
-
-    return ('0' + hour).slice(-2) + ('0' + minute).slice(-2);
-}
-
-  function changeMonth(offset) {
-    currentMonth += offset;
-    if (currentMonth < 0) {
-      currentMonth = 11;
-      currentYear -= 1;
-    } else if (currentMonth > 11) {
-      currentMonth = 0;
-      currentYear += 1;
-    }
-    renderCalendar(currentMonth, currentYear);
-  }
-
-  refreshButton.addEventListener('click', () => {
-    if (currentDay) {
-      loadEventsForDay(currentYear, currentMonth + 1, currentDay);
-    }
-  });
-
-  todayButton.addEventListener('click', () => {
-    const today = new Date();
-    currentMonth = today.getMonth();
-    currentYear = today.getFullYear();
-    renderCalendar(currentMonth, currentYear);
-  });
-
-  prevMonth.addEventListener('click', () => changeMonth(-1));
-  nextMonth.addEventListener('click', () => changeMonth(1));
-
-  span.onclick = function() {
-    modal.style.display = "none";
-  }
-
-  window.onclick = function(event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
-  }
-
-  renderCalendar(currentMonth, currentYear);
-</script>
+  <script src="calendar.js"></script>
 
 </body>
+
 </html>
