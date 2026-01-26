@@ -104,7 +104,7 @@ function renderCalendar(month, year) {
       // Tooltip แสดงจำนวนงาน
       dayCell.title =
         `SOM SAN = ${count.somSan} Job\n` +
-        `GOOK SAN = ${count.gookSan} Job\n` +
+      //  `GOOK SAN = ${count.gookSan} Job\n` +
         `POOKY SAN = ${count.pookySan} Job\n` +
         `L SAN = ${count.lSan} Job`;
     }
