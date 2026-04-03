@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>📈 Dashboard - Interpreter Booking</title>
+  <title>ðŸ“ˆ Dashboard - Interpreter Booking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- SweetAlert2 -->
@@ -264,7 +264,7 @@
 </head>
 <body>
 
-<!-- โหลด Layout (Navbar + Tabs) -->
+<!-- à¹‚à¸«à¸¥à¸” Layout (Navbar + Tabs) -->
 <div id="layout"></div>
 
 <script>
@@ -286,7 +286,7 @@ fetch("layout.html")
 <div class="container">
   <div id="loading"><div class="spinner"></div></div>
 
-  <h2>📈 Dashboard Overview</h2>
+  <h2>ðŸ“ˆ Dashboard Overview</h2>
 
   <!-- Summary Cards -->
   <div class="card-box">
@@ -303,7 +303,7 @@ fetch("layout.html")
     <div class="card">
       <h3>Active Interpreters</h3>
       <p id="totalInterpreter">4</p>
-      <span class="sub">SOM SAN • GOOK SAN • POOKY SAN • L SAN</span>
+      <span class="sub">SOM SAN â€¢ GOOK SAN â€¢ POOKY SAN â€¢ L SAN</span>
     </div>
   </div>
 
@@ -313,19 +313,19 @@ fetch("layout.html")
     <!-- Bookings per Day (line chart, full width) -->
     <div class="chart-card">
       <h3>
-        📊 Bookings per Day (This Month)
+        ðŸ“Š Bookings per Day (This Month)
         <span class="mode-group">
           <span class="mode-label">Mode:</span>
           <button type="button" id="modeCountBtn" class="mode-btn active" onclick="setDailyMode('count')">
-            🧾 Bookings
+            ðŸ§¾ Bookings
           </button>
           <button type="button" id="modeHoursBtn" class="mode-btn" onclick="setDailyMode('hours')">
-            ⏱ Working Hours
+            â± Working Hours
           </button>
         </span>
       </h3>
       <div class="chart-subtitle">
-        One line per interpreter • Click legend labels to hide/show lines • Gray dashed line = daily average
+        One line per interpreter â€¢ Click legend labels to hide/show lines â€¢ Gray dashed line = daily average
       </div>
       <div class="chart-wrapper">
         <canvas id="dailyChart"></canvas>
@@ -335,7 +335,7 @@ fetch("layout.html")
           Tooltip format adapts to selected mode (bookings or hours)
         </span>
         <button type="button" onclick="downloadDailyChart()">
-          ⬇️ Download PNG
+          â¬‡ï¸ Download PNG
         </button>
       </div>
     </div>
@@ -343,14 +343,14 @@ fetch("layout.html")
     <!-- Bookings per Interpreter (bar chart) -->
     <div class="chart-card">
       <h3>
-        👥 Bookings per Interpreter (This Month)
+        ðŸ‘¥ Bookings per Interpreter (This Month)
         <span class="mode-group">
           <span class="mode-label">Mode:</span>
           <button type="button" id="iModeCountBtn" class="mode-btn active" onclick="setInterpreterMode('count')">
-            🧾 Bookings
+            ðŸ§¾ Bookings
           </button>
           <button type="button" id="iModeHoursBtn" class="mode-btn" onclick="setInterpreterMode('hours')">
-            ⏱ Working Hours
+            â± Working Hours
           </button>
         </span>
       </h3>
@@ -364,7 +364,7 @@ fetch("layout.html")
 
   </div>
 
-  <h3 style="margin-top: 26px;">📋 Latest Bookings – Displaying the 10 most recent submissions</h3>
+  <h3 style="margin-top: 26px;">ðŸ“‹ Latest Bookings â€“ Displaying the 10 most recent submissions</h3>
   <table>
     <thead>
       <tr>
@@ -383,7 +383,7 @@ fetch("layout.html")
 </div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbzcCpIFWhFc2XNjGGDCYmpTzWQE2_IqUJL0YirH7LXIo_L96exXb5BVnoFGFgW96E8/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbwYn26RJ7FXL4UQP9pGUxIwsHKU7FFApFwjsdtSr-KAIxpI-xDPM9abBtxtYosfiPM/exec";
 const loading  = document.getElementById("loading");
 const show  = () => loading.style.display = "flex";
 const hide  = () => loading.style.display = "none";
@@ -399,23 +399,23 @@ const interpreterNames = {
 let dailyChart = null;
 let interpreterChart = null;
 
-// โหมดปัจจุบันของกราฟรายวัน
+// à¹‚à¸«à¸¡à¸”à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸à¸£à¸²à¸Ÿà¸£à¸²à¸¢à¸§à¸±à¸™
 let currentDailyMode = "count";
 
-// โหมดปัจจุบันของกราฟ per Interpreter
+// à¹‚à¸«à¸¡à¸”à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸à¸£à¸²à¸Ÿ per Interpreter
 let currentInterpreterMode = "count";
 
-// เก็บข้อมูลสำหรับ redraw เวลาเปลี่ยนโหมด
+// à¹€à¸à¹‡à¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸³à¸«à¸£à¸±à¸š redraw à¹€à¸§à¸¥à¸²à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”
 let perDayCountsGlobal = {};
 let perDayMinutesGlobal = {};
 let globalInterpreters = ["i001","i002","i003","i004"];
 let globalYearStr = "";
 let globalMonthStr = "";
-let interpreterCountGlobal = null;  // เก็บค่า count ต่อ interpreter
+let interpreterCountGlobal = null;  // à¹€à¸à¹‡à¸šà¸„à¹ˆà¸² count à¸•à¹ˆà¸­ interpreter
 
 // ===== Utility functions =====
 
-// เพิ่ม 1 นาทีให้เวลา
+// à¹€à¸žà¸´à¹ˆà¸¡ 1 à¸™à¸²à¸—à¸µà¹ƒà¸«à¹‰à¹€à¸§à¸¥à¸²
 function addOneMinute(t) {
   if (!t || t.indexOf(":") === -1) return t;
   let [h, m] = t.split(":").map(Number);
@@ -425,14 +425,14 @@ function addOneMinute(t) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// แปลง HH:MM -> นาที
+// à¹à¸›à¸¥à¸‡ HH:MM -> à¸™à¸²à¸—à¸µ
 function timeToMinutes(t) {
   if (!t || t.indexOf(":") === -1) return 0;
   const [h, m] = t.split(":").map(Number);
   return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m);
 }
 
-// แปลงชั่วโมง (ตัวเลขทศนิยม) -> H:MM สำหรับแสดง tooltip โหมด hours
+// à¹à¸›à¸¥à¸‡à¸Šà¸±à¹ˆà¸§à¹‚à¸¡à¸‡ (à¸•à¸±à¸§à¹€à¸¥à¸‚à¸—à¸¨à¸™à¸´à¸¢à¸¡) -> H:MM à¸ªà¸³à¸«à¸£à¸±à¸šà¹à¸ªà¸”à¸‡ tooltip à¹‚à¸«à¸¡à¸” hours
 function formatHoursHM(hoursValue) {
   const totalMinutes = Math.round((hoursValue || 0) * 60);
   const h = Math.floor(totalMinutes / 60);
@@ -460,13 +460,13 @@ async function loadDashboard() {
     let countToday = 0;
     let countMonth = 0;
 
-    // สำหรับกราฟ Bookings per day per interpreter
-    // แบบ Count และแบบ Minutes
+    // à¸ªà¸³à¸«à¸£à¸±à¸šà¸à¸£à¸²à¸Ÿ Bookings per day per interpreter
+    // à¹à¸šà¸š Count à¹à¸¥à¸°à¹à¸šà¸š Minutes
     const perDayCounts = {};   // { 'YYYY-MM-DD': { i001: n, ... } }
     const perDayMinutes = {};  // { 'YYYY-MM-DD': { i001: minutes, ... } }
     const interpreters = ["i001","i002","i003","i004"];
 
-    // สำหรับ bar chart ต่อ interpreter (ใช้ Count)
+    // à¸ªà¸³à¸«à¸£à¸±à¸š bar chart à¸•à¹ˆà¸­ interpreter (à¹ƒà¸Šà¹‰ Count)
     const interpreterCount = {
       i001: 0,
       i002: 0,
@@ -485,18 +485,18 @@ async function loadDashboard() {
       const isLeave =
         titleStr.includes("take leave") ||
         titleStr.includes("leave") ||
-        titleStr.includes("ลา");
+        titleStr.includes("à¸¥à¸²");
 
-      // (1) ตัด Leave ออก
+      // (1) à¸•à¸±à¸” Leave à¸­à¸­à¸
       if (isLeave) return;
 
       const status = String(row.status || "").toUpperCase();
       const iid    = row.interpreterId;
 
-      // (2) ต้องเป็น BOOKED เท่านั้น
+      // (2) à¸•à¹‰à¸­à¸‡à¹€à¸›à¹‡à¸™ BOOKED à¹€à¸—à¹ˆà¸²à¸™à¸±à¹‰à¸™
       if (status !== "BOOKED") return;
 
-      // (3) BOOKED → ใช้ใน countMonth / countToday
+      // (3) BOOKED â†’ à¹ƒà¸Šà¹‰à¹ƒà¸™ countMonth / countToday
       if (rowDate.startsWith(month)) countMonth++;
       if (rowDate === today) countToday++;
 
@@ -512,7 +512,7 @@ async function loadDashboard() {
         if (iid && perDayCounts[rowDate].hasOwnProperty(iid))
           perDayCounts[rowDate][iid]++;
 
-        // คำนวณชั่วโมง
+        // à¸„à¸³à¸™à¸§à¸“à¸Šà¸±à¹ˆà¸§à¹‚à¸¡à¸‡
         const start = row.startTime || "";
         const end   = row.endTime   || "";
 
@@ -523,7 +523,7 @@ async function loadDashboard() {
 
           let diff = Math.max(0, endM - startM);
 
-          // ตัดพักเที่ยง 12:00–13:00
+          // à¸•à¸±à¸”à¸žà¸±à¸à¹€à¸—à¸µà¹ˆà¸¢à¸‡ 12:00â€“13:00
           if (startM < 780 && endM > 720) {
             diff -= 60;
             if (diff < 0) diff = 0;
@@ -545,19 +545,19 @@ async function loadDashboard() {
     document.getElementById("totalToday").innerText      = countToday;
     document.getElementById("totalInterpreter").innerText= 4;
 
-    // เก็บลง global เพื่อใช้ตอนเปลี่ยนโหมด
+    // à¹€à¸à¹‡à¸šà¸¥à¸‡ global à¹€à¸žà¸·à¹ˆà¸­à¹ƒà¸Šà¹‰à¸•à¸­à¸™à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”
     perDayCountsGlobal   = perDayCounts;
     perDayMinutesGlobal  = perDayMinutes;
     globalInterpreters   = interpreters;
     interpreterCountGlobal = interpreterCount;
 
-    // ====== Latest Bookings (ใช้ createdAt) – ตรงนี้โชว์ทั้งหมด ไม่ตัด leave/canceled ======
+    // ====== Latest Bookings (à¹ƒà¸Šà¹‰ createdAt) â€“ à¸•à¸£à¸‡à¸™à¸µà¹‰à¹‚à¸Šà¸§à¹Œà¸—à¸±à¹‰à¸‡à¸«à¸¡à¸” à¹„à¸¡à¹ˆà¸•à¸±à¸” leave/canceled ======
     const latest = data
       .filter(r => r.createdAt)
       .sort((a, b) => {
         const da = new Date(String(a.createdAt).replace(/^'/,''));
         const db = new Date(String(b.createdAt).replace(/^'/,''));
-        return db - da;  // ล่าสุดก่อน
+        return db - da;  // à¸¥à¹ˆà¸²à¸ªà¸¸à¸”à¸à¹ˆà¸­à¸™
       })
       .slice(0, 10);
 
@@ -579,7 +579,7 @@ async function loadDashboard() {
       tbody.appendChild(tr);
     });
 
-    // ====== Build Charts (เริ่มต้นโหมด Count ทั้งสองกราฟ) ======
+    // ====== Build Charts (à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™à¹‚à¸«à¸¡à¸” Count à¸—à¸±à¹‰à¸‡à¸ªà¸­à¸‡à¸à¸£à¸²à¸Ÿ) ======
     currentDailyMode = "count";
     currentInterpreterMode = "count";
 
@@ -593,29 +593,29 @@ async function loadDashboard() {
 
   } catch (err) {
     console.error(err);
-    Swal.fire("❌ Error", "Cannot load dashboard data", "error");
+    Swal.fire("âŒ Error", "Cannot load dashboard data", "error");
   } finally {
     hide();
   }
 }
 
 /**
- * เปลี่ยนโหมดแสดงผลกราฟรายวัน (Count / Hours)
+ * à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”à¹à¸ªà¸”à¸‡à¸œà¸¥à¸à¸£à¸²à¸Ÿà¸£à¸²à¸¢à¸§à¸±à¸™ (Count / Hours)
  */
 function setDailyMode(mode) {
   if (mode === currentDailyMode) return;
   currentDailyMode = mode;
 
-  // ปรับปุ่มโหมด
+  // à¸›à¸£à¸±à¸šà¸›à¸¸à¹ˆà¸¡à¹‚à¸«à¸¡à¸”
   document.getElementById("modeCountBtn").classList.toggle("active", mode === "count");
   document.getElementById("modeHoursBtn").classList.toggle("active", mode === "hours");
 
-  // วาดกราฟใหม่ตามโหมด
+  // à¸§à¸²à¸”à¸à¸£à¸²à¸Ÿà¹ƒà¸«à¸¡à¹ˆà¸•à¸²à¸¡à¹‚à¸«à¸¡à¸”
   buildDailyChart(perDayCountsGlobal, perDayMinutesGlobal, globalInterpreters, globalYearStr, globalMonthStr, currentDailyMode);
 }
 
 /**
- * เปลี่ยนโหมดกราฟ per Interpreter (Count / Hours)
+ * à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”à¸à¸£à¸²à¸Ÿ per Interpreter (Count / Hours)
  */
 function setInterpreterMode(mode) {
   if (mode === currentInterpreterMode) return;
@@ -632,7 +632,7 @@ function setInterpreterMode(mode) {
  * - One line per interpreter
  * - Custom tooltip
  * - Average line
- * - รองรับ 2 โหมด: count / hours
+ * - à¸£à¸­à¸‡à¸£à¸±à¸š 2 à¹‚à¸«à¸¡à¸”: count / hours
  */
 function buildDailyChart(perDayCounts, perDayMinutes, interpreters, yearStr, monthStr, mode) {
   const ctx = document.getElementById("dailyChart").getContext("2d");
@@ -683,7 +683,7 @@ function buildDailyChart(perDayCounts, perDayMinutes, interpreters, yearStr, mon
     };
   });
 
-  // ค่าเฉลี่ยต่อวัน (รวมทุกล่าม)
+  // à¸„à¹ˆà¸²à¹€à¸‰à¸¥à¸µà¹ˆà¸¢à¸•à¹ˆà¸­à¸§à¸±à¸™ (à¸£à¸§à¸¡à¸—à¸¸à¸à¸¥à¹ˆà¸²à¸¡)
   const totalsPerDay = fullLabels.map(day => {
     if (mode === "count") {
       const obj = perDayCounts[day] || {};
@@ -811,7 +811,7 @@ function buildInterpreterChart(interpreterCount, mode) {
     "L SAN"
   ];
 
-  // เตรียมค่าในแต่ละโหมด
+  // à¹€à¸•à¸£à¸µà¸¢à¸¡à¸„à¹ˆà¸²à¹ƒà¸™à¹à¸•à¹ˆà¸¥à¸°à¹‚à¸«à¸¡à¸”
   let values;
   if (mode === "count") {
     values = [
@@ -821,7 +821,7 @@ function buildInterpreterChart(interpreterCount, mode) {
       interpreterCount.i004
     ];
   } else {
-    // Hours mode: รวม minutes จาก perDayMinutesGlobal แล้วแปลงเป็นชั่วโมง
+    // Hours mode: à¸£à¸§à¸¡ minutes à¸ˆà¸²à¸ perDayMinutesGlobal à¹à¸¥à¹‰à¸§à¹à¸›à¸¥à¸‡à¹€à¸›à¹‡à¸™à¸Šà¸±à¹ˆà¸§à¹‚à¸¡à¸‡
     const minutesByInterpreter = {
       i001: 0,
       i002: 0,
@@ -922,3 +922,5 @@ window.onload = loadDashboard;
 
 </body>
 </html>
+
+

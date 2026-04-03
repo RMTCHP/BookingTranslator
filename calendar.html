@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -18,15 +18,110 @@
   }
 
   .calendar-header {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     margin-bottom: 10px;
+    gap: 10px;
   }
 
-  .calendar-header h2 {
-    margin: 0;
-    color: #333;
+  .month-picker-wrap {
+    position: relative;
+    justify-self: center;
+  }
+  .calendar-header .month-year-btn {
+    border: none !important;
+    background: transparent !important;
+    color: #1f2d3f !important;
+    font-size: 42px !important;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 !important;
+    line-height: 1.1;
+    box-shadow: none !important;
+  }
+  .calendar-header .month-year-btn:hover {
+    color: #0f4f8f !important;
+    transform: none !important;
+  }
+  .month-picker-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.92);
+    opacity: 0;
+    pointer-events: none;
+    width: 290px;
+    background: #ffffff;
+    border: 1px solid #d3e0f0;
+    border-radius: 12px;
+    box-shadow: 0 14px 28px rgba(12, 46, 82, 0.2);
+    padding: 10px;
+    z-index: 30;
+    transition: all 0.18s ease;
+  }
+  .month-picker-popover.open {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    pointer-events: auto;
+  }
+  .month-picker-header {
+    display: grid;
+    grid-template-columns: 34px 1fr 34px;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  #monthPickerYear {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #274160;
+  }
+  .calendar-header .month-year-nav {
+    border: 1px solid #c9daee !important;
+    background: #f5faff !important;
+    color: #1a5d9d !important;
+    border-radius: 8px;
+    width: 34px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .calendar-header .month-year-nav:hover {
+    background: #eaf4ff !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .calendar-header .month-item {
+    border: 1px solid #d4e1f2 !important;
+    background: #ffffff !important;
+    color: #27405f !important;
+    border-radius: 8px;
+    padding: 7px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .calendar-header .month-item:hover {
+    background: #edf5ff !important;
+    border-color: #bdd1ea !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .calendar-header .month-item.active {
+    background: #fff6b8 !important;
+    border-color: #e8dc8c !important;
+    color: #3b3411 !important;
   }
 
   .calendar-header button {
@@ -36,22 +131,91 @@
     color: white;
     border: none;
     border-radius: 4px;
-    transition: background-color 0.3s ease;
+    transition: all 0.2s ease;
+    font-weight: 600;
+  }
+  .calendar-header button:hover {
+    background-color: #0f74cc;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(17, 86, 153, 0.25);
+  }
+  .calendar-header button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(17, 86, 153, 0.2);
+  }
+  .calendar-header button:focus-visible {
+    outline: 2px solid #8ec5ff;
+    outline-offset: 1px;
+  }
+  .calendar-nav-group {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    justify-self: end;
+  }
+  .calendar-header-spacer {
+    justify-self: start;
+    width: 1px;
+    height: 1px;
   }
 
-  #todayButton {
-    background-color: #ffeb3b;
-    color: black;
+  .nav-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    border-radius: 9px !important;
+    background: #ffffff !important;
+    color: #1b5f9f !important;
+    border: 1px solid #c9dbef !important;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  #todayButton:hover {
-    background-color: #fdd835;
+  .nav-icon-btn:hover {
+    background: #edf5ff !important;
+    border-color: #a9c5e7 !important;
+    color: #0f4f8f !important;
+    box-shadow: 0 5px 12px rgba(17, 86, 153, 0.16);
   }
 
   .calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     grid-gap: 5px;
+  }
+
+  /* Month transition animation */
+  #calendarDays.month-slide-left {
+    animation: monthSlideLeft 0.28s ease;
+  }
+
+  #calendarDays.month-slide-right {
+    animation: monthSlideRight 0.28s ease;
+  }
+
+  @keyframes monthSlideLeft {
+    0% {
+      opacity: 0.15;
+      transform: translateX(26px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes monthSlideRight {
+    0% {
+      opacity: 0.15;
+      transform: translateX(-26px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .calendar-day,
@@ -83,7 +247,7 @@
     cursor: default;
   }
 
-  /* แสดงไอคอนหนังสือเมื่อมีงาน */
+  /* à¹à¸ªà¸”à¸‡à¹„à¸­à¸„à¸­à¸™à¸«à¸™à¸±à¸‡à¸ªà¸·à¸­à¹€à¸¡à¸·à¹ˆà¸­à¸¡à¸µà¸‡à¸²à¸™ */
   .has-event::after {
     content: '\1F4D6';
     position: absolute;
@@ -94,7 +258,7 @@
     color: #4CAF50;
   }
 
-  /* สีพื้นหลังของวัน Unavailable */
+  /* à¸ªà¸µà¸žà¸·à¹‰à¸™à¸«à¸¥à¸±à¸‡à¸‚à¸­à¸‡à¸§à¸±à¸™ Unavailable */
   .unavailable-day {
     background-color: #fff3cd;
     border: 2px solid #ffc107;
@@ -104,87 +268,105 @@
   .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 3000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(7, 22, 41, 0.55);
     justify-content: center;
     align-items: center;
+    padding: 24px;
   }
 
   .modal-content {
-    background-color: #fefefe;
-    margin: 1% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 600px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    background-color: #ffffff;
+    margin: 0 auto;
+    padding: 16px;
+    border: 1px solid #d8e2ee;
+    width: 92%;
+    max-width: 980px;
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 12, 30, 0.28);
+    max-height: 88vh;
+    overflow: auto;
   }
 
-  .close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
+  .modal-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
   }
 
-  .close:hover,
-  .close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
+  #modalText {
+    margin: 0;
+    color: #0d2f53;
+    font-size: 20px;
   }
 
+  .modal-actions {
+    display: inline-flex;
+    gap: 8px;
+  }
+
+  .close,
   .refresh {
-    color: #aaa;
-    font-size: 28px;
+    border: 1px solid #c8d7ea;
+    background: #f7fbff;
+    color: #0f4f8f;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    line-height: 1;
     cursor: pointer;
-    margin-left: 80px;
-    vertical-align: middle;
-    float: right;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .close:hover,
+  .refresh:hover {
+    background: #e8f2ff;
+    transform: translateY(-1px);
   }
 
-  .refresh:hover,
-  .refresh:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  table {
+  #eventTable {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    margin-top: 10px;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    overflow: hidden;
   }
 
-  table,
-  th,
-  td {
-    border: 1px solid #ddd;
-  }
-
-  th,
-  td {
-    padding: 12px;
+  #eventTable th,
+  #eventTable td {
+    border: 1px solid #e2eaf4;
+    padding: 9px 8px;
     text-align: center;
   }
 
-  th {
-    background-color: #2196F3;
+  #eventTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #1e73be;
     color: white;
+    font-size: 12px;
+    letter-spacing: 0.4px;
   }
 
-  td {
+  #eventTable td {
     background-color: #fff;
     color: #333;
+    font-size: 12px;
   }
 
-  tr:nth-child(even) td {
+  #eventTable tbody tr:nth-child(even) td {
     background-color: #f9f9f9;
   }
 
@@ -215,18 +397,18 @@
     }
   }
 
-  /* ลดขนาดฟอนต์เฉพาะ modal ตาราง */
+  /* à¸¥à¸”à¸‚à¸™à¸²à¸”à¸Ÿà¸­à¸™à¸•à¹Œà¹€à¸‰à¸žà¸²à¸° modal à¸•à¸²à¸£à¸²à¸‡ */
   #eventTable th,
   #eventTable td {
     font-size: 12px;
-    padding: 6px;
+    padding: 9px 8px;
   }
 
   #myModal .modal-content h3 {
-    font-size: 14px;
+    font-size: 20px;
   }
 
-  /* จุดสถานะในตาราง */
+  /* à¸ˆà¸¸à¸”à¸ªà¸–à¸²à¸™à¸°à¹ƒà¸™à¸•à¸²à¸£à¸²à¸‡ */
   .blue-dot,
   .orange-dot {
     height: 10px;
@@ -237,13 +419,13 @@
     margin: 0 2px;
   }
 
-  /* 💙 Booked */
+  /* ðŸ’™ Booked */
   .blue-dot {
     background-color: #2196F3;
     box-shadow: 0 0 3px rgba(33, 150, 243, 0.7);
   }
 
-  /* 🟠 Unavailable */
+  /* ðŸŸ  Unavailable */
   .orange-dot {
     background-color: #ff9800;
     box-shadow: 0 0 3px rgba(255, 152, 0, 0.7);
@@ -285,7 +467,7 @@
     border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
   }
 
-  /* Legend ใต้ตาราง */
+  /* Legend à¹ƒà¸•à¹‰à¸•à¸²à¸£à¸²à¸‡ */
   .legend {
     display: flex;
     justify-content: center;
@@ -316,11 +498,21 @@
 
   <div class="calendar">
     <div class="calendar-header">
-      <button id="prevMonth">Previous</button>
-      <h2 id="monthYear"></h2>
-      <div>
-        <button id="todayButton">Today</button>
-        <button id="nextMonth">Next</button>
+      <div class="calendar-header-spacer" aria-hidden="true"></div>
+      <div class="month-picker-wrap" id="monthPickerWrap">
+        <button id="monthYear" class="month-year-btn" type="button" aria-label="Select month"></button>
+        <div class="month-picker-popover" id="monthPickerPopover" aria-hidden="true">
+          <div class="month-picker-header">
+            <button type="button" id="monthYearPrev" class="month-year-nav" aria-label="Previous year">&#10094;</button>
+            <span id="monthPickerYear"></span>
+            <button type="button" id="monthYearNext" class="month-year-nav" aria-label="Next year">&#10095;</button>
+          </div>
+          <div class="month-grid" id="monthGrid"></div>
+        </div>
+      </div>
+      <div class="calendar-nav-group">
+        <button id="prevMonth" class="nav-icon-btn" type="button" onclick="changeMonth(-1)" aria-label="Previous month">&#10094;</button>
+        <button id="nextMonth" class="nav-icon-btn" type="button" onclick="changeMonth(1)" aria-label="Next month">&#10095;</button>
       </div>
     </div>
 
@@ -335,21 +527,20 @@
     </div>
     <div class="calendar-days" id="calendarDays"></div>
 
-    <!-- Legend -->
-<div class="legend">
-  <span><span class="blue-dot"></span> Booked</span>
-  <!-- <span><span class="orange-dot"></span> Unavailable</span> -->
-</div>
   </div>
 
   <div class="spinner" id="spinner"></div>
 
-  <!-- Modal ตาราง -->
+  <!-- Modal à¸•à¸²à¸£à¸²à¸‡ -->
   <div id="myModal" class="modal">
     <div class="modal-content">
-      <span class="close">&times;</span>
-      <span class="refresh">&#x21bb;</span>
-      <h3 id="modalText">Details</h3>
+      <div class="modal-toolbar">
+        <h3 id="modalText">Details</h3>
+        <div class="modal-actions">
+          <button type="button" class="refresh" title="Refresh">&#x21bb;</button>
+          <button type="button" class="close" title="Close">&times;</button>
+        </div>
+      </div>
       <table id="eventTable">
         <thead>
           <tr>
@@ -553,3 +744,4 @@
 </body>
 
 </html>
+

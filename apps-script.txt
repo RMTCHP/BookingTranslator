@@ -1,0 +1,608 @@
+function doPost(e) {
+  const page = e.parameter.page;
+
+  // 📌 Register User
+  if (page === 'registerUser') {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users") 
+               || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Users");
+
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["id","username","email","passwordHash","role","active"]);
+    }
+
+    const username = e.parameter.username;
+    const email = e.parameter.email;
+    const passwordHash = e.parameter.passwordHash;
+    const role = e.parameter.role;
+
+    if (!username || !email || !passwordHash || !role) {
+      return out_({success:false,message:"❌ All fields are required"});
+    }
+
+    const values = sheet.getDataRange().getValues();
+    for (let i=1; i<values.length; i++) {
+      if (values[i][1] === username) {
+        return out_({success:false,message:"❌ This username is already in use"});
+      }
+    }
+
+    const userId = "U-" + new Date().getTime();
+    sheet.appendRow([userId,username,email,passwordHash,role,"yes"]);
+
+    return out_({success:true,message:"✅ Registration successful"});
+  }
+
+  // 📌 Login User
+  if (page === 'loginUser') {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+    if (!sheet) return out_({success:false,message:"❌ ยังไม่มี Users sheet"});
+
+    const username = e.parameter.username;
+    const passwordHash = e.parameter.passwordHash;
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0]; const map = {};
+    headers.forEach((h,i)=> map[h]=i);
+
+    for (let i=1; i<data.length; i++) {
+      if (data[i][map.username] === username) {
+        if (data[i][map.passwordHash] === passwordHash) {
+          if (data[i][map.active] !== "yes") 
+            return out_({success:false,message:"Account is inactive"});
+          return out_({
+            success:true,
+            message:"✅ Login successful",
+            user:{
+              id: data[i][map.id],
+              username: data[i][map.username],
+              email: data[i][map.email],
+              role: data[i][map.role]
+            }
+          });
+        } else {
+          return out_({success:false,message:"❌ Incorrect password"});
+        }
+      }
+    }
+    return out_({success:false,message:"❌ Invalid username"});
+  }
+
+  // 📌 New Booking (ใช้ทั้งจอง และ Set Not Available)
+  if (page === 'newBooking') {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Bookings") 
+             || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Bookings");
+
+    if(sheet.getLastRow() === 0){
+      sheet.appendRow([
+        "bookingId","createdAt","userId","userEmail",
+        "interpreterId","interpreterEmail",
+        "date","startTime","endTime",
+        "title","location","status"
+      ]);
+    }
+
+    const bookingId = "B-" + new Date().getTime();
+    const createdAt = e.parameter.createdAt || new Date().toISOString();
+    const userId = e.parameter.userId;
+    const userEmail = e.parameter.userEmail;
+    const interpreterId = e.parameter.interpreterId;
+    const interpreterEmail = e.parameter.interpreterEmail;
+    const date = e.parameter.date;
+    const startTime = e.parameter.startTime;
+    const endTime = e.parameter.endTime;
+    const title = e.parameter.title || "";     
+    const location = e.parameter.location;
+    const status = e.parameter.status || "BOOKED";
+
+    if(!userId || !userEmail || !interpreterId || !date || !startTime || !endTime || !location || !title){
+      return out_({success:false,message:"❌ All fields are required"});
+    }
+
+    // ✅ ตรวจสอบ Duplicate Booking (BOOKED + UNAVAILABLE)
+    try {
+      checkDuplicateBooking(sheet, date, interpreterId, startTime, endTime);
+    } catch (err) {
+      return out_({success:false,message: err.message});
+    }
+
+    // ✅ ถ้าไม่ซ้ำ → เขียนข้อมูลลงชีต
+    const newRow = sheet.getLastRow() + 1;
+    sheet.getRange(newRow, 1).setValue(formatAsText(bookingId));
+    sheet.getRange(newRow, 2).setValue(formatAsText(createdAt));
+    sheet.getRange(newRow, 3).setValue(userId);
+    sheet.getRange(newRow, 4).setValue(userEmail);
+    sheet.getRange(newRow, 5).setValue(interpreterId);
+    sheet.getRange(newRow, 6).setValue(interpreterEmail);
+    sheet.getRange(newRow, 7).setValue(formatAsText(date));
+    sheet.getRange(newRow, 8).setNumberFormat("@").setValue(formatAsText(startTime));
+    sheet.getRange(newRow, 9).setNumberFormat("@").setValue(formatAsText(endTime));
+    sheet.getRange(newRow, 10).setValue(formatAsText(title));
+    sheet.getRange(newRow, 11).setValue(formatAsText(location));
+    sheet.getRange(newRow, 12).setValue(status);
+
+    // ✅ ส่งอีเมล
+    if (status === "BOOKED") {
+      sendInterpreterEmail("new", {
+        interpreterId, interpreterEmail, userEmail,
+        date, startTime, endTime, title, location
+      });
+    } 
+    else if (status === "UNAVAILABLE") {
+      sendInterpreterEmail("unavailable", {
+        interpreterId, interpreterEmail, userEmail,
+        date, startTime, endTime, title, location
+      });
+    }
+
+    return out_({success:true,message:`✅ ${status === "UNAVAILABLE" ? "Set Not Available successfully" : "Booking successful"}`, bookingId});
+  }
+
+  // 📌 Cancel Booking
+  if (page === 'cancelBooking') {
+    const bookingId = e.parameter.bookingId;
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Bookings");
+    if (!sheet) return out_({success:false,message:"❌ ยังไม่มี Bookings sheet"});
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0]; 
+    const map = {};
+    headers.forEach((h,i)=> map[h]=i);
+
+    for (let i=1; i<data.length; i++) {
+      if (data[i][map.bookingId] === bookingId) {
+        sheet.getRange(i+1,map.status+1).setValue("CANCELED");
+
+        if (data[i][map.status] === "BOOKED") {
+          sendInterpreterEmail("cancel", {
+            interpreterId: data[i][map.interpreterId],
+            interpreterEmail: data[i][map.interpreterEmail],
+            userEmail: data[i][map.userEmail],
+            date: data[i][map.date],
+            startTime: data[i][map.startTime],
+            endTime: data[i][map.endTime],
+            title: data[i][map.title],
+            location: data[i][map.location]
+          });
+        }
+
+        return out_({success:true,message:"✅ Successfully cancelled"});
+      }
+    }
+    return out_({success:false,message:"❌ Booking not found"});
+  }
+
+// 📌 Edit Booking (ใหม่)
+if (page === 'editBooking') {
+  return editBooking_(e);
+}
+
+  // 📌 เปลี่ยนรหัสผ่านผู้ใช้ (Admin)
+  if (page === 'updatePassword') {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+    if (!sheet) return out_({ success: false, message: "❌ ยังไม่มี Users sheet" });
+
+    const username = e.parameter.username;
+    const passwordHash = e.parameter.passwordHash;
+    if (!username || !passwordHash) {
+      return out_({ success: false, message: "❌ Missing username or passwordHash" });
+    }
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const map = {};
+    headers.forEach((h, i) => map[h] = i);
+
+    let found = false;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][map.username] === username) {
+        sheet.getRange(i + 1, map.passwordHash + 1).setValue(passwordHash);
+        found = true;
+        break;
+      }
+    }
+
+    if (found)
+      return out_({ success: true, message: "✅ Password updated successfully" });
+    else
+      return out_({ success: false, message: "❌ Username not found" });
+  }
+
+  // 📌 Save Factory Plan (Interpreter only)
+  if (page === 'saveFactoryPlan') {
+    const interpreterEmail = String(e.parameter.interpreterEmail || "").trim().toLowerCase();
+    const yearMonth = String(e.parameter.yearMonth || "").trim();
+    const plansRaw = e.parameter.plans || "{}";
+    if (!interpreterEmail || !yearMonth) {
+      return out_({ success: false, message: "❌ Missing interpreterEmail or yearMonth" });
+    }
+
+    // Allow update by interpreter role only.
+    const role = getUserRoleByEmail_(interpreterEmail);
+    if (role !== "INTERPRETER") {
+      return out_({ success: false, message: "❌ Forbidden: interpreter only" });
+    }
+
+    let plans = {};
+    try {
+      plans = JSON.parse(plansRaw || "{}");
+    } catch (err) {
+      return out_({ success: false, message: "❌ Invalid plans JSON" });
+    }
+
+    const sheet = getOrCreateFactoryPlanSheet_();
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const map = {};
+    headers.forEach((h, i) => map[h] = i);
+    const byDate = {};
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const rowEmail = String(row[map.interpreterEmail] || "").trim().toLowerCase();
+      const rowDate = String(row[map.date] || "").replace(/^'/, "").trim();
+      if (rowEmail === interpreterEmail && rowDate.startsWith(yearMonth + "-")) {
+        byDate[rowDate] = i + 1;
+      }
+    }
+
+    // Clear month rows first, then write from payload.
+    Object.keys(byDate).forEach((dateKey) => {
+      sheet.getRange(byDate[dateKey], map.workAt + 1).setValue("NONE");
+      sheet.getRange(byDate[dateKey], map.updatedAt + 1).setValue(new Date().toISOString());
+      sheet.getRange(byDate[dateKey], map.updatedBy + 1).setValue(interpreterEmail);
+    });
+
+    Object.keys(plans || {}).forEach((dateKey) => {
+      const value = String(plans[dateKey] || "").toUpperCase();
+      if (!dateKey.startsWith(yearMonth + "-")) return;
+      if (value !== "CHP" && value !== "G1P") return;
+      const existingRow = byDate[dateKey];
+      if (existingRow) {
+        sheet.getRange(existingRow, map.workAt + 1).setValue(value);
+        sheet.getRange(existingRow, map.updatedAt + 1).setValue(new Date().toISOString());
+        sheet.getRange(existingRow, map.updatedBy + 1).setValue(interpreterEmail);
+      } else {
+        const id = "FP-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000);
+        sheet.appendRow([
+          formatAsText(id),
+          formatAsText(new Date().toISOString()),
+          formatAsText(new Date().toISOString()),
+          interpreterEmail,
+          formatAsText(dateKey),
+          value,
+          interpreterEmail
+        ]);
+      }
+    });
+
+    return out_({ success: true, message: "✅ Factory plan saved" });
+  }
+
+
+  return out_({success:false,message:"❌ Unknown page"});
+}
+
+// 📩 ส่งอีเมลแจ้งล่ามหรือหัวหน้า
+function sendInterpreterEmail(type, data) {
+  try {
+    const { interpreterId, interpreterEmail, userEmail, date, startTime, endTime, title, location } = data;
+    const interpreterNames = {
+      i001: "SOM SAN",
+      i002: "GOOK SAN",
+      i003: "POOKY SAN",
+      i004: "L SAN"
+    };
+    const interpreterName = interpreterNames[interpreterId] || "Interpreter";
+    const supervisorEmail = "angoon.thanrang.xlgln@resonac.com";
+
+    // 🕒 เพิ่ม 1 นาทีให้เวลาแสดง
+    function addOneMinuteToTime(timeStr) {
+      const [h, m] = timeStr.split(":").map(Number);
+      let total = h * 60 + m + 1;
+      const newH = String(Math.floor(total / 60)).padStart(2, "0");
+      const newM = String(total % 60).padStart(2, "0");
+      return `${newH}:${newM}`;
+    }
+    const adjustedEndTime = addOneMinuteToTime(endTime);
+
+    let subject = "";
+    let htmlBody = "";
+
+    // 🟢 กรณีจองใหม่
+    if (type === "new") {
+      subject = `📅 New Booking: ${title}`;
+      htmlBody = `
+      <div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
+        <p>Dear <b>${interpreterName}</b>,</p>
+        <p>You have been assigned to a new interpretation session.</p>
+        <p>📅 <b>Date:</b> ${date}<br>
+           🕒 <b>Time:</b> ${startTime} - ${adjustedEndTime}<br>
+           🏢 <b>Location:</b> ${location}<br>
+           👤 <b>Booked by:</b> ${userEmail}</p>
+        <p>🔗 <a href="https://rmtchp.github.io/BookingTranslator/" target="_blank">
+           Open Booking Dashboard</a></p>
+      </div>`;
+      MailApp.sendEmail({
+        to: interpreterEmail,
+        cc: `${userEmail},${supervisorEmail}`,
+        subject,
+        htmlBody
+      });
+    }
+
+    // ❌ ยกเลิกการจอง
+    else if (type === "cancel") {
+      subject = `❌ Booking Canceled: ${title}`;
+      htmlBody = `
+      <div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
+        <p>Dear <b>${interpreterName}</b>,</p>
+        <p>The following interpretation booking has been <b>canceled</b>:</p>
+        <p>📅 ${date}<br>
+           🕒 ${startTime} - ${adjustedEndTime}<br>
+           🏢 ${location}</p>
+        <p>👤 <b>Canceled by:</b> ${userEmail}</p>
+      </div>`;
+      MailApp.sendEmail({
+        to: interpreterEmail,
+        cc: `${userEmail},${supervisorEmail}`,
+        subject,
+        htmlBody
+      });
+    }
+
+    // 🔴 แจ้งไม่ว่าง (Unavailable)
+    else if (type === "unavailable") {
+      subject = `🕒 Not Available Notice from ${interpreterName}`;
+      htmlBody = `
+      <div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
+        <p>Dear Supervisor,</p>
+        <p><b>${interpreterName}</b> has marked themselves as <b>Not Available</b> for interpretation.</p>
+        <p>📅 <b>Date:</b> ${date}<br>
+           🕒 <b>Time:</b> ${startTime} - ${adjustedEndTime}<br>
+           📝 <b>Reason:</b> ${location}</p>
+        <p>👤 <b>Submitted by:</b> ${userEmail}</p>
+        <p>Submitted via Resonac Interpreter Booking System</p>
+      </div>`;
+      MailApp.sendEmail({
+        to: supervisorEmail,
+        subject,
+        htmlBody
+      });
+    }
+
+    // ✏️ แก้ไขการจอง (Edit Booking)
+    else if (type === "edit") {
+      subject = `✏️ Booking Updated: ${title}`;
+      htmlBody = `
+      <div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
+        <p>Dear <b>${interpreterName}</b>,</p>
+        <p>The following booking details have been <b>updated</b>:</p>
+        <p>📅 ${date}<br>
+           🕒 ${startTime} - ${adjustedEndTime}<br>
+           🏢 ${location}</p>
+        <p>👤 <b>Updated by:</b> ${userEmail}</p>
+        <p>🔗 <a href="https://rmtchp.github.io/BookingTranslator/" target="_blank">
+           Open Booking Dashboard</a></p>
+      </div>`;
+      MailApp.sendEmail({
+        to: interpreterEmail,
+        cc: `${userEmail},${supervisorEmail}`,
+        subject,
+        htmlBody
+      });
+    }
+
+  } catch (err) {
+    Logger.log("❌ Error sending email: " + err);
+  }
+}
+
+
+// 📊 doGet
+function doGet(e) {
+  const page = e.parameter.page;
+  if (page === 'listUsers') return out_(getSheetData_("Users"));
+  if (page === 'listBookings') return out_(getSheetData_("Bookings"));
+  if (page === 'getFactoryPlan') {
+    const interpreterEmail = String(e.parameter.interpreterEmail || "").trim().toLowerCase();
+    const yearMonth = String(e.parameter.yearMonth || "").trim();
+    if (!interpreterEmail || !yearMonth) {
+      return out_({ success: false, message: "❌ Missing interpreterEmail or yearMonth" });
+    }
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("FactoryPlan");
+    if (!sheet || sheet.getLastRow() === 0) {
+      return out_({ success: true, data: {} });
+    }
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const map = {};
+    headers.forEach((h, i) => map[h] = i);
+    const result = {};
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const rowEmail = String(row[map.interpreterEmail] || "").trim().toLowerCase();
+      const rowDate = String(row[map.date] || "").replace(/^'/, "").trim();
+      const rowWorkAt = String(row[map.workAt] || "").toUpperCase().trim();
+      if (rowEmail !== interpreterEmail) continue;
+      if (!rowDate.startsWith(yearMonth + "-")) continue;
+      if (rowWorkAt === "CHP" || rowWorkAt === "G1P") {
+        result[rowDate] = rowWorkAt;
+      }
+    }
+    return out_({ success: true, data: result });
+  }
+  return out_({success:false,message:"❌ Unknown page"});
+}
+
+// ✅ ตรวจสอบการจองซ้ำ (BOOKED + UNAVAILABLE พร้อม throw error จริง)
+function checkDuplicateBooking(sheet, date, interpreterId, newStart, newEnd) {
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const map = {};
+  headers.forEach((h,i)=> map[h]=i);
+
+  for (let i=1; i<data.length; i++) {
+    const row = data[i];
+    if (!row[map["date"]] || !row[map["interpreterId"]]) continue;
+
+    const rowDate = String(row[map["date"]]).replace(/^'/,'');
+    const rowInterpreter = row[map["interpreterId"]];
+    const rowStart = String(row[map["startTime"]]).replace(/^'/,'');
+    const rowEnd = String(row[map["endTime"]]).replace(/^'/,'');
+    const rowStatus = row[map["status"]] ? String(row[map["status"]]).toUpperCase() : "";
+
+    if ((rowStatus === "BOOKED" || rowStatus === "UNAVAILABLE") &&
+        rowDate === date && rowInterpreter === interpreterId) {
+
+      if (isOverlap(newStart, newEnd, rowStart, rowEnd)) {
+        if (rowStatus === "UNAVAILABLE") {
+          throw new Error("❌ This interpreter is not available at that time.");
+        } else {
+          throw new Error("❌ Duplicate booking: A booking already exists for this time slot.");
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function isOverlap(newStart, newEnd, existStart, existEnd) {
+  const newStartM = timeToMinutes(newStart);
+  const newEndM   = timeToMinutes(newEnd) + 1;
+  const existStartM = timeToMinutes(existStart);
+  const existEndM   = timeToMinutes(existEnd) + 1;
+  return (newStartM < existEndM) && (newEndM > existStartM);
+}
+
+function timeToMinutes(time) {
+  const parts = String(time).split(":");
+  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+function formatAsText(value) { return "'" + value; }
+
+function getSheetData_(sheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet || sheet.getLastRow() === 0) return [];
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  return data.slice(1).map(row=>{
+    const obj={}; headers.forEach((h,i)=> obj[h]=row[i]); return obj;
+  });
+}
+
+function out_(obj){ 
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON); 
+}
+
+function getOrCreateFactoryPlanSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("FactoryPlan");
+  if (!sheet) sheet = ss.insertSheet("FactoryPlan");
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      "id",
+      "createdAt",
+      "updatedAt",
+      "interpreterEmail",
+      "date",
+      "workAt",
+      "updatedBy"
+    ]);
+  }
+  return sheet;
+}
+
+function getUserRoleByEmail_(email) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+  if (!sheet || sheet.getLastRow() === 0) return "";
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const map = {};
+  headers.forEach((h, i) => map[h] = i);
+  for (let i = 1; i < data.length; i++) {
+    const rowEmail = String(data[i][map.email] || "").trim().toLowerCase();
+    if (rowEmail === String(email || "").trim().toLowerCase()) {
+      return String(data[i][map.role] || "").trim().toUpperCase();
+    }
+  }
+  return "";
+}
+
+function editBooking_(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Bookings");
+  if (!sheet) return out_({ success: false, message: "❌ ยังไม่มี Bookings sheet" });
+
+  const bookingId = e.parameter.bookingId;
+  const userId = e.parameter.userId;
+  const userEmail = e.parameter.userEmail || ""; // ✅ เพิ่มตรงนี้
+  const interpreterId = e.parameter.interpreterId;
+  const interpreterEmail = e.parameter.interpreterEmail;
+  const date = e.parameter.date;
+  const startTime = e.parameter.startTime;
+  const endTime = e.parameter.endTime;
+  const title = e.parameter.title;
+  const location = e.parameter.location;
+
+  if (!bookingId || !userId || !interpreterId || !date || !startTime || !endTime || !title || !location) {
+    return out_({ success: false, message: "❌ All fields are required" });
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const map = {};
+  headers.forEach((h, i) => map[h] = i);
+
+  // 🔍 หา booking ที่ต้องการแก้ไข
+  let foundRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][map.bookingId] === bookingId) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  if (foundRow === -1) return out_({ success: false, message: "❌ Booking not found" });
+
+  // ✅ ตรวจสอบซ้ำ (ยกเว้นตัวเอง)
+  try {
+    const allRows = data.slice(1);
+    for (let i = 0; i < allRows.length; i++) {
+      const row = allRows[i];
+      if (row[map.bookingId] === bookingId) continue;
+      if (row[map.status] === "CANCELED") continue;
+      if (row[map.interpreterId] !== interpreterId) continue;
+      if (String(row[map.date]).replace(/^'/, '') !== date) continue;
+
+      const overlap = isOverlap(startTime, endTime, row[map.startTime], row[map.endTime]);
+      if (overlap) {
+        throw new Error("❌ Duplicate booking: A booking already exists for this time slot.");
+      }
+    }
+  } catch (err) {
+    return out_({ success: false, message: err.message });
+  }
+
+  // ✅ อัปเดตข้อมูล (ใช้ formatAsText เหมือน newBooking)
+  sheet.getRange(foundRow, map.userId + 1).setValue(formatAsText(userId));
+  sheet.getRange(foundRow, map.interpreterId + 1).setValue(formatAsText(interpreterId));
+  sheet.getRange(foundRow, map.interpreterEmail + 1).setValue(formatAsText(interpreterEmail));
+  sheet.getRange(foundRow, map.date + 1).setValue(formatAsText(date));
+  sheet.getRange(foundRow, map.startTime + 1).setNumberFormat("@").setValue(formatAsText(startTime));
+  sheet.getRange(foundRow, map.endTime + 1).setNumberFormat("@").setValue(formatAsText(endTime));
+  sheet.getRange(foundRow, map.title + 1).setValue(formatAsText(title));
+  sheet.getRange(foundRow, map.location + 1).setValue(formatAsText(location));
+
+  // ✅ ส่งอีเมลแจ้งการแก้ไข
+  sendInterpreterEmail("edit", {
+    interpreterId,
+    interpreterEmail,
+    userEmail, // ✅ ใช้ค่าจาก parameter จริง
+    date,
+    startTime,
+    endTime,
+    title,
+    location
+  });
+
+  return out_({ success: true, message: "✅ Booking updated successfully" });
+}

@@ -1,16 +1,21 @@
-// =================== CONFIG ===================
+﻿// =================== CONFIG ===================
 const calendarDays = document.getElementById('calendarDays');
 const monthYear = document.getElementById('monthYear');
+const monthPickerWrap = document.getElementById('monthPickerWrap');
+const monthPickerPopover = document.getElementById('monthPickerPopover');
+const monthPickerYear = document.getElementById('monthPickerYear');
+const monthYearPrev = document.getElementById('monthYearPrev');
+const monthYearNext = document.getElementById('monthYearNext');
+const monthGrid = document.getElementById('monthGrid');
 const prevMonth = document.getElementById('prevMonth');
 const nextMonth = document.getElementById('nextMonth');
-const todayButton = document.getElementById('todayButton');
 const modal = document.getElementById("myModal");
 const modalText = document.getElementById("modalText");
 const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzcCpIFWhFc2XNjGGDCYmpTzWQE2_IqUJL0YirH7LXIo_L96exXb5BVnoFGFgW96E8/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwYn26RJ7FXL4UQP9pGUxIwsHKU7FFApFwjsdtSr-KAIxpI-xDPM9abBtxtYosfiPM/exec";
 
 const INTERPRETER_MAP = {
   i001: "somSan",
@@ -31,6 +36,7 @@ const date = new Date();
 let currentMonth = date.getMonth();
 let currentYear = date.getFullYear();
 let currentDay = null;
+let pickerYear = currentYear;
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -38,6 +44,55 @@ const months = [
 ];
 
 let allBookings = [];
+let calendarRenderToken = 0;
+let calendarDayWorkAtMap = {};
+const CALENDAR_INTERPRETERS = [
+  { id: "i001", name: "SOM SAN", email: "teeraporn.sanyaprachasakul.xijqx@resonac.com" },
+  { id: "i003", name: "POOKY SAN", email: "waraporn.yokao.xlbmb@resonac.com" },
+  { id: "i004", name: "L SAN", email: "prataksara.poolsawad.xmpuh@resonac.com" }
+];
+const factoryPlanCache = {};
+
+function normalizeFactoryValue(raw) {
+  const v = String(raw || "").trim().toUpperCase();
+  if (v === "CHP") return "CHP";
+  if (v === "G1P") return "G1P";
+  if (v === "LEAVE") return "Leave";
+  return "Not set";
+}
+
+function fetchFactoryPlan(interpreterEmail, yearMonth) {
+  const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(yearMonth)}`;
+  return fetch(url).then((r) => r.json());
+}
+
+async function getFactoryPlanByInterpreterForMonth(yearMonth) {
+  if (!/^\d{4}-\d{2}$/.test(String(yearMonth || ""))) return {};
+  const pairs = await Promise.all(
+    CALENDAR_INTERPRETERS.map(async (it) => {
+      const key = `${it.email}|${yearMonth}`;
+      if (factoryPlanCache[key]) return [it.id, factoryPlanCache[key]];
+      try {
+        const result = await fetchFactoryPlan(it.email, yearMonth);
+        const map = result && result.success && result.data ? result.data : {};
+        factoryPlanCache[key] = map;
+        return [it.id, map];
+      } catch (_) {
+        factoryPlanCache[key] = {};
+        return [it.id, {}];
+      }
+    })
+  );
+  return Object.fromEntries(pairs);
+}
+
+function animateMonth(direction) {
+  if (!calendarDays) return;
+  calendarDays.classList.remove("month-slide-left", "month-slide-right");
+  void calendarDays.offsetWidth; // force reflow to replay animation
+  if (direction === "left") calendarDays.classList.add("month-slide-left");
+  if (direction === "right") calendarDays.classList.add("month-slide-right");
+}
 
 // =================== FETCH BOOKINGS ===================
 async function fetchBookings() {
@@ -46,16 +101,35 @@ async function fetchBookings() {
     const res = await fetch(API_URL + "?page=listBookings");
     allBookings = await res.json();
   } catch (err) {
-    console.error("❌ fetchBookings error:", err);
+    console.error("âŒ fetchBookings error:", err);
   } finally {
     spinner.style.display = 'none';
   }
 }
 
 // =================== RENDER CALENDAR ===================
-function renderCalendar(month, year) {
+async function renderCalendar(month, year, slideDirection = "") {
   calendarDays.innerHTML = '';
   monthYear.textContent = `${months[month]} ${year}`;
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const factoryByInterpreter = await getFactoryPlanByInterpreterForMonth(monthKey);
+  calendarDayWorkAtMap = {};
+  const leaveByInterpreter = {
+    i001: new Set(),
+    i003: new Set(),
+    i004: new Set()
+  };
+  (allBookings || []).forEach((b) => {
+    const iid = String(b && b.interpreterId ? b.interpreterId : "").trim();
+    const ymd = String(b && b.date ? b.date : "").trim();
+    const title = String(b && b.title ? b.title : "").trim().toLowerCase();
+    const status = String(b && b.status ? b.status : "").trim().toUpperCase();
+    if (!leaveByInterpreter[iid]) return;
+    if (!ymd.startsWith(monthKey + "-")) return;
+    if (title !== "take leave") return;
+    if (status === "CANCELED" || status === "CANCELLED") return;
+    leaveByInterpreter[iid].add(ymd);
+  });
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -65,14 +139,14 @@ function renderCalendar(month, year) {
   const todayMonth = today.getMonth();
   const todayYear = today.getFullYear();
 
-  // ช่องว่างก่อนวันที่ 1
+  // à¸Šà¹ˆà¸­à¸‡à¸§à¹ˆà¸²à¸‡à¸à¹ˆà¸­à¸™à¸§à¸±à¸™à¸—à¸µà¹ˆ 1
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.classList.add('calendar-day');
     calendarDays.appendChild(emptyCell);
   }
 
-  // วนวันที่ในเดือน
+  // à¸§à¸™à¸§à¸±à¸™à¸—à¸µà¹ˆà¹ƒà¸™à¹€à¸”à¸·à¸­à¸™
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${('0' + (month + 1)).slice(-2)}-${('0' + day).slice(-2)}`;
     const dayCell = document.createElement('div');
@@ -83,30 +157,46 @@ function renderCalendar(month, year) {
       dayCell.classList.add('today');
     }
 
-    // ✅ รวมทั้ง Booked และ Unavailable (ไม่สนตัวพิมพ์ใหญ่/เล็ก)
+    // âœ… à¸£à¸§à¸¡à¸—à¸±à¹‰à¸‡ Booked à¹à¸¥à¸° Unavailable (à¹„à¸¡à¹ˆà¸ªà¸™à¸•à¸±à¸§à¸žà¸´à¸¡à¸žà¹Œà¹ƒà¸«à¸à¹ˆ/à¹€à¸¥à¹‡à¸)
     const events = allBookings.filter(b => {
       const status = (b.status || '').toUpperCase();
       return b.date === dateStr && (status === "BOOKED" || status === "UNAVAILABLE");
     });
 
+    const i001Factory = leaveByInterpreter.i001.has(dateStr)
+      ? "Leave"
+      : normalizeFactoryValue(factoryByInterpreter.i001 && factoryByInterpreter.i001[dateStr]);
+    const i003Factory = leaveByInterpreter.i003.has(dateStr)
+      ? "Leave"
+      : normalizeFactoryValue(factoryByInterpreter.i003 && factoryByInterpreter.i003[dateStr]);
+    const i004Factory = leaveByInterpreter.i004.has(dateStr)
+      ? "Leave"
+      : normalizeFactoryValue(factoryByInterpreter.i004 && factoryByInterpreter.i004[dateStr]);
+    calendarDayWorkAtMap[dateStr] = { i001: i001Factory, i003: i003Factory, i004: i004Factory };
+
     if (events.length > 0) {
       dayCell.classList.add('has-event');
 
-      // นับจำนวนงานต่อ interpreter
+      // à¸™à¸±à¸šà¸ˆà¸³à¸™à¸§à¸™à¸‡à¸²à¸™à¸•à¹ˆà¸­ interpreter
       const count = { somSan: 0, gookSan: 0, pookySan: 0, lSan: 0 };
       events.forEach(ev => {
-        if (ev.interpreterId === "i001") count.somSan++;
-        if (ev.interpreterId === "i002") count.gookSan++;
-        if (ev.interpreterId === "i003") count.pookySan++;
-        if (ev.interpreterId === "i004") count.lSan++;
+        if (ev.interpreterId === "i001") { count.somSan++; }
+        if (ev.interpreterId === "i002") { count.gookSan++; }
+        if (ev.interpreterId === "i003") { count.pookySan++; }
+        if (ev.interpreterId === "i004") { count.lSan++; }
       });
 
-      // Tooltip แสดงจำนวนงาน
+      const tooltipLine = (name, state, jobs) => {
+        if (state === "Leave") return `${name} [Leave]`;
+        return `${name} [${state}] = ${jobs} Job`;
+      };
+
+      // Tooltip à¹à¸ªà¸”à¸‡à¸ˆà¸³à¸™à¸§à¸™à¸‡à¸²à¸™
       dayCell.title =
-        `SOM SAN = ${count.somSan} Job\n` +
+        `${tooltipLine("SOM SAN", i001Factory, count.somSan)}\n` +
       //  `GOOK SAN = ${count.gookSan} Job\n` +
-        `POOKY SAN = ${count.pookySan} Job\n` +
-        `L SAN = ${count.lSan} Job`;
+        `${tooltipLine("POOKY SAN", i003Factory, count.pookySan)}\n` +
+        `${tooltipLine("L SAN", i004Factory, count.lSan)}`;
     }
 
     dayCell.addEventListener('click', () => {
@@ -116,13 +206,33 @@ function renderCalendar(month, year) {
 
     calendarDays.appendChild(dayCell);
   }
+
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: "calendar-month-workat",
+      yearMonth: monthKey,
+      workAtByDate: calendarDayWorkAtMap
+    }, "*");
+  }
+
+  animateMonth(slideDirection);
+}
+
+async function renderCalendarWithLoader(month, year, slideDirection = "") {
+  const token = ++calendarRenderToken;
+  spinner.style.display = 'block';
+  try {
+    await renderCalendar(month, year, slideDirection);
+  } finally {
+    if (token === calendarRenderToken) spinner.style.display = 'none';
+  }
 }
 
 // =================== LOAD EVENTS FOR DAY ===================
 function loadEventsForDay(dateStr) {
   spinner.style.display = 'block';
 
-  // เคลียร์ตารางเก่า
+  // à¹€à¸„à¸¥à¸µà¸¢à¸£à¹Œà¸•à¸²à¸£à¸²à¸‡à¹€à¸à¹ˆà¸²
   timeSlots.forEach(time => {
     document.getElementById(`somSan_${time}`).innerHTML = '';
     document.getElementById(`gookSan_${time}`).innerHTML = '';
@@ -130,13 +240,35 @@ function loadEventsForDay(dateStr) {
     document.getElementById(`lSan_${time}`).innerHTML = '';
   });
 
-  // ✅ ดึงทั้ง BOOKED + UNAVAILABLE (ไม่สนตัวพิมพ์)
+  // âœ… à¸”à¸¶à¸‡à¸—à¸±à¹‰à¸‡ BOOKED + UNAVAILABLE (à¹„à¸¡à¹ˆà¸ªà¸™à¸•à¸±à¸§à¸žà¸´à¸¡à¸žà¹Œ)
   const events = allBookings.filter(b => {
     const status = (b.status || '').toUpperCase();
     return b.date === dateStr && (status === "BOOKED" || status === "UNAVAILABLE");
   });
 
+  const detailEvents = events.map(ev => ({
+    date: ev.date || "",
+    startTime: ev.startTime || "",
+    endTime: ev.endTime || "",
+    title: ev.title || "",
+    location: ev.location || "",
+    userEmail: ev.userEmail || "",
+    interpreterId: ev.interpreterId || "",
+    status: (ev.status || "").toUpperCase()
+  }));
+
   spinner.style.display = 'none';
+
+  // If loaded inside dashboard iframe, ask parent to render details via SweetAlert.
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: "calendar-day-details",
+      date: dateStr,
+      events: detailEvents,
+      workAtByInterpreter: calendarDayWorkAtMap[dateStr] || { i001: "Not set", i003: "Not set", i004: "Not set" }
+    }, "*");
+    return;
+  }
 
   if (events.length === 0) {
     modalText.textContent = `No events for ${dateStr}`;
@@ -171,7 +303,10 @@ function loadEventsForDay(dateStr) {
 }
 
 // =================== UTILS ===================
-function openModal() { modal.style.display = "block"; }
+function openModal() {
+  modal.style.display = "flex";
+  modal.scrollTop = 0;
+}
 function closeModal() { modal.style.display = "none"; }
 
 function getTimeSlot(timeFrom) {
@@ -195,37 +330,96 @@ function incrementTimeSlotBy30Minutes(timeSlot) {
   return ('0' + hour).slice(-2) + ('0' + minute).slice(-2);
 }
 
-function changeMonth(offset) {
+async function changeMonth(offset) {
   currentMonth += offset;
   if (currentMonth < 0) { currentMonth = 11; currentYear -= 1; }
   else if (currentMonth > 11) { currentMonth = 0; currentYear += 1; }
-  renderCalendar(currentMonth, currentYear);
+  await renderCalendarWithLoader(currentMonth, currentYear, offset > 0 ? "left" : "right");
 }
 
+function toggleMonthPicker(forceOpen = null) {
+  if (!monthPickerPopover) return;
+  const willOpen = forceOpen === null ? !monthPickerPopover.classList.contains("open") : !!forceOpen;
+  monthPickerPopover.classList.toggle("open", willOpen);
+  monthPickerPopover.setAttribute("aria-hidden", String(!willOpen));
+}
+
+function renderMonthPicker() {
+  if (!monthPickerYear || !monthGrid) return;
+  monthPickerYear.textContent = String(pickerYear);
+  monthGrid.innerHTML = months.map((name, idx) => {
+    const activeClass = pickerYear === currentYear && idx === currentMonth ? "active" : "";
+    const shortName = name.slice(0, 3);
+    return `<button type="button" class="month-item ${activeClass}" data-month-index="${idx}">${shortName}</button>`;
+  }).join("");
+  monthGrid.querySelectorAll(".month-item").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const idx = Number(btn.getAttribute("data-month-index"));
+      const oldIndex = currentYear * 12 + currentMonth;
+      const newIndex = pickerYear * 12 + idx;
+      currentYear = pickerYear;
+      currentMonth = idx;
+      await renderCalendarWithLoader(currentMonth, currentYear, newIndex > oldIndex ? "left" : "right");
+      toggleMonthPicker(false);
+    });
+  });
+}
+
+// Expose handlers for inline onclick in calendar.html
+window.changeMonth = changeMonth;
+
 // =================== EVENTS ===================
-refreshButton.addEventListener('click', () => {
-  if (currentDay) {
-    const dateStr = `${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDay).slice(-2)}`;
-    loadEventsForDay(dateStr);
+if (refreshButton) {
+  refreshButton.addEventListener('click', () => {
+    if (currentDay) {
+      const dateStr = `${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDay).slice(-2)}`;
+      loadEventsForDay(dateStr);
+    }
+  });
+}
+
+
+if (span) {
+  span.onclick = function() { closeModal(); };
+}
+
+window.onclick = function(event) {
+  if (monthPickerWrap && !monthPickerWrap.contains(event.target)) {
+    toggleMonthPicker(false);
   }
-});
+  if (modal && event.target == modal) closeModal();
+};
 
-todayButton.addEventListener('click', () => {
-  const today = new Date();
-  currentMonth = today.getMonth();
-  currentYear = today.getFullYear();
-  renderCalendar(currentMonth, currentYear);
-});
+if (monthYear) {
+  monthYear.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pickerYear = currentYear;
+    renderMonthPicker();
+    toggleMonthPicker();
+  });
+}
 
-prevMonth.addEventListener('click', () => changeMonth(-1));
-nextMonth.addEventListener('click', () => changeMonth(1));
+if (monthYearPrev) {
+  monthYearPrev.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pickerYear -= 1;
+    renderMonthPicker();
+  });
+}
 
-span.onclick = function() { closeModal(); }
-window.onclick = function(event) { if (event.target == modal) closeModal(); }
+if (monthYearNext) {
+  monthYearNext.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pickerYear += 1;
+    renderMonthPicker();
+  });
+}
 
 // =================== INIT ===================
 async function init(){
   await fetchBookings();
-  renderCalendar(currentMonth, currentYear);
+  await renderCalendarWithLoader(currentMonth, currentYear);
 }
 init();
+
+

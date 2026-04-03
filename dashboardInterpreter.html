@@ -1,150 +1,1952 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <title>Interpreter Dashboard - Resonac Booking</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { margin:0; font-family:Arial,sans-serif; background:#f4f6f9; font-size:14px; }
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --border: #dbe4f0;
+      --text: #0f172a;
+      --primary: #1f4e8c;
+      --danger: #c62828;
+      --shadow: 0 12px 30px rgba(14, 23, 38, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Tahoma", sans-serif;
+      background:
+        radial-gradient(circle at 20% -10%, #e7efff 0%, rgba(231, 239, 255, 0) 40%),
+        radial-gradient(circle at 90% 0%, #eef6ff 0%, rgba(238, 246, 255, 0) 42%),
+        var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      min-height: 100vh;
+    }
     .navbar {
-      background:#007bff; color:#fff; padding:12px 20px;
-      display:flex; justify-content:space-between; align-items:center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: linear-gradient(95deg, #012c56 0%, #00254a 55%, #001b38 100%);
+      border-bottom: 1px solid #0f3966;
+      color: #ecf4ff;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 18px rgba(0, 20, 42, 0.22);
     }
-    .navbar-right { display:flex; align-items:center; gap:12px; }
-    .navbar .title { font-size:18px; font-weight:bold; }
-    .navbar .user-info { font-size:13px; }
-    .navbar button {
-      background:#dc3545; color:#fff; border:none;
-      padding:6px 12px; border-radius:4px; cursor:pointer;
-      font-weight:500; transition:all 0.25s ease-in-out;
+    .navbar-right { display: flex; align-items: center; gap: 12px; }
+    .navbar .title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #f5f9ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      line-height: 1;
+      text-shadow: 0 1px 10px rgba(162, 209, 255, 0.2);
+      transition: filter 0.25s ease;
     }
-    .navbar button:hover {
-      background:#c82333;
-      transform:scale(1.05);
-      box-shadow:0 4px 8px rgba(0,0,0,0.15);
+    .navbar .title:hover {
+      filter: brightness(1.08);
+    }
+    .navbar .title span {
+      display: inline-block;
+      transition: transform 0.25s ease, text-shadow 0.25s ease;
+      animation: headerTitleSlideIn 0.55s ease both;
+    }
+    .navbar .title:hover span {
+      transform: translateX(2px);
+      text-shadow: 0 2px 14px rgba(173, 220, 255, 0.35);
+    }
+    .navbar-title-icon {
+      width: 128px;
+      height: 128px;
+      object-fit: contain;
+      display: block;
+      margin-top: -44px;
+      margin-bottom: -44px;
+      margin-left: -14px;
+      margin-right: -2px;
+      filter: drop-shadow(0 3px 12px rgba(84, 178, 255, 0.28));
+      transform-origin: center;
+      animation: headerIconFloat 3s ease-in-out infinite;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+    .navbar .title:hover .navbar-title-icon {
+      transform: scale(1.04);
+      filter: drop-shadow(0 5px 16px rgba(108, 194, 255, 0.38));
+    }
+    @keyframes headerTitleSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes headerIconFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+    .navbar .user-info {
+      font-size: 12px;
+      color: #dbe8ff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(197, 222, 255, 0.3);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+      min-height: 36px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .user-menu {
+      position: relative;
+    }
+    .user-menu-btn {
+      border: 1px solid rgba(197, 222, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      padding: 6px 10px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .user-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(212, 230, 255, 0.45);
+    }
+    .user-menu.open .user-menu-btn {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(224, 236, 255, 0.6);
+    }
+    .user-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 170px;
+      background: #ffffff;
+      border: 1px solid #cfdeef;
+      border-radius: 10px;
+      box-shadow: 0 12px 26px rgba(4, 28, 56, 0.22);
+      padding: 6px;
+      display: none;
+      z-index: 60;
+    }
+    .user-menu.open .user-menu-dropdown {
+      display: block;
+    }
+    .user-menu-dropdown button {
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      background: #ffffff;
+      color: #173457;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+    .user-menu-dropdown button:hover {
+      background: #f1f7ff;
+      border-color: #d2dfef;
+    }
+    #menuLogout {
+      color: #a31f2e;
+    }
+    #menuLogout:hover {
+      background: #fff1f3;
+      border-color: #f0c7cd;
     }
 
-    .main { display:grid; grid-template-columns:1fr 2fr; gap:20px; padding:20px; }
+    .workspace-shell {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 14px;
+      padding: 18px 14px 26px 14px;
+      align-items: start;
+    }
+    .left-sidebar {
+      position: sticky;
+      top: 84px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid #d6e2f2;
+      box-shadow: 0 8px 20px rgba(17, 32, 54, 0.06);
+      backdrop-filter: blur(6px);
+      overflow: visible;
+      z-index: 80;
+    }
+    .side-nav-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      border: 1px solid #c9d9ed;
+      background: rgba(255, 255, 255, 0.8);
+      color: #1d477f;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .side-nav-btn:hover {
+      background: #edf4ff;
+      transform: translateY(-1px) scale(1.08);
+      box-shadow: 0 8px 14px rgba(24, 68, 122, 0.14);
+    }
+    .side-nav-btn.active {
+      background: #1f4e8c;
+      color: #ffffff;
+      border-color: #1f4e8c;
+      box-shadow: 0 10px 18px rgba(21, 56, 104, 0.2);
+    }
+    .side-nav-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #123a69;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      box-shadow: 0 6px 14px rgba(6, 26, 52, 0.25);
+      z-index: 120;
+    }
+    .side-nav-btn:hover::after {
+      opacity: 1;
+      transform: translateY(-50%) translateX(2px);
+    }
+    .side-nav-icon {
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .side-nav-icon svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      transition: transform 0.2s ease;
+    }
+    .side-nav-btn:hover .side-nav-icon svg {
+      transform: scale(1.08);
+    }
+
+    .workspace-content {
+      min-width: 0;
+    }
+    #dashboardView {
+      display: none;
+      padding: 6px;
+    }
+    .dashboard-panel {
+      border: 1px solid #d5e3f3;
+      border-radius: 18px;
+      background: linear-gradient(165deg, #ffffff 0%, #f5f9ff 100%);
+      box-shadow: 0 18px 34px rgba(11, 29, 53, 0.08);
+      padding: 22px 22px 24px;
+      min-height: 520px;
+    }
+    .dashboard-head h2 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: #14355f;
+      letter-spacing: 0.2px;
+    }
+    .dashboard-top-layout {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+      align-items: stretch;
+    }
+    .dashboard-summary-col {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .dashboard-card {
+      border: 1px solid #d5e3f3;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #eaf4ff, #f6f9ff);
+      box-shadow: 0 6px 16px rgba(11, 29, 53, 0.06);
+      padding: 14px 14px 12px;
+      min-height: 118px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .dashboard-card::before {
+      content: "";
+      position: absolute;
+      top: -22px;
+      right: -22px;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.11);
+    }
+    .dashboard-card h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .dashboard-card p {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .dashboard-card .sub {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .dashboard-interpreter-col {
+      border: 1px solid #d5e3f3;
+      border-radius: 12px;
+      background: #f9fbff;
+      padding: 12px;
+      box-shadow: 0 6px 16px rgba(11, 29, 53, 0.05);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .dashboard-side-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #17385f;
+      font-weight: 700;
+    }
+    .interpreter-card-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      flex: 1;
+      align-items: stretch;
+    }
+    .interpreter-card-list .interpreter-card {
+      min-width: 0;
+      height: 100%;
+    }
+    .interpreter-card {
+      border: 1px solid #d6e3f2;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      align-items: stretch;
+      min-height: 110px;
+      overflow: hidden;
+    }
+    .interpreter-avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      border: none;
+      border-right: 1px solid #d6e3f2;
+      object-fit: cover;
+      display: block;
+      background: #f1f7ff;
+    }
+    .interpreter-info {
+      width: 100%;
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+      text-align: left;
+      align-content: start;
+      padding: 8px 10px 10px;
+    }
+    .interpreter-name {
+      font-size: 18px;
+      line-height: 1.1;
+      color: #15365f;
+      font-weight: 800;
+    }
+    .interpreter-job {
+      font-size: 12px;
+      color: #1f2c3d;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .interpreter-location {
+      font-size: 11px;
+      color: #62738d;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .work-at-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      height: 22px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid #c9d9ec;
+      background: #f4f8fd;
+      color: #214b78;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      box-shadow: 0 2px 6px rgba(19, 48, 84, 0.08);
+    }
+    .work-at-badge.chp {
+      background: #e5f3ff;
+      border-color: #8ebee8;
+      color: #114f84;
+      box-shadow: 0 4px 10px rgba(34, 107, 175, 0.18);
+    }
+    .work-at-badge.g1p {
+      background: #e8f8ee;
+      border-color: #85d0a0;
+      color: #0f6f3c;
+      box-shadow: 0 4px 10px rgba(19, 129, 70, 0.16);
+    }
+    .work-at-badge.empty {
+      background: #f4f6f8;
+      border-color: #c9d4e0;
+      color: #556274;
+    }
+    .dashboard-chart-section {
+      margin-top: 20px;
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+    }
+    .dashboard-chart-section .dashboard-chart-card:first-child {
+      flex: 0 0 75%;
+      max-width: 75%;
+      min-width: 0;
+    }
+    .dashboard-chart-section .dashboard-chart-card:last-child {
+      flex: 0 0 25%;
+      max-width: 25%;
+      min-width: 0;
+    }
+    .dashboard-chart-card {
+      background: #f9fbff;
+      border: 1px solid #d9e6f4;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+      padding: 12px 14px;
+    }
+    .dashboard-chart-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #0f172a;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .dash-month-picker-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .dashboard-month-btn {
+      border: 1px solid #c9d8eb;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #17385f;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 130px;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+    .dashboard-month-btn:hover {
+      background: #edf4ff;
+      border-color: #9fbbe0;
+    }
+    .dash-month-picker-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 244px;
+      background: #ffffff;
+      border: 1px solid #c9d8eb;
+      border-radius: 12px;
+      box-shadow: 0 14px 24px rgba(15, 35, 62, 0.16);
+      padding: 10px;
+      z-index: 30;
+      display: none;
+    }
+    .dash-month-picker-popover.open {
+      display: block;
+      animation: dashMonthFadeIn 0.16s ease both;
+    }
+    .dash-month-picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #17385f;
+      font-weight: 700;
+    }
+    .dash-month-year-nav {
+      border: 1px solid #c9d8eb;
+      background: #f8fbff;
+      color: #1c477f;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .dash-month-year-nav:hover { background: #edf4ff; }
+    .dash-month-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .dash-month-item {
+      border: 1px solid #d4e1f0;
+      border-radius: 8px;
+      background: #f9fbff;
+      color: #1c426f;
+      padding: 7px 0;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+    .dash-month-item:hover {
+      background: #ebf3ff;
+      border-color: #adc7e5;
+    }
+    .dash-month-item.active {
+      background: #1f4e8c;
+      color: #ffffff;
+      border-color: #1f4e8c;
+    }
+    @keyframes dashMonthFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dashboard-chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+    .dashboard-chart-wrapper-small {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+    .dashboard-chart-wrapper canvas,
+    .dashboard-chart-wrapper-small canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .main {
+      width: 100%;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 400px minmax(0, 1fr);
+      gap: 20px;
+      padding: 4px 6px;
+      align-items: start;
+    }
+    .mybooking,
+    .calendar-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .calendar-box {
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
     .mybooking {
-      background:#fff; border-radius:10px; padding:15px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1); display:flex; flex-direction:column;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-top: 16px;
     }
-    .job-summary { display:flex; justify-content:space-between; margin-bottom:12px; gap:10px; }
+
+    .job-summary { display: flex; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
     .job-card {
-      flex:1; text-align:center; padding:10px 0; border-radius:8px;
-      font-weight:bold; box-shadow:0 1px 4px rgba(0,0,0,0.1);
+      flex: 1;
+      text-align: center;
+      padding: 11px 0;
+      border-radius: 10px;
+      font-weight: 700;
+      border: 1px solid #d4e2f4;
+      box-shadow: 0 4px 12px rgba(8, 32, 58, 0.06);
     }
-    .job-today { background:#e9f2ff; color:#007bff; }
-    .job-month { background:#e9fbe9; color:#198754; }
+    .job-today { background: #eef5ff; color: #1f4e8c; }
+    .job-month { background: #ecf9ef; color: #1d6f42; }
+
     .mybooking-header {
-      display:flex; justify-content:space-between; align-items:center;
-      color:#007bff; margin-bottom:8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--primary);
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .mybooking-header h3 {
+      margin: 0;
+      color: var(--primary);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .job-title-icon {
+      width: 22px;
+      height: 22px;
+      color: #1f4e8c;
+      display: inline-block;
+    }
+    .job-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .date-nav-btn {
-      background:#007bff; color:#fff; border:none;
-      border-radius:5px; padding:4px 8px; font-size:12px; cursor:pointer;
-      transition:background 0.2s ease;
+      background: #f6f9ff;
+      color: var(--primary);
+      border: 1px solid #ccdcf3;
+      min-height: 32px;
+      padding: 4px 10px;
+      border-radius: 9px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 700;
     }
-    .date-nav-btn:hover { background:#0056b3; }
+    .date-nav-btn:hover {
+      background: #1f4e8c;
+      color: #fff;
+      border-color: #1f4e8c;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(21, 56, 104, 0.22);
+    }
+    .date-nav-btn.take-leave-btn {
+      width: 44px;
+      min-width: 44px;
+      height: 38px;
+      margin: 0;
+      padding: 0;
+      background: #123a69 !important;
+      color: #ffffff !important;
+      border: 1px solid #0f3159 !important;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .date-nav-btn.take-leave-btn:hover {
+      background: #0b2f57 !important;
+      border-color: #0b2f57 !important;
+      transform: translateY(-1px) scale(1.12);
+      box-shadow: 0 8px 16px rgba(9, 33, 62, 0.28);
+    }
+    .date-nav-btn.factory-btn {
+      width: 44px;
+      min-width: 44px;
+      height: 38px;
+      margin: 0;
+      padding: 0;
+      background: #0f6f68 !important;
+      color: #ffffff !important;
+      border: 1px solid #0c6059 !important;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .date-nav-btn.factory-btn:hover {
+      background: #0b5e58 !important;
+      border-color: #0b5e58 !important;
+      transform: translateY(-1px) scale(1.12);
+      box-shadow: 0 8px 16px rgba(10, 70, 66, 0.28);
+    }
+    .take-leave-icon {
+      width: 16px;
+      height: 16px;
+      display: block;
+      color: #ffffff;
+    }
+    .factory-icon {
+      width: 16px;
+      height: 16px;
+      display: block;
+      color: #ffffff;
+    }
+    .factory-indicator {
+      margin: -2px 0 10px;
+      font-size: 12px;
+      color: #365274;
+      font-weight: 700;
+    }
+    .factory-indicator span {
+      color: #0f6f68;
+      background: #e8f8f6;
+      border: 1px solid #bde4df;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-weight: 700;
+      margin-left: 6px;
+      display: inline-block;
+    }
+    .swal-factory-popup {
+      border-radius: 16px !important;
+      border: 1px solid #d4e2f2 !important;
+      box-shadow: 0 16px 36px rgba(8, 32, 62, 0.2) !important;
+      width: min(1000px, 92vw) !important;
+    }
+    .swal-factory-title {
+      color: #16385f !important;
+      font-size: 22px !important;
+      font-weight: 800 !important;
+    }
+    .swal-factory-popup .swal2-html-container {
+      overflow: visible !important;
+      max-height: none !important;
+      margin-top: 6px !important;
+    }
+    .factory-plan-wrap {
+      text-align: left;
+    }
+    .factory-plan-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .factory-month-picker-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .factory-month-nav-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 1px solid #c6d8ee;
+      background: #f5f9ff;
+      color: #1d457a;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+    .factory-month-nav-btn:hover {
+      background: #e8f1ff;
+      border-color: #aec7e5;
+    }
+    .factory-month-btn {
+      border: 1px solid #c6d8ee;
+      background: #f5f9ff;
+      color: #1d457a;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 7px 12px;
+      cursor: pointer;
+      min-width: 150px;
+      text-align: center;
+    }
+    .factory-month-btn:hover {
+      background: #e8f1ff;
+    }
+    .factory-month-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 250px;
+      background: #ffffff;
+      border: 1px solid #c8d9ec;
+      border-radius: 12px;
+      box-shadow: 0 14px 24px rgba(13, 34, 60, 0.18);
+      padding: 10px;
+      z-index: 90;
+      display: none;
+    }
+    .factory-month-popover.open {
+      display: block;
+    }
+    .factory-month-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #173b68;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .factory-month-year-nav {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid #c8d9ec;
+      background: #f7fbff;
+      color: #1b487f;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .factory-month-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .factory-month-item {
+      border: 1px solid #d7e3f2;
+      border-radius: 8px;
+      background: #f9fbff;
+      color: #1d395e;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 0;
+      cursor: pointer;
+    }
+    .factory-month-item:hover {
+      background: #eaf3ff;
+      border-color: #aac5e5;
+    }
+    .factory-month-item.active {
+      background: #1f4e8c;
+      border-color: #1f4e8c;
+      color: #fff;
+    }
+    .factory-plan-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .factory-bulk-btn {
+      border: 1px solid #c6d8ee;
+      background: #f5f9ff;
+      color: #1d457a;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .factory-bulk-btn:hover {
+      background: #e8f1ff;
+    }
+    .factory-plan-calendar-wrap {
+      border: 1px solid #d4e1f1;
+      border-radius: 10px;
+      max-height: none;
+      overflow: visible;
+      background: #fff;
+      padding: 6px;
+    }
+    .factory-cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+    .factory-cal-weekdays span {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #345276;
+      background: #eef4fc;
+      border: 1px solid #d7e3f2;
+      border-radius: 8px;
+      padding: 6px 2px;
+    }
+    .factory-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .factory-cal-empty {
+      border: 1px dashed #dfe8f4;
+      border-radius: 10px;
+      min-height: 84px;
+      background: #f9fbff;
+    }
+    .factory-day-card {
+      border: 1px solid #d4e1f1;
+      border-radius: 10px;
+      background: #fbfdff;
+      min-height: 68px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+    }
+    .factory-day-card.today {
+      border-color: #e1cb7c;
+      background: #fff9e3;
+    }
+    .factory-day-card.factory-chp {
+      background: #e5f3ff;
+      border-color: #8ebee8;
+    }
+    .factory-day-card.factory-g1p {
+      background: #e8f8ee;
+      border-color: #8fd4a9;
+    }
+    .factory-day-card.factory-leave-locked {
+      background: #fff3e3;
+      border-color: #e2bf8c;
+    }
+    .factory-day-top {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex: 0 0 38px;
+    }
+    .factory-day-num {
+      font-size: 24px;
+      font-weight: 800;
+      color: #123b68;
+      line-height: 1;
+      letter-spacing: 0.2px;
+      display: block;
+      white-space: nowrap;
+    }
+    .factory-choice-group {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0;
+      flex: 0 0 auto;
+    }
+    .factory-cycle-btn {
+      border: 1px solid #c6d8ee;
+      background: #f7fbff;
+      color: #24476f;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      width: 52px;
+      min-width: 52px;
+      height: 40px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      padding: 0;
+    }
+    .factory-cycle-btn[data-state="CHP"] {
+      background: #dff1ff;
+      border-color: #82bae8;
+      color: #114f84;
+    }
+    .factory-cycle-btn[data-state="G1P"] {
+      background: #e8f8ee;
+      border-color: #85d0a0;
+      color: #0f6f3c;
+    }
+    .factory-cycle-btn[data-state="NONE"] {
+      background: #f4f6f8;
+      border-color: #c9d4e0;
+      color: #556274;
+    }
+    .factory-cycle-btn[disabled] {
+      cursor: not-allowed;
+      opacity: 0.92;
+      background: #f8efe2;
+      border-color: #e2bf8c;
+      color: #8a5a1a;
+    }
+    @media (max-width: 980px) {
+      .factory-cal-grid,
+      .factory-cal-weekdays {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    .interpreter-date-picker-wrap {
+      position: relative;
+      display: inline-flex;
+      margin: 0 2px;
+    }
+    .interpreter-date-btn {
+      min-width: 130px;
+      text-align: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .interpreter-date-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 250px;
+      background: #ffffff;
+      border: 1px solid #c8d9ec;
+      border-radius: 12px;
+      box-shadow: 0 14px 24px rgba(13, 34, 60, 0.18);
+      padding: 10px;
+      z-index: 90;
+      display: none;
+    }
+    .interpreter-date-popover.open {
+      display: block;
+      animation: interpreterDateFadeIn 0.16s ease both;
+    }
+    .interpreter-date-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #173b68;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .interpreter-date-month-nav {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid #c8d9ec;
+      background: #f7fbff;
+      color: #1b487f;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .interpreter-date-month-nav:hover { background: #ebf3ff; }
+    .interpreter-date-weekdays,
+    .interpreter-date-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .interpreter-date-weekdays {
+      margin-bottom: 6px;
+      color: #5b6e8a;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .interpreter-date-day {
+      height: 30px;
+      border: 1px solid #d7e3f2;
+      border-radius: 8px;
+      background: #f9fbff;
+      color: #1d395e;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .interpreter-date-day:hover {
+      background: #eaf3ff;
+      border-color: #aac5e5;
+    }
+    .interpreter-date-day.today {
+      border-color: #e5cc72;
+      background: #fff5cc;
+      color: #6b5200;
+    }
+    .interpreter-date-day.active {
+      background: #1f4e8c;
+      border-color: #1f4e8c;
+      color: #ffffff;
+    }
+    .interpreter-date-day.empty {
+      border: none;
+      background: transparent;
+      cursor: default;
+    }
+    .interpreter-date-footer {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #d8e3f2;
+    }
+    .interpreter-this-month-btn {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid #c6d8ec;
+      border-radius: 8px;
+      background: #f3f8ff;
+      color: #1f4e8c;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+    .interpreter-this-month-btn:hover {
+      background: #e7f1ff;
+      border-color: #a7c2e3;
+    }
+    @keyframes interpreterDateFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-    #myBookingList { max-height:480px; overflow-y:auto; padding-right:8px; }
-    #myBookingList::-webkit-scrollbar { width:8px; }
-    #myBookingList::-webkit-scrollbar-thumb { background:#ccc; border-radius:4px; }
-    #myBookingList::-webkit-scrollbar-thumb:hover { background:#999; }
+    #myBookingList { max-height: 640px; overflow-y: auto; padding-right: 6px; }
+    #myBookingList::-webkit-scrollbar { width: 8px; }
+    #myBookingList::-webkit-scrollbar-thumb { background: #ced9e8; border-radius: 999px; }
 
     .booking-item {
-      display:flex; align-items:flex-start; border-bottom:1px solid #ddd;
-      padding:8px 0; font-size:13px;
+      display: flex;
+      align-items: flex-start;
+      border: 1px solid #dde7f5;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      margin-bottom: 8px;
+      background: #f9fbff;
     }
-    .booking-item:nth-child(even){background:#f8f9fa;}
-    .booking-item:last-child{border-bottom:none;}
-    .status-bar{width:6px;border-radius:4px;margin-right:10px;flex-shrink:0;}
-    .booking-content{flex:1;}
-    .booking-item .title{color:#007bff;font-size:14px;font-weight:bold;margin-bottom:4px;}
-    .calendar-box{background:#fff; border-radius:10px; padding:15px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-    .badge{display:inline-block;padding:2px 8px;border-radius:6px;
-      color:#fff;font-weight:bold;font-size:12px;}
-    .badge.booked{background:#28a745;}
-    .badge.canceled{background:#dc3545;}
-    #loader{
-      display:none;position:fixed;top:0;left:0;right:0;bottom:0;
-      background:rgba(255,255,255,0.7);z-index:9999;
-      align-items:center;justify-content:center;
+    .booking-item:last-child { margin-bottom: 0; }
+    .status-bar { width: 6px; border-radius: 8px; margin-right: 10px; flex-shrink: 0; min-height: 74px; }
+    .booking-content { flex: 1; }
+    .booking-item .title { color: #1f4e8c; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
     }
-    #loader div{
-      border:6px solid #f3f3f3;border-top:6px solid #3498db;
-      border-radius:50%;width:60px;height:60px;
-      animation:spin 1s linear infinite;
+    .badge.booked { background: #177245; }
+    .badge.canceled { background: #c62828; }
+
+    #calendarFrame {
+      width: 100%;
+      height: 800px;
+      border: none;
+      border-radius: 12px;
     }
-    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-    .swal2-container{z-index:30000 !important;position:fixed !important;}
+    .user-name {
+      font-weight: 700;
+      color: #f5f9ff;
+    }
+    .user-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(216, 233, 255, 0.8);
+      background: rgba(255, 255, 255, 0.15);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .user-dot-head {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #eaf3ff;
+      position: absolute;
+      top: 3px;
+    }
+    .user-dot-body {
+      width: 8px;
+      height: 5px;
+      border-radius: 999px 999px 2px 2px;
+      background: #eaf3ff;
+      position: absolute;
+      bottom: 3px;
+    }
+    .user-role {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #d9e9ff;
+      border: 1px solid rgba(214, 232, 255, 0.45);
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .user-caret {
+      font-size: 10px;
+      color: #cdddf4;
+      transform: translateY(1px);
+    }
 
-.date-nav-btn.take-leave-btn {
-  background: #cc5500 !important;
-  color: #fff !important;
-  transition: all 0.3s ease;
-}
-.date-nav-btn.take-leave-btn:hover {
-  background: #e69a2a !important;
-  transform: scale(1.05);
-}
+    #loader {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(245, 249, 255, 0.75);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    #loader div {
+      border: 5px solid #deebff;
+      border-top: 5px solid var(--primary);
+      border-radius: 50%;
+      width: 54px;
+      height: 54px;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .swal2-container { z-index: 30000 !important; position: fixed !important; }
 
-.swal2-html-container label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: bold;
-}
-
-.swal2-html-container select,
-.swal2-html-container input[type="date"] {
-  display: block;
-  margin: 0 auto 10px auto;
-  width: 80%;
-  text-align: center;
-}
+    .swal2-html-container label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 700;
+      color: #30445f;
+    }
+    .swal2-html-container select,
+    .swal2-html-container input[type="date"] {
+      display: block;
+      margin: 0 auto 10px auto;
+      width: 80%;
+      text-align: center;
+      border: 1px solid #c8d8ea;
+      border-radius: 9px;
+      min-height: 38px;
+      padding: 6px 8px;
+    }
+    .swal2-actions {
+      gap: 10px !important;
+      margin-top: 14px !important;
+    }
+    .swal2-styled.swal2-confirm,
+    .swal2-styled.swal2-cancel {
+      min-width: 112px !important;
+      height: 40px !important;
+      border-radius: 10px !important;
+      border: 1px solid transparent !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.2px;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease !important;
+      box-shadow: none !important;
+    }
+    .swal2-styled.swal2-confirm {
+      background: #1f4e8c !important;
+      color: #ffffff !important;
+      border-color: #1a447c !important;
+      box-shadow: 0 10px 18px rgba(31, 78, 140, 0.24) !important;
+    }
+    .swal2-styled.swal2-confirm:hover {
+      background: #1a4377 !important;
+      border-color: #1a4377 !important;
+      transform: translateY(-1px);
+    }
+    .swal2-styled.swal2-cancel {
+      background: #f2f6fb !important;
+      color: #28476b !important;
+      border-color: #c5d5e8 !important;
+    }
+    .swal2-styled.swal2-cancel:hover {
+      background: #e9f0f9 !important;
+      border-color: #b7cade !important;
+      transform: translateY(-1px);
+    }
+    .swal-change-pass-popup {
+      border-radius: 16px !important;
+      border: 1px solid #d4e2f2 !important;
+      box-shadow: 0 16px 36px rgba(8, 32, 62, 0.2) !important;
+      padding: 18px 18px 16px !important;
+    }
+    .swal-change-pass-title {
+      color: #16385f !important;
+      font-size: 24px !important;
+      font-weight: 800 !important;
+      margin-bottom: 4px !important;
+    }
+    .change-pass-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+      margin-top: 4px;
+    }
+    .change-pass-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .change-pass-field label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #28476e;
+      margin: 0;
+    }
+    .change-pass-input {
+      width: 100% !important;
+      margin: 0 !important;
+      min-height: 42px !important;
+      border-radius: 10px !important;
+      border: 1px solid #bfd3ea !important;
+      background: #f8fbff !important;
+      font-size: 15px !important;
+      padding: 10px 12px !important;
+      color: #0f2744 !important;
+      box-shadow: inset 0 1px 2px rgba(7, 33, 63, 0.06);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .change-pass-input:focus {
+      border-color: #1f4e8c !important;
+      background: #ffffff !important;
+      box-shadow: 0 0 0 3px rgba(31, 78, 140, 0.15) !important;
+    }
+    .change-pass-hint {
+      margin-top: 2px;
+      font-size: 12px;
+      color: #5f7693;
+    }
+    .swal-change-pass-confirm,
+    .swal-change-pass-cancel {
+      min-width: 108px;
+      height: 40px;
+      border-radius: 10px !important;
+      border: 1px solid transparent !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .swal-change-pass-confirm {
+      background: #1f4e8c !important;
+      color: #ffffff !important;
+      border-color: #1a447c !important;
+      box-shadow: 0 10px 18px rgba(31, 78, 140, 0.28) !important;
+    }
+    .swal-change-pass-confirm:hover {
+      background: #1a4377 !important;
+      transform: translateY(-1px);
+    }
+    .swal-change-pass-cancel {
+      background: #f2f6fb !important;
+      color: #28476b !important;
+      border-color: #c5d5e8 !important;
+    }
+    .swal-change-pass-cancel:hover {
+      background: #e9f0f9 !important;
+      transform: translateY(-1px);
+    }
+    .swal-takeleave-popup {
+      border-radius: 16px !important;
+      border: 1px solid #d4e2f2 !important;
+      box-shadow: 0 16px 36px rgba(8, 32, 62, 0.2) !important;
+      padding: 18px 18px 16px !important;
+      width: 760px !important;
+      max-width: 760px !important;
+    }
+    .swal-takeleave-title {
+      color: #16385f !important;
+      font-size: 24px !important;
+      font-weight: 800 !important;
+      margin-bottom: 4px !important;
+    }
+    .take-leave-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+      margin-top: 4px;
+    }
+    .take-leave-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .take-leave-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .take-leave-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #28476e;
+      margin: 0;
+    }
+    .take-leave-input {
+      width: 100% !important;
+      margin: 0 !important;
+      min-height: 42px !important;
+      border-radius: 10px !important;
+      border: 1px solid #bfd3ea !important;
+      background: #f8fbff !important;
+      font-size: 15px !important;
+      padding: 10px 12px !important;
+      color: #0f2744 !important;
+      text-align: left !important;
+      box-shadow: inset 0 1px 2px rgba(7, 33, 63, 0.06);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .take-leave-input:focus {
+      border-color: #1f4e8c !important;
+      background: #ffffff !important;
+      box-shadow: 0 0 0 3px rgba(31, 78, 140, 0.15) !important;
+    }
+    .take-leave-tabs {
+      display: inline-flex;
+      border: 1px solid #c4d6eb;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      background: #f4f8fe;
+    }
+    .take-leave-tab-btn {
+      border: 0;
+      background: transparent;
+      color: #2a4c73;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .take-leave-tab-btn.active {
+      background: #1f4e8c;
+      color: #fff;
+    }
+    .take-leave-panel {
+      display: none;
+      text-align: left;
+      min-height: 260px;
+    }
+    .take-leave-panel.active {
+      display: block;
+    }
+    .take-leave-add-save {
+      margin-top: 10px;
+      border: 1px solid #1a447c;
+      background: #1f4e8c;
+      color: #fff;
+      border-radius: 10px;
+      min-height: 40px;
+      min-width: 120px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .take-leave-add-save:hover {
+      background: #1a4377;
+    }
+    .take-leave-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      min-height: 260px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .take-leave-item {
+      border: 1px solid #c8d9ec;
+      border-radius: 10px;
+      background: #f9fbff;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .take-leave-item-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .take-leave-item-date {
+      color: #133d69;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .take-leave-item-time {
+      color: #355778;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .take-leave-item-status {
+      display: inline-flex;
+      align-self: flex-start;
+      border-radius: 999px;
+      border: 1px solid #b7cadf;
+      background: #edf4fc;
+      color: #2b4f77;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .take-leave-item-status.canceled {
+      border-color: #e8c0c6;
+      background: #fff2f4;
+      color: #8d3440;
+    }
+    .take-leave-item-actions {
+      display: inline-flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .take-leave-item-btn {
+      border: 1px solid #bfd3ea;
+      background: #f3f8ff;
+      color: #204a79;
+      border-radius: 8px;
+      min-height: 34px;
+      min-width: 70px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .take-leave-item-btn:hover {
+      background: #e7f1ff;
+    }
+    .take-leave-item-btn.cancel {
+      border-color: #e3b9bf;
+      background: #fff4f5;
+      color: #8f3240;
+    }
+    .take-leave-item-btn.cancel:hover {
+      background: #ffe9ec;
+    }
+    .take-leave-empty {
+      border: 1px dashed #c7d8eb;
+      border-radius: 10px;
+      background: #f8fbff;
+      color: #58708a;
+      text-align: center;
+      padding: 22px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .swal-takeleave-confirm,
+    .swal-takeleave-cancel {
+      min-width: 108px;
+      height: 40px;
+      border-radius: 10px !important;
+      border: 1px solid transparent !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .swal-takeleave-confirm {
+      background: #1f4e8c !important;
+      color: #ffffff !important;
+      border-color: #1a447c !important;
+      box-shadow: 0 10px 18px rgba(31, 78, 140, 0.28) !important;
+    }
+    .swal-takeleave-confirm:hover {
+      background: #1a4377 !important;
+      transform: translateY(-1px);
+    }
+    .swal-takeleave-cancel {
+      background: #f2f6fb !important;
+      color: #28476b !important;
+      border-color: #c5d5e8 !important;
+    }
+    .swal-takeleave-cancel:hover {
+      background: #e9f0f9 !important;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 560px) {
+      .take-leave-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    .swal-calendar-popup {
+      border-radius: 14px !important;
+    }
+    .swal-calendar-popup .swal2-title {
+      font-size: 18px !important;
+      margin-bottom: 4px !important;
+      line-height: 1.2;
+      text-align: left !important;
+    }
+    .swal-calendar-popup .swal2-html-container {
+      margin-top: 4px !important;
+    }
+    .swal-calendar-meta {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin: 0 0 8px;
+      color: #2a4566;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .swal-calendar-wrap {
+      max-height: 72vh;
+      overflow: auto;
+      border: 1px solid #dbe6f3;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .swal-calendar-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: center;
+      min-width: 860px;
+    }
+    .swal-calendar-table th,
+    .swal-calendar-table td {
+      padding: 8px 10px;
+      border: 1px solid #d2deec;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .swal-calendar-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #2d4f78;
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+    .swal-calendar-table thead th:not(:first-child) {
+      border-left: 1px solid #8ea8c8 !important;
+    }
+    .swal-calendar-table th:last-child {
+      border-right: 1px solid #8ea8c8 !important;
+    }
+    .swal-time-cell {
+      text-align: center;
+      font-weight: 700;
+      color: #203149;
+      background: #f8fbff;
+      white-space: nowrap;
+    }
+    .swal-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 1px 3px;
+      vertical-align: middle;
+      animation: swalDotPulse 1.8s ease-in-out infinite;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.68), 0 1px 3px rgba(0, 0, 0, 0.18);
+      transition: transform 0.18s ease, filter 0.18s ease;
+    }
+    .swal-dot:hover {
+      transform: scale(1.15);
+      filter: brightness(1.06);
+    }
+    .swal-dot.booked { background: #2196f3; }
+    .swal-dot.unavailable { background: #ff9800; }
+    .swal-legend-dot {
+      width: 10px;
+      height: 10px;
+      margin: 0;
+      animation: none;
+    }
+    .swal-empty {
+      text-align: center;
+      color: #63738c;
+      padding: 18px 8px !important;
+    }
+    .swal-calendar-table tbody tr:nth-child(even) td {
+      background: #fbfdff;
+    }
+    .swal-calendar-x-btn {
+      width: 30px !important;
+      height: 30px !important;
+      border: none !important;
+      background: transparent !important;
+      color: #11457b !important;
+      font-size: 36px !important;
+      font-weight: 800 !important;
+      right: 10px !important;
+      top: 8px !important;
+      transition: color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+      box-shadow: none !important;
+    }
+    .swal-calendar-x-btn:hover {
+      background: rgba(229, 241, 255, 0.6) !important;
+      color: #082d55 !important;
+      transform: translateY(-1px);
+      box-shadow: none !important;
+    }
+    @keyframes swalDotPulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.12); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.9; }
+    }
   </style>
 </head>
 <body>
   <div class="navbar">
-    <div class="title">🗓️ Resonac Interpreter Booking System</div>
+    <div class="title">
+      <img src="images/Icon.png" alt="System Icon" class="navbar-title-icon">
+      <span>Resonac Interpreter Booking System</span>
+    </div>
     <div class="navbar-right">
-      <div class="user-info" id="userInfo"></div>
-      <button onclick="logout()">Logout</button>
+      <div class="user-menu" id="userMenu">
+        <button type="button" class="user-info user-menu-btn" id="userInfo" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="user-menu-dropdown" id="userMenuDropdown">
+          <button type="button" id="menuChangePassword">Change Password</button>
+          <button type="button" id="menuLogout">Logout</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="main">
-    <div class="mybooking">
-      <div class="job-summary">
-        <div class="job-card job-today" id="todayCard">🗓️ Today: 0</div>
-        <div class="job-card job-month" id="monthCard">📆 Total This Month: 0</div>
-      </div>
+    <div class="workspace-shell">
+    <aside class="left-sidebar" aria-label="Main navigation">
+      <button type="button" id="navDashboard" class="side-nav-btn" aria-label="Dashboard" title="Dashboard" data-tooltip="Dashboard">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 18V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M10 18V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M16 18V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M22 18V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </button>
+      <button type="button" id="navMyJob" class="side-nav-btn active" aria-label="My Job" title="My Job" data-tooltip="My Job">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 6.5C4 5.67 4.67 5 5.5 5H11.5C12.33 5 13 5.67 13 6.5V19H5.5C4.67 19 4 18.33 4 17.5V6.5Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M20 6.5C20 5.67 19.33 5 18.5 5H12.5C11.67 5 11 5.67 11 6.5V19H18.5C19.33 19 20 18.33 20 17.5V6.5Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+      </button>
+    </aside>
 
-      <div class="mybooking-header">
-        <h3 id="jobHeader">My Job (—)</h3>
-        <div>
-          <button class="date-nav-btn take-leave-btn" onclick="openTakeLeave()">🏖️ Take Leave</button>
-          <button class="date-nav-btn" onclick="changeDate(-1)">&lt;</button>
-          <button class="date-nav-btn" onclick="goToday()">Today</button>
-          <button class="date-nav-btn" onclick="changeDate(1)">&gt;</button>
+    <div class="workspace-content">
+      <div class="main" id="jobView">
+        <div class="mybooking">
+          <div class="mybooking-header">
+            <h3 id="jobHeader">
+              <svg class="job-title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7.5C4 6.67 4.67 6 5.5 6H11.5C12.33 6 13 6.67 13 7.5V19H5.5C4.67 19 4 18.33 4 17.5V7.5Z" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M20 7.5C20 6.67 19.33 6 18.5 6H12.5C11.67 6 11 6.67 11 7.5V19H18.5C19.33 19 20 18.33 20 17.5V7.5Z" stroke="currentColor" stroke-width="1.8"/>
+              </svg>
+              My Job
+            </h3>
+            <div class="job-header-controls">
+              <button class="date-nav-btn factory-btn" onclick="openFactorySelector()" aria-label="Factory" title="Factory">
+                <svg class="factory-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 21V8.5C3 7.67 3.67 7 4.5 7H11V21H3Z" fill="currentColor" opacity="0.95"/>
+                  <path d="M11 21V11.5L16.7 9.1C17.7 8.7 18.8 9.4 18.8 10.5V21H11Z" fill="currentColor"/>
+                  <path d="M18.8 21V14.5H21V21H18.8Z" fill="currentColor" opacity="0.9"/>
+                  <rect x="5.2" y="9.2" width="1.7" height="1.7" fill="#123a69"/>
+                  <rect x="8" y="9.2" width="1.7" height="1.7" fill="#123a69"/>
+                  <rect x="5.2" y="12" width="1.7" height="1.7" fill="#123a69"/>
+                  <rect x="8" y="12" width="1.7" height="1.7" fill="#123a69"/>
+                </svg>
+              </button>
+              <button class="date-nav-btn take-leave-btn" onclick="openTakeLeave()" aria-label="Take Leave" title="Take Leave">
+                <svg class="take-leave-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M22 16.5V15l-8-4.5V5.5a1.5 1.5 0 0 0-3 0v5L3 15v1.5l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5l8 2.5z" fill="currentColor"/>
+                </svg>
+              </button>
+              <div class="interpreter-date-picker-wrap" id="interpreterDatePickerWrap">
+                <button type="button" class="date-nav-btn interpreter-date-btn" id="interpreterDateBtn" aria-label="Select date"></button>
+                <div class="interpreter-date-popover" id="interpreterDatePopover" aria-hidden="true">
+                  <div class="interpreter-date-header">
+                    <button type="button" id="interpreterMonthPrev" class="interpreter-date-month-nav" aria-label="Previous month">&#10094;</button>
+                    <span id="interpreterDateMonthYear"></span>
+                    <button type="button" id="interpreterMonthNext" class="interpreter-date-month-nav" aria-label="Next month">&#10095;</button>
+                  </div>
+                  <div class="interpreter-date-weekdays">
+                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                  </div>
+                  <div class="interpreter-date-grid" id="interpreterDateGrid"></div>
+                  <div class="interpreter-date-footer">
+                    <button type="button" id="interpreterThisMonthBtn" class="interpreter-this-month-btn">this month</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="factory-indicator" id="factoryIndicator">Work at:<span>Not set</span></div>
+
+          <div id="myBookingList"></div>
+        </div>
+
+        <div class="calendar-box">
+          <iframe id="calendarFrame" src="calendar.html"></iframe>
         </div>
       </div>
 
-      <div id="myBookingList"></div>
-    </div>
+      <section id="dashboardView">
+        <div class="dashboard-panel">
+          <div class="dashboard-head">
+            <h2>Dashboard Overview</h2>
+          </div>
 
-    <div class="calendar-box">
-      <iframe id="calendarFrame" src="calendar.html"
-        style="width:100%; height:600px; border:none; border-radius:10px;"></iframe>
+          <div class="dashboard-top-layout">
+            <div class="dashboard-summary-col">
+              <div class="dashboard-card">
+                <h3>Total Bookings (This Month)</h3>
+                <p id="dashTotalMonth">0</p>
+                <span class="sub" id="dashMonthLabel">-</span>
+              </div>
+              <div class="dashboard-card">
+                <h3>Total Bookings (Today)</h3>
+                <p id="dashTotalToday">0</p>
+                <span class="sub" id="dashTodayLabel">-</span>
+              </div>
+              <div class="dashboard-card">
+                <h3>Active Interpreters</h3>
+                <p id="dashTotalInterpreter">3</p>
+                <span class="sub">SOM SAN â€¢ POOKY SAN â€¢ L SAN</span>
+              </div>
+            </div>
+
+            <div class="dashboard-interpreter-col">
+              <h3 class="dashboard-side-title">Today's Interpreter Jobs</h3>
+              <div class="interpreter-card-list">
+                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/SOMSAN.JPG" alt="SOM SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">SOM SAN</div>
+                    <div class="interpreter-job" id="dashI001Job">Job Total: 0</div>
+                    <div class="interpreter-location" id="dashI001Loc">Work at: <span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>
+                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/POOKYSAN.JPG" alt="POOKY SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">POOKY SAN</div>
+                    <div class="interpreter-job" id="dashI003Job">Job Total: 0</div>
+                    <div class="interpreter-location" id="dashI003Loc">Work at: <span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>
+                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/LSAN.JPG" alt="L SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">L SAN</div>
+                    <div class="interpreter-job" id="dashI004Job">Job Total: 0</div>
+                    <div class="interpreter-location" id="dashI004Loc">Work at: <span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-chart-section">
+            <div class="dashboard-chart-card">
+              <h3>
+                <span>Bookings per Day</span>
+                <div class="dash-month-picker-wrap" id="dashMonthPickerWrap">
+                  <button type="button" id="dashMonthPickerBtn" class="dashboard-month-btn" aria-label="Select month"></button>
+                  <div class="dash-month-picker-popover" id="dashMonthPickerPopover" aria-hidden="true">
+                    <div class="dash-month-picker-header">
+                      <button type="button" id="dashMonthYearPrev" class="dash-month-year-nav" aria-label="Previous year">&#10094;</button>
+                      <span id="dashMonthPickerYear"></span>
+                      <button type="button" id="dashMonthYearNext" class="dash-month-year-nav" aria-label="Next year">&#10095;</button>
+                    </div>
+                    <div class="dash-month-grid" id="dashMonthGrid"></div>
+                  </div>
+                </div>
+              </h3>
+              <div class="dashboard-chart-wrapper">
+                <canvas id="dashDailyChart"></canvas>
+              </div>
+            </div>
+
+            <div class="dashboard-chart-card">
+              <h3>Summary Bookings by Interpreter</h3>
+              <div class="dashboard-chart-wrapper-small">
+                <canvas id="dashInterpreterChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbzcCpIFWhFc2XNjGGDCYmpTzWQE2_IqUJL0YirH7LXIo_L96exXb5BVnoFGFgW96E8/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbwYn26RJ7FXL4UQP9pGUxIwsHKU7FFApFwjsdtSr-KAIxpI-xDPM9abBtxtYosfiPM/exec";
     let currentDate=new Date();
+    let interpreterPickerMonth = currentDate.getMonth();
+    let interpreterPickerYear = currentDate.getFullYear();
+    const interpreterDatePickerWrap = document.getElementById("interpreterDatePickerWrap");
+    const interpreterDateBtn = document.getElementById("interpreterDateBtn");
+    const interpreterDatePopover = document.getElementById("interpreterDatePopover");
+    const interpreterDateMonthYear = document.getElementById("interpreterDateMonthYear");
+    const interpreterMonthPrev = document.getElementById("interpreterMonthPrev");
+    const interpreterMonthNext = document.getElementById("interpreterMonthNext");
+    const interpreterDateGrid = document.getElementById("interpreterDateGrid");
+    const interpreterThisMonthBtn = document.getElementById("interpreterThisMonthBtn");
+    const navDashboard = document.getElementById("navDashboard");
+    const navMyJob = document.getElementById("navMyJob");
+    const jobView = document.getElementById("jobView");
+    const dashboardView = document.getElementById("dashboardView");
+    const factoryIndicator = document.getElementById("factoryIndicator");
+    const userMenu = document.getElementById("userMenu");
+    const userInfoBtn = document.getElementById("userInfo");
+    const menuChangePassword = document.getElementById("menuChangePassword");
+    const menuLogout = document.getElementById("menuLogout");
+    let interpreterViewMode = "today";
+    const DASH_INTERPRETERS = ["i001", "i003", "i004"];
+    const DASH_INTERPRETER_NAMES = {
+      i001: "SOM SAN",
+      i003: "POOKY SAN",
+      i004: "L SAN"
+    };
+    let dashDailyChart = null;
+    let dashInterpreterChart = null;
+    let dashLoaded = false;
+    let dashAllBookedRows = [];
+    let dashSelectedMonth = "";
+    let dashPickerYear = new Date().getFullYear();
+    const calendarWorkAtCacheByMonth = {};
+    const interpreterFactoryPlanCache = {};
+    const dashMonthPickerWrap = document.getElementById("dashMonthPickerWrap");
+    const dashMonthPickerBtn = document.getElementById("dashMonthPickerBtn");
+    const dashMonthPickerPopover = document.getElementById("dashMonthPickerPopover");
+    const dashMonthPickerYearEl = document.getElementById("dashMonthPickerYear");
+    const dashMonthYearPrev = document.getElementById("dashMonthYearPrev");
+    const dashMonthYearNext = document.getElementById("dashMonthYearNext");
+    const dashMonthGrid = document.getElementById("dashMonthGrid");
 
     const INTERPRETERS = {
       i001: { name: "SOM SAN",  email: "teeraporn.sanyaprachasakul.xijqx@resonac.com" },
@@ -152,36 +1954,1113 @@
       i003: { name: "POOKY SAN",email: "waraporn.yokao.xlbmb@resonac.com" },
       i004: { name: "L SAN",    email: "prataksara.poolsawad.xmpuh@resonac.com" }
     };
+    const FACTORY_VALUES = ["CHP", "G1P"];
+    const CALENDAR_SLOT_KEYS = [
+      "0700_0730","0730_0800","0800_0830","0830_0900","0900_0930","0930_1000",
+      "1000_1030","1030_1100","1100_1130","1130_1200","1200_1230","1230_1300",
+      "1300_1330","1330_1400","1400_1430","1430_1500","1500_1530","1530_1600",
+      "1600_1630","1630_1700","1700_1730","1730_1800","1800_1830","1830_1900",
+      "1900_1930","1930_2000"
+    ];
+    const SLOT_STARTS = CALENDAR_SLOT_KEYS.map((k) => k.split("_")[0]);
+    const SLOT_INDEX_BY_START = Object.fromEntries(SLOT_STARTS.map((s, i) => [s, i]));
+    const CALENDAR_COLUMNS = [
+      { id: "i001", label: "SOM SAN" },
+      { id: "i003", label: "POOKY SAN" },
+      { id: "i004", label: "L SAN" }
+    ];
     function getInterpreterEmail(id){ return (INTERPRETERS[id] && INTERPRETERS[id].email) || ""; }
     function getInterpreterName(id){ return (INTERPRETERS[id] && INTERPRETERS[id].name) || id; }
 
     function showLoader(){document.getElementById("loader").style.display="flex";}
     function hideLoader(){document.getElementById("loader").style.display="none";}
-    function logout(){localStorage.removeItem("loggedInUser");window.location.href="login.html";}
-    function formatDate(d){return d.toISOString().split("T")[0];}
-    function changeDate(o){currentDate.setDate(currentDate.getDate()+o);loadMyBookings();}
-    function goToday(){currentDate=new Date();loadMyBookings();}
+    function logout(){localStorage.removeItem("loggedInUser");window.location.href="index.html";}
+    function formatDate(d){
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+    function parseDatePart(dateVal) {
+      if (!dateVal) return null;
+      const s = String(dateVal).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        const [y, m, d] = s.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      }
+      const d = new Date(s);
+      return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    function parseTimePart(timeVal) {
+      if (!timeVal) return null;
+      const s = String(timeVal).trim();
+      const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+      if (m) return { hh: parseInt(m[1], 10), mm: parseInt(m[2], 10) };
+      const d = new Date(s);
+      if (!isNaN(d)) return { hh: d.getHours(), mm: d.getMinutes() };
+      return null;
+    }
+    function formatRange(dateVal, startTime, endTime) {
+      const d = parseDatePart(dateVal);
+      const st = parseTimePart(startTime);
+      const et = parseTimePart(endTime);
+      if (!d || !st || !et) return `${dateVal} ${startTime} - ${endTime}`;
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), st.hh, st.mm);
+      const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), et.hh, et.mm);
+      const dateStr = start.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+      const startStr = start.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+      const endStr = end.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+      return `${dateStr}, ${startStr} - ${endStr}`;
+    }
+    function addOneMinute(timeVal) {
+      const m = String(timeVal || "").match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return timeVal;
+      let hh = parseInt(m[1], 10);
+      let mm = parseInt(m[2], 10) + 1;
+      if (mm >= 60) {
+        mm = 0;
+        hh += 1;
+      }
+      return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    }
+    function formatDateLabelShort(dateVal) {
+      const d = parseDatePart(dateVal);
+      if (!d) return String(dateVal || "");
+      const day = String(d.getDate()).padStart(2, "0");
+      const mon = d.toLocaleDateString("en-GB", { month: "short" });
+      const year = d.getFullYear();
+      return `${day}-${mon}-${year}`;
+    }
+    function fetchFactoryPlan(interpreterEmail, yearMonth) {
+      const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(yearMonth)}`;
+      return fetch(url).then((r) => r.json());
+    }
+    function getInterpreterIdByEmail(email) {
+      const target = String(email || "").trim().toLowerCase();
+      if (!target) return "";
+      const found = Object.entries(INTERPRETERS).find(([, info]) =>
+        String((info && info.email) || "").trim().toLowerCase() === target
+      );
+      return found ? found[0] : "";
+    }
+    function getFactoryMapFromCalendarCache(user, yearMonth) {
+      const ym = String(yearMonth || "").trim();
+      if (!/^\d{4}-\d{2}$/.test(ym)) return null;
+      const userId = getInterpreterIdByEmail(user && user.email);
+      if (!userId) return null;
+      const monthMap = calendarWorkAtCacheByMonth[ym];
+      if (!monthMap || typeof monthMap !== "object") return null;
+      const out = {};
+      Object.entries(monthMap).forEach(([ymd, row]) => {
+        const raw = String(row && row[userId] ? row[userId] : "").trim().toUpperCase();
+        if (raw === "CHP" || raw === "G1P") out[ymd] = raw;
+      });
+      return out;
+    }
+    async function getFactoryPlanForUserMonth(user, yearMonth) {
+      const ym = String(yearMonth || "").trim();
+      const emailKey = String((user && user.email) || "").trim().toLowerCase();
+      const cacheKey = `${emailKey}|${ym}`;
+      if (interpreterFactoryPlanCache[cacheKey]) return interpreterFactoryPlanCache[cacheKey];
+      const fromCalendar = getFactoryMapFromCalendarCache(user, ym);
+      if (fromCalendar) {
+        interpreterFactoryPlanCache[cacheKey] = fromCalendar;
+        return fromCalendar;
+      }
+      const result = await fetchFactoryPlan(user.email, ym);
+      const map = result && result.success && result.data ? result.data : {};
+      interpreterFactoryPlanCache[cacheKey] = map;
+      return map;
+    }
+    async function saveFactoryPlan(interpreterEmail, yearMonth, plans) {
+      const payload = new URLSearchParams();
+      payload.append("page", "saveFactoryPlan");
+      payload.append("interpreterEmail", interpreterEmail);
+      payload.append("yearMonth", yearMonth);
+      payload.append("plans", JSON.stringify(plans || {}));
+      const res = await fetch(API_URL, { method: "POST", body: payload });
+      return res.json();
+    }
+    async function updateFactoryIndicator() {
+      if (!factoryIndicator) return;
+      if (interpreterViewMode === "monthly") {
+        factoryIndicator.style.display = "none";
+        return;
+      }
+      factoryIndicator.style.display = "block";
+      const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+      if (!user || !user.email) {
+        factoryIndicator.innerHTML = "Work at:<span>Not set</span>";
+        return;
+      }
+      const selectedDate = currentDate instanceof Date ? currentDate : new Date();
+      const selectedYmd = formatDate(selectedDate);
+      const yearMonth = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}`;
+      const map = await getFactoryPlanForUserMonth(user, yearMonth);
+      const selected = map[selectedYmd] || "Not set";
+      factoryIndicator.innerHTML = `Work at:<span>${escapeHtml(selected)}</span>`;
+    }
+    function refreshCalendarAndDashboardViews() {
+      const iframe = document.getElementById("calendarFrame");
+      if (iframe) iframe.src = "calendar.html?v=" + new Date().getTime();
+      dashLoaded = false;
+      loadDashboardPanel();
+    }
+
+    async function openFactorySelector() {
+      const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+      if (!user || !user.email) {
+        Swal.fire("Please login first", "", "warning");
+        return;
+      }
+      try {
+        await openFactorySelectorForMonth(user, currentDate.getFullYear(), currentDate.getMonth());
+      } catch (err) {
+        Swal.fire("Error", err.message || "Cannot open factory plan", "error");
+      }
+    }
+
+    async function openFactorySelectorForMonth(user, year, month) {
+      const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+      showLoader();
+      let map = {};
+      try {
+        map = await getFactoryPlanForUserMonth(user, monthKey);
+      } finally {
+        hideLoader();
+      }
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const monthLabel = new Date(year, month, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      const dates = Array.from({ length: daysInMonth }, (_, i) => formatDate(new Date(year, month, i + 1)));
+      const firstDay = new Date(year, month, 1).getDay();
+      const emptyCellsHtml = Array.from({ length: firstDay }, () => `<div class="factory-cal-empty" aria-hidden="true"></div>`).join("");
+      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const leaveDates = new Set(
+        (window.allMyBookings || [])
+          .filter((b) => {
+            const ymd = String(b?.date || "");
+            const title = String(b?.title || "").trim().toLowerCase();
+            const status = String(b?.status || "").trim().toUpperCase();
+            return ymd.startsWith(monthKey + "-") && title === "take leave" && status !== "CANCELED";
+          })
+          .map((b) => String(b.date || ""))
+      );
+
+      const dayCardsHtml = dates.map((ymd) => {
+        const [yy, mm, dd] = ymd.split("-").map(Number);
+        const dayNumber = String(dd);
+        const isLeaveLocked = leaveDates.has(ymd);
+        const selected = isLeaveLocked ? "LEAVE" : (map[ymd] || "NONE");
+        const todayClass = ymd === formatDate(new Date()) ? "today" : "";
+        const selectedClass = isLeaveLocked
+          ? "factory-leave-locked"
+          : (selected === "CHP" ? "factory-chp" : (selected === "G1P" ? "factory-g1p" : ""));
+        const stateText = selected;
+        return `
+          <div class="factory-day-card ${todayClass} ${selectedClass}" data-date="${ymd}" data-month="${monthKey}" data-selected="${selected}" data-locked="${isLeaveLocked ? "1" : "0"}">
+            <div class="factory-day-top">
+              <div class="factory-day-num">${escapeHtml(dayNumber)}</div>
+            </div>
+            <div class="factory-choice-group">
+              <button type="button" class="factory-cycle-btn" data-state="${selected}" ${isLeaveLocked ? "disabled" : ""} title="${isLeaveLocked ? "This day is Take Leave and cannot be changed." : ""}">${stateText}</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const monthItemsHtml = monthNames.map((name, idx) => {
+        const active = idx === month ? "active" : "";
+        return `<button type="button" class="factory-month-item ${active}" data-month-index="${idx}">${name}</button>`;
+      }).join("");
+
+      const { value: form, isConfirmed } = await Swal.fire({
+        title: "",
+        width: 980,
+        customClass: {
+          popup: "swal-factory-popup",
+          title: "swal-factory-title"
+        },
+        html: `
+          <div class="factory-plan-wrap">
+            <div class="factory-plan-head">
+              <div class="factory-month-picker-wrap" id="factoryMonthPickerWrap">
+                <button type="button" class="factory-month-nav-btn" id="factoryMonthPrev" aria-label="Previous month">&#10094;</button>
+                <button type="button" class="factory-month-btn" id="factoryMonthBtn">${monthLabel}</button>
+                <button type="button" class="factory-month-nav-btn" id="factoryMonthNext" aria-label="Next month">&#10095;</button>
+                <div class="factory-month-popover" id="factoryMonthPopover" aria-hidden="true">
+                  <div class="factory-month-header">
+                    <button type="button" class="factory-month-year-nav" id="factoryYearPrev">&#10094;</button>
+                    <span id="factoryPickerYear">${year}</span>
+                    <button type="button" class="factory-month-year-nav" id="factoryYearNext">&#10095;</button>
+                  </div>
+                  <div class="factory-month-grid" id="factoryMonthGrid">${monthItemsHtml}</div>
+                </div>
+              </div>
+              <div class="factory-plan-toolbar">
+                <button type="button" class="factory-bulk-btn" data-bulk="CHP">Set all CHP</button>
+                <button type="button" class="factory-bulk-btn" data-bulk="G1P">Set all G1P</button>
+              </div>
+            </div>
+            <div class="factory-plan-calendar-wrap">
+              <div class="factory-cal-weekdays">
+                <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+              </div>
+              <div class="factory-cal-grid">
+                ${emptyCellsHtml}
+                ${dayCardsHtml}
+              </div>
+            </div>
+          </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: "Save",
+        didOpen: () => {
+          const cycleOrder = ["NONE", "CHP", "G1P"];
+          const cards = Array.from(document.querySelectorAll(".factory-day-card[data-date]"));
+          const applyCardValue = (card, value) => {
+            if ((card.dataset.locked || "0") === "1") return;
+            card.dataset.selected = value;
+            card.classList.remove("factory-chp", "factory-g1p");
+            if (value === "CHP") card.classList.add("factory-chp");
+            if (value === "G1P") card.classList.add("factory-g1p");
+            const btn = card.querySelector(".factory-cycle-btn");
+            if (btn) {
+              btn.dataset.state = value;
+              btn.textContent = value;
+            }
+          };
+
+          cards.forEach((card) => {
+            const btn = card.querySelector(".factory-cycle-btn");
+            if (!btn) return;
+            btn.addEventListener("click", () => {
+              const current = card.getAttribute("data-selected") || "NONE";
+              if ((card.dataset.locked || "0") === "1") return;
+              const idx = cycleOrder.indexOf(current);
+              const next = cycleOrder[(idx + 1) % cycleOrder.length];
+              applyCardValue(card, next);
+            });
+          });
+
+          document.querySelectorAll(".factory-bulk-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const bulk = btn.getAttribute("data-bulk") || "";
+              cards
+                .filter((card) => card.getAttribute("data-month") === monthKey && (card.dataset.locked || "0") !== "1")
+                .forEach((card) => applyCardValue(card, bulk));
+            });
+          });
+
+          const monthPickerWrap = document.getElementById("factoryMonthPickerWrap");
+          const monthBtn = document.getElementById("factoryMonthBtn");
+          const monthPrev = document.getElementById("factoryMonthPrev");
+          const monthNext = document.getElementById("factoryMonthNext");
+          const monthPopover = document.getElementById("factoryMonthPopover");
+          const yearEl = document.getElementById("factoryPickerYear");
+          const monthGrid = document.getElementById("factoryMonthGrid");
+          let pickerYear = year;
+          const goToAdjacentMonth = async (offset) => {
+            const nextDate = new Date(year, month + offset, 1);
+            Swal.close();
+            await openFactorySelectorForMonth(user, nextDate.getFullYear(), nextDate.getMonth());
+          };
+
+          const renderMonthGrid = () => {
+            if (!yearEl || !monthGrid) return;
+            yearEl.textContent = String(pickerYear);
+            monthGrid.innerHTML = monthNames.map((name, idx) => {
+              const active = pickerYear === year && idx === month ? "active" : "";
+              return `<button type="button" class="factory-month-item ${active}" data-month-index="${idx}">${name}</button>`;
+            }).join("");
+            monthGrid.querySelectorAll(".factory-month-item").forEach((btn) => {
+              btn.addEventListener("click", async () => {
+                const nextMonth = Number(btn.getAttribute("data-month-index"));
+                const nextYear = pickerYear;
+                Swal.close();
+                await openFactorySelectorForMonth(user, nextYear, nextMonth);
+              });
+            });
+          };
+
+          if (monthBtn && monthPopover) {
+            monthBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              monthPopover.classList.toggle("open");
+            });
+          }
+          if (monthPrev) {
+            monthPrev.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              await goToAdjacentMonth(-1);
+            });
+          }
+          if (monthNext) {
+            monthNext.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              await goToAdjacentMonth(1);
+            });
+          }
+          const yearPrev = document.getElementById("factoryYearPrev");
+          const yearNext = document.getElementById("factoryYearNext");
+          if (yearPrev) yearPrev.addEventListener("click", (e) => { e.stopPropagation(); pickerYear -= 1; renderMonthGrid(); });
+          if (yearNext) yearNext.addEventListener("click", (e) => { e.stopPropagation(); pickerYear += 1; renderMonthGrid(); });
+          document.addEventListener("click", (e) => {
+            if (monthPickerWrap && monthPopover && !monthPickerWrap.contains(e.target)) monthPopover.classList.remove("open");
+          }, { once: true });
+
+          renderMonthGrid();
+        },
+        preConfirm: () => {
+          const result = {};
+          document.querySelectorAll(".factory-day-card[data-date]").forEach((card) => {
+            const ymd = card.getAttribute("data-date");
+            const selected = card.getAttribute("data-selected") || "";
+            if (ymd) result[ymd] = selected;
+          });
+          return result;
+        }
+      });
+
+      if (!isConfirmed || !form) return;
+      const cleaned = {};
+      Object.entries(form).forEach(([ymd, value]) => {
+        if (value && FACTORY_VALUES.includes(value)) cleaned[ymd] = value;
+      });
+      showLoader();
+      try {
+        const saveResult = await saveFactoryPlan(user.email, monthKey, cleaned);
+        if (!saveResult || !saveResult.success) {
+          Swal.fire("Error", (saveResult && saveResult.message) || "Cannot save factory plan", "error");
+          return;
+        }
+        const emailKey = String(user.email || "").trim().toLowerCase();
+        const cacheKey = `${emailKey}|${monthKey}`;
+        interpreterFactoryPlanCache[cacheKey] = { ...cleaned };
+        const userId = getInterpreterIdByEmail(user.email);
+        if (userId) {
+          if (!calendarWorkAtCacheByMonth[monthKey]) calendarWorkAtCacheByMonth[monthKey] = {};
+          const daysInMonthForCache = new Date(year, month + 1, 0).getDate();
+          for (let d = 1; d <= daysInMonthForCache; d += 1) {
+            const ymd = `${monthKey}-${String(d).padStart(2, "0")}`;
+            if (!calendarWorkAtCacheByMonth[monthKey][ymd]) {
+              calendarWorkAtCacheByMonth[monthKey][ymd] = { i001: "Not set", i003: "Not set", i004: "Not set" };
+            }
+            const val = cleaned[ymd] || "Not set";
+            if (val === "CHP" || val === "G1P") {
+              calendarWorkAtCacheByMonth[monthKey][ymd][userId] = val;
+            } else if (calendarWorkAtCacheByMonth[monthKey][ymd][userId] !== "Leave") {
+              calendarWorkAtCacheByMonth[monthKey][ymd][userId] = "Not set";
+            }
+          }
+        }
+        await updateFactoryIndicator();
+        refreshCalendarAndDashboardViews();
+        Swal.fire("Saved", "Factory plan for this month has been updated.", "success");
+      } finally {
+        hideLoader();
+      }
+    }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function openCalendarDetailsSwal(dateStr, events, workAtByInterpreter = null) {
+      const formatDisplayDate = (raw) => {
+        const s = String(raw || "").trim();
+        const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (m) {
+          const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          const monthIndex = Number(m[2]) - 1;
+          const mon = months[monthIndex] || m[2];
+          return `${m[3]}-${mon}-${m[1]}`;
+        }
+        return s;
+      };
+
+      const safeDate = escapeHtml(formatDisplayDate(dateStr));
+      const list = Array.isArray(events) ? events : [];
+      const normalizeHeaderWorkAt = (raw) => {
+        const v = String(raw || "").trim().toUpperCase();
+        if (v === "CHP") return "CHP";
+        if (v === "G1P") return "G1P";
+        if (v === "LEAVE") return "Leave";
+        return "Not set";
+      };
+      const workAt = workAtByInterpreter && typeof workAtByInterpreter === "object" ? workAtByInterpreter : {};
+      const headerWorkAt = {
+        i001: normalizeHeaderWorkAt(workAt.i001),
+        i003: normalizeHeaderWorkAt(workAt.i003),
+        i004: normalizeHeaderWorkAt(workAt.i004)
+      };
+      const slotMap = {};
+      CALENDAR_SLOT_KEYS.forEach((slot) => {
+        slotMap[slot] = { i001: [], i003: [], i004: [] };
+      });
+
+      const normalizeHHMM = (t) => String(t || "").slice(0, 5).replace(":", "");
+      const incrementBy30 = (hhmm) => {
+        let h = parseInt(hhmm.slice(0, 2), 10);
+        let m = parseInt(hhmm.slice(2, 4), 10);
+        m += 30;
+        if (m >= 60) { m = 0; h += 1; }
+        return `${String(h).padStart(2, "0")}${String(m).padStart(2, "0")}`;
+      };
+
+      list.forEach((e) => {
+        const status = String(e.status || "").toUpperCase();
+        if (status !== "BOOKED" && status !== "UNAVAILABLE") return;
+        const start = normalizeHHMM(e.startTime);
+        const end = normalizeHHMM(e.endTime);
+        if (!Object.prototype.hasOwnProperty.call(SLOT_INDEX_BY_START, start)) return;
+        const col = String(e.interpreterId || "");
+        if (!Object.prototype.hasOwnProperty.call(slotMap[CALENDAR_SLOT_KEYS[0]], col)) return;
+
+        let cursor = start;
+        while (cursor < end) {
+          const idx = SLOT_INDEX_BY_START[cursor];
+          if (idx === undefined) break;
+          const slot = CALENDAR_SLOT_KEYS[idx];
+          slotMap[slot][col].push({
+            title: e.title || "-",
+            location: e.location || "-",
+            user: e.userEmail || "-",
+            status
+          });
+          cursor = incrementBy30(cursor);
+        }
+      });
+
+      const hasAnyData = CALENDAR_SLOT_KEYS.some((slot) =>
+        CALENDAR_COLUMNS.some((c) => slotMap[slot][c.id].length > 0)
+      );
+
+      const dotHtml = (item) => {
+        const statusClass = item.status === "UNAVAILABLE" ? "unavailable" : "booked";
+        const tip = escapeHtml(`Title: ${item.title}\nLocation: ${item.location}\nUser: ${item.user}`);
+        return `<span class="swal-dot ${statusClass}" title="${tip}"></span>`;
+      };
+
+      const bodyHtml = hasAnyData
+        ? CALENDAR_SLOT_KEYS.map((slot) => {
+          const [start, end] = slot.split("_");
+          const fmt = (t) => `${t.slice(0, 2)}:${t.slice(2)}`;
+          const cells = CALENDAR_COLUMNS.map((c) => {
+            const items = slotMap[slot][c.id];
+            return `<td>${items.map(dotHtml).join("")}</td>`;
+          }).join("");
+          return `<tr><td class="swal-time-cell">${fmt(start)} - ${fmt(end)}</td>${cells}</tr>`;
+        }).join("")
+        : `<tr><td colspan="4" class="swal-empty">No booking details for this date.</td></tr>`;
+
+      Swal.fire({
+        title: `Details for ${safeDate}`,
+        width: 980,
+        showConfirmButton: false,
+        showCloseButton: true,
+        customClass: {
+          popup: "swal-calendar-popup",
+          closeButton: "swal-calendar-x-btn"
+        },
+        html: `
+          <div class="swal-calendar-meta">
+            <span class="swal-calendar-legend-item"><span class="swal-dot swal-legend-dot booked"></span>Booked</span>
+          </div>
+          <div class="swal-calendar-wrap">
+            <table class="swal-calendar-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>SOM SAN [${escapeHtml(headerWorkAt.i001)}]</th>
+                  <th>POOKY SAN [${escapeHtml(headerWorkAt.i003)}]</th>
+                  <th>L SAN [${escapeHtml(headerWorkAt.i004)}]</th>
+                </tr>
+              </thead>
+              <tbody>${bodyHtml}</tbody>
+            </table>
+          </div>
+        `
+      });
+    }
+
+    function bindCalendarBridge() {
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || !data.type) return;
+        if (data.type === "calendar-month-workat") {
+          const ym = String(data.yearMonth || "").trim();
+          if (/^\d{4}-\d{2}$/.test(ym) && data.workAtByDate && typeof data.workAtByDate === "object") {
+            calendarWorkAtCacheByMonth[ym] = data.workAtByDate;
+            const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+            if (user && user.email) {
+              const mapped = getFactoryMapFromCalendarCache(user, ym);
+              if (mapped) {
+                const cacheKey = `${String(user.email).trim().toLowerCase()}|${ym}`;
+                interpreterFactoryPlanCache[cacheKey] = mapped;
+              }
+            }
+          }
+          return;
+        }
+        if (data.type !== "calendar-day-details") return;
+        openCalendarDetailsSwal(data.date, data.events, data.workAtByInterpreter);
+      });
+    }
+
+    function toggleUserMenu(forceOpen = null) {
+      if (!userMenu) return;
+      const willOpen = forceOpen === null ? !userMenu.classList.contains("open") : !!forceOpen;
+      userMenu.classList.toggle("open", willOpen);
+      if (userInfoBtn) userInfoBtn.setAttribute("aria-expanded", String(willOpen));
+    }
+
+    async function sha256Text(text) {
+      const data = new TextEncoder().encode(String(text || ""));
+      const hash = await crypto.subtle.digest("SHA-256", data);
+      return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function openChangePasswordDialog() {
+      const user = JSON.parse(localStorage.getItem("loggedInUser"));
+      if (!user || !user.username) return;
+
+      const { value: formData } = await Swal.fire({
+        title: "Change Password",
+        html: `
+          <div class="change-pass-form">
+            <div class="change-pass-field">
+              <label for="newPwd">New Password</label>
+              <input id="newPwd" class="swal2-input change-pass-input" type="password" placeholder="Enter new password">
+            </div>
+            <div class="change-pass-field">
+              <label for="confirmPwd">Confirm Password</label>
+              <input id="confirmPwd" class="swal2-input change-pass-input" type="password" placeholder="Re-enter new password">
+            </div>
+          </div>
+        `,
+        customClass: {
+          popup: "swal-change-pass-popup",
+          title: "swal-change-pass-title",
+          confirmButton: "swal-change-pass-confirm",
+          cancelButton: "swal-change-pass-cancel"
+        },
+        buttonsStyling: false,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: "Update",
+        cancelButtonText: "Cancel",
+        preConfirm: () => {
+          const newPwd = document.getElementById("newPwd").value;
+          const confirmPwd = document.getElementById("confirmPwd").value;
+          if (!newPwd || !confirmPwd) {
+            Swal.showValidationMessage("Please fill both password fields.");
+            return null;
+          }
+          if (newPwd !== confirmPwd) {
+            Swal.showValidationMessage("Passwords do not match.");
+            return null;
+          }
+          if (newPwd.length < 6) {
+            Swal.showValidationMessage("Password must be at least 6 characters.");
+            return null;
+          }
+          return { newPwd };
+        }
+      });
+
+      if (!formData) return;
+
+      try {
+        showLoader();
+        const passwordHash = await sha256Text(formData.newPwd);
+        const form = new URLSearchParams();
+        form.append("page", "updatePassword");
+        form.append("username", user.username);
+        form.append("passwordHash", passwordHash);
+
+        const res = await fetch(API_URL, { method: "POST", body: form });
+        const result = await res.json();
+        hideLoader();
+
+        if (result.success) Swal.fire("Success", result.message || "Password updated.", "success");
+        else Swal.fire("Error", result.message || "Cannot change password.", "error");
+      } catch (err) {
+        hideLoader();
+        Swal.fire("Error", err.message, "error");
+      }
+    }
+
+    function bindUserMenu() {
+      if (userInfoBtn) {
+        userInfoBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleUserMenu();
+        });
+      }
+      if (menuChangePassword) {
+        menuChangePassword.addEventListener("click", async () => {
+          toggleUserMenu(false);
+          await openChangePasswordDialog();
+        });
+      }
+      if (menuLogout) {
+        menuLogout.addEventListener("click", () => {
+          toggleUserMenu(false);
+          logout();
+        });
+      }
+      document.addEventListener("click", (e) => {
+        if (userMenu && !userMenu.contains(e.target)) toggleUserMenu(false);
+      });
+    }
+    function changeDate(o){
+      interpreterViewMode = "today";
+      currentDate.setDate(currentDate.getDate()+o);
+      syncInterpreterPickerToCurrentDate();
+      loadMyBookings();
+    }
+    function goToday(){
+      interpreterViewMode = "today";
+      currentDate = new Date();
+      syncInterpreterPickerToCurrentDate();
+      loadMyBookings();
+    }
+
+    function updateInterpreterDateButton() {
+      if (!interpreterDateBtn) return;
+      if (interpreterViewMode === "monthly") {
+        interpreterDateBtn.textContent = "this month";
+        return;
+      }
+      interpreterDateBtn.textContent = currentDate.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function toggleInterpreterDatePicker(forceOpen = null) {
+      if (!interpreterDatePopover) return;
+      const willOpen = forceOpen === null ? !interpreterDatePopover.classList.contains("open") : !!forceOpen;
+      interpreterDatePopover.classList.toggle("open", willOpen);
+      interpreterDatePopover.setAttribute("aria-hidden", String(!willOpen));
+    }
+
+    function renderInterpreterDatePicker() {
+      if (!interpreterDateGrid || !interpreterDateMonthYear) return;
+      interpreterDateMonthYear.textContent = new Date(interpreterPickerYear, interpreterPickerMonth, 1).toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric"
+      });
+      interpreterDateGrid.innerHTML = "";
+
+      const firstDay = new Date(interpreterPickerYear, interpreterPickerMonth, 1).getDay();
+      const daysInMonth = new Date(interpreterPickerYear, interpreterPickerMonth + 1, 0).getDate();
+      const now = new Date();
+
+      for (let i = 0; i < firstDay; i++) {
+        const blank = document.createElement("button");
+        blank.type = "button";
+        blank.className = "interpreter-date-day empty";
+        blank.disabled = true;
+        interpreterDateGrid.appendChild(blank);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "interpreter-date-day";
+        btn.textContent = String(d);
+
+        if (
+          interpreterPickerYear === now.getFullYear() &&
+          interpreterPickerMonth === now.getMonth() &&
+          d === now.getDate()
+        ) btn.classList.add("today");
+
+        if (
+          interpreterPickerYear === currentDate.getFullYear() &&
+          interpreterPickerMonth === currentDate.getMonth() &&
+          d === currentDate.getDate()
+        ) btn.classList.add("active");
+
+        btn.addEventListener("click", () => {
+          interpreterViewMode = "today";
+          currentDate = new Date(interpreterPickerYear, interpreterPickerMonth, d);
+          updateInterpreterDateButton();
+          loadMyBookings();
+          toggleInterpreterDatePicker(false);
+        });
+        interpreterDateGrid.appendChild(btn);
+      }
+    }
+
+    function syncInterpreterPickerToCurrentDate() {
+      interpreterPickerMonth = currentDate.getMonth();
+      interpreterPickerYear = currentDate.getFullYear();
+      updateInterpreterDateButton();
+      renderInterpreterDatePicker();
+    }
+
+    function bindInterpreterDatePicker() {
+      if (interpreterDateBtn) {
+        interpreterDateBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          renderInterpreterDatePicker();
+          toggleInterpreterDatePicker();
+        });
+      }
+      if (interpreterMonthPrev) {
+        interpreterMonthPrev.addEventListener("click", (e) => {
+          e.stopPropagation();
+          interpreterPickerMonth -= 1;
+          if (interpreterPickerMonth < 0) {
+            interpreterPickerMonth = 11;
+            interpreterPickerYear -= 1;
+          }
+          renderInterpreterDatePicker();
+        });
+      }
+      if (interpreterMonthNext) {
+        interpreterMonthNext.addEventListener("click", (e) => {
+          e.stopPropagation();
+          interpreterPickerMonth += 1;
+          if (interpreterPickerMonth > 11) {
+            interpreterPickerMonth = 0;
+            interpreterPickerYear += 1;
+          }
+          renderInterpreterDatePicker();
+        });
+      }
+      if (interpreterThisMonthBtn) {
+        interpreterThisMonthBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          interpreterViewMode = "monthly";
+          currentDate = new Date(interpreterPickerYear, interpreterPickerMonth, 1);
+          updateInterpreterDateButton();
+          loadMyBookings();
+          toggleInterpreterDatePicker(false);
+        });
+      }
+      document.addEventListener("click", (event) => {
+        if (interpreterDatePickerWrap && !interpreterDatePickerWrap.contains(event.target)) {
+          toggleInterpreterDatePicker(false);
+        }
+      });
+      syncInterpreterPickerToCurrentDate();
+    }
+
+    function switchInterpreterView(view){
+      const isDashboard = view === "dashboard";
+      if (!jobView || !dashboardView || !navDashboard || !navMyJob) return;
+      navDashboard.classList.toggle("active", isDashboard);
+      navMyJob.classList.toggle("active", !isDashboard);
+      jobView.style.display = isDashboard ? "none" : "grid";
+      dashboardView.style.display = isDashboard ? "block" : "none";
+      if (isDashboard) loadDashboardPanel();
+    }
+
+    function bindInterpreterSidebar(){
+      if (navDashboard) navDashboard.addEventListener("click", () => switchInterpreterView("dashboard"));
+      if (navMyJob) navMyJob.addEventListener("click", () => switchInterpreterView("myjob"));
+    }
+
+    function dashLocalDateParts() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return { y, m, d, ymd: `${y}-${m}-${d}`, ym: `${y}-${m}` };
+    }
+
+    async function getDashboardWorkAtByInterpreter(ymd) {
+      const monthKey = String(ymd || "").slice(0, 7);
+      if (!/^\d{4}-\d{2}$/.test(monthKey)) return {};
+      const pairs = await Promise.all(
+        DASH_INTERPRETERS.map(async (iid) => {
+          const interpreterEmail = getInterpreterEmail(iid);
+          if (!interpreterEmail) return [iid, "-"];
+          try {
+            const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(monthKey)}`;
+            const res = await fetch(url);
+            const result = await res.json();
+            const map = result && result.success && result.data ? result.data : {};
+            const raw = String(map[ymd] || "").trim().toUpperCase();
+            const normalized = raw === "CHP" || raw === "G1P" ? raw : "-";
+            return [iid, normalized];
+          } catch (_) {
+            return [iid, "-"];
+          }
+        })
+      );
+      return Object.fromEntries(pairs);
+    }
+
+    function computeMonthChartData(ym) {
+      const monthRows = dashAllBookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
+      const perDayCounts = {};
+      const monthCountsByInterpreter = { i001: 0, i003: 0, i004: 0 };
+      monthRows.forEach((r) => {
+        const d = String(r.date || "").replace(/^'/, "");
+        const iid = String(r.interpreterId || "");
+        if (!DASH_INTERPRETERS.includes(iid)) return;
+        monthCountsByInterpreter[iid] += 1;
+        if (!perDayCounts[d]) perDayCounts[d] = { i001: 0, i003: 0, i004: 0 };
+        perDayCounts[d][iid] += 1;
+      });
+      return { monthRows, perDayCounts, monthCountsByInterpreter };
+    }
+
+    function formatDashMonthLabel(ym) {
+      const [y, m] = String(ym || "").split("-").map(Number);
+      if (!y || !m) return "-";
+      return new Date(y, m - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    }
+
+    function renderDashboardChartsForMonth(ym) {
+      if (!ym) return;
+      dashSelectedMonth = ym;
+      if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = formatDashMonthLabel(ym);
+      const { perDayCounts, monthCountsByInterpreter } = computeMonthChartData(ym);
+      buildDashboardDailyChart(perDayCounts, ym);
+      buildDashboardInterpreterChart(monthCountsByInterpreter);
+    }
+
+    function toggleDashMonthPicker(forceOpen = null) {
+      if (!dashMonthPickerPopover) return;
+      const willOpen = forceOpen === null ? !dashMonthPickerPopover.classList.contains("open") : !!forceOpen;
+      dashMonthPickerPopover.classList.toggle("open", willOpen);
+      dashMonthPickerPopover.setAttribute("aria-hidden", String(!willOpen));
+    }
+
+    function renderDashMonthPicker() {
+      if (!dashMonthGrid || !dashMonthPickerYearEl) return;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      dashMonthPickerYearEl.textContent = String(dashPickerYear);
+      dashMonthGrid.innerHTML = months.map((name, idx) => {
+        const monthValue = `${dashPickerYear}-${String(idx + 1).padStart(2, "0")}`;
+        const active = monthValue === dashSelectedMonth ? "active" : "";
+        return `<button type="button" class="dash-month-item ${active}" data-month="${monthValue}">${name}</button>`;
+      }).join("");
+      dashMonthGrid.querySelectorAll(".dash-month-item").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const monthValue = btn.getAttribute("data-month");
+          renderDashboardChartsForMonth(monthValue);
+          toggleDashMonthPicker(false);
+        });
+      });
+    }
+
+    function initDashMonthPicker(defaultYm) {
+      if (!defaultYm) return;
+      dashSelectedMonth = defaultYm;
+      dashPickerYear = Number(defaultYm.slice(0, 4)) || new Date().getFullYear();
+      if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = formatDashMonthLabel(defaultYm);
+      renderDashMonthPicker();
+      if (dashMonthPickerBtn && !dashMonthPickerBtn.dataset.bound) {
+        dashMonthPickerBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          renderDashMonthPicker();
+          toggleDashMonthPicker();
+        });
+        dashMonthPickerBtn.dataset.bound = "1";
+      }
+      if (dashMonthYearPrev && !dashMonthYearPrev.dataset.bound) {
+        dashMonthYearPrev.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dashPickerYear -= 1;
+          renderDashMonthPicker();
+        });
+        dashMonthYearPrev.dataset.bound = "1";
+      }
+      if (dashMonthYearNext && !dashMonthYearNext.dataset.bound) {
+        dashMonthYearNext.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dashPickerYear += 1;
+          renderDashMonthPicker();
+        });
+        dashMonthYearNext.dataset.bound = "1";
+      }
+      if (!document.body.dataset.dashMonthPickerBound) {
+        document.addEventListener("click", (event) => {
+          if (dashMonthPickerWrap && !dashMonthPickerWrap.contains(event.target)) toggleDashMonthPicker(false);
+        });
+        document.body.dataset.dashMonthPickerBound = "1";
+      }
+    }
+
+    function buildDashboardDailyChart(perDayCounts, ym) {
+      const canvas = document.getElementById("dashDailyChart");
+      if (!canvas || typeof Chart === "undefined") return;
+      const ctx = canvas.getContext("2d");
+      const [year, month] = ym.split("-").map(Number);
+      const lastDay = new Date(year, month, 0).getDate();
+      const labels = Array.from({ length: lastDay }, (_, i) => `${year}-${String(month).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`);
+      const colors = { i001: "#3b82f6", i003: "#10b981", i004: "#f59e0b" };
+      const datasets = DASH_INTERPRETERS.map((iid) => ({
+        label: DASH_INTERPRETER_NAMES[iid],
+        data: labels.map((day) => (perDayCounts[day] && perDayCounts[day][iid]) ? perDayCounts[day][iid] : 0),
+        borderColor: colors[iid],
+        backgroundColor: colors[iid],
+        borderWidth: 2,
+        tension: 0.25,
+        fill: false,
+        pointRadius: 2,
+        pointHoverRadius: 4
+      }));
+      if (dashDailyChart) dashDailyChart.destroy();
+      dashDailyChart = new Chart(ctx, {
+        type: "line",
+        data: { labels: labels.map((d) => d.slice(-2)), datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 1100, easing: "easeOutQuart" },
+          animations: {
+            y: {
+              from: 0,
+              duration: 1100,
+              easing: "easeOutQuart",
+              delay(context) { return (context.dataIndex || 0) * 20; }
+            }
+          },
+          plugins: { legend: { position: "top" } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(148,163,184,0.25)" } },
+            x: { grid: { color: "rgba(148,163,184,0.15)" } }
+          }
+        }
+      });
+    }
+
+    function buildDashboardInterpreterChart(monthCounts) {
+      const canvas = document.getElementById("dashInterpreterChart");
+      if (!canvas || typeof Chart === "undefined") return;
+      const ctx = canvas.getContext("2d");
+      const labels = DASH_INTERPRETERS.map((iid) => DASH_INTERPRETER_NAMES[iid]);
+      const values = DASH_INTERPRETERS.map((iid) => monthCounts[iid] || 0);
+      if (dashInterpreterChart) dashInterpreterChart.destroy();
+      dashInterpreterChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{ label: "Bookings", data: values, backgroundColor: ["#3b82f6", "#10b981", "#f59e0b"], borderRadius: 8 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 1000, easing: "easeOutCubic" },
+          animations: {
+            y: {
+              from: 0,
+              duration: 1000,
+              easing: "easeOutCubic",
+              delay(context) { return (context.dataIndex || 0) * 120; }
+            }
+          },
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(148,163,184,0.25)" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    async function loadDashboardPanel() {
+      if (dashLoaded) return;
+      dashLoaded = true;
+      try {
+        const { ymd, ym } = dashLocalDateParts();
+        const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
+        const res = await fetch(`${API_URL}?page=listBookings`);
+        const rows = await res.json();
+        const workAtByInterpreter = await workAtPromise;
+        const bookedRows = Array.isArray(rows) ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED") : [];
+        dashAllBookedRows = bookedRows;
+
+        const monthRows = bookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
+        const todayRows = bookedRows
+          .filter((r) => String(r.date || "").replace(/^'/, "") === ymd)
+          .sort((a, b) => String(a.startTime || "").localeCompare(String(b.startTime || "")));
+
+        const totalMonthEl = document.getElementById("dashTotalMonth");
+        const totalTodayEl = document.getElementById("dashTotalToday");
+        const totalInterpreterEl = document.getElementById("dashTotalInterpreter");
+        const monthLabelEl = document.getElementById("dashMonthLabel");
+        const todayLabelEl = document.getElementById("dashTodayLabel");
+        if (totalMonthEl) totalMonthEl.textContent = String(monthRows.length);
+        if (totalTodayEl) totalTodayEl.textContent = String(todayRows.length);
+        if (totalInterpreterEl) totalInterpreterEl.textContent = String(DASH_INTERPRETERS.length);
+        if (monthLabelEl) monthLabelEl.textContent = ym;
+        if (todayLabelEl) todayLabelEl.textContent = ymd;
+
+        DASH_INTERPRETERS.forEach((iid) => {
+          const todayByInterpreter = todayRows.filter((r) => String(r.interpreterId || "") === iid);
+          const totalJobsToday = todayByInterpreter.length;
+          const jobEl = document.getElementById(`dash${iid.toUpperCase()}Job`);
+          const locEl = document.getElementById(`dash${iid.toUpperCase()}Loc`);
+          if (!jobEl || !locEl) return;
+          jobEl.textContent = `Job Total: ${totalJobsToday}`;
+          const rawWorkAt = String(workAtByInterpreter[iid] || "Not set");
+          const workAt = rawWorkAt === "-" ? "Not set" : rawWorkAt;
+          const badgeClass = workAt === "CHP" ? "work-at-badge chp" : (workAt === "G1P" ? "work-at-badge g1p" : "work-at-badge empty");
+          locEl.innerHTML = `Work at: <span class="${badgeClass}">${escapeHtml(workAt)}</span>`;
+        });
+
+        initDashMonthPicker(ym);
+        renderDashboardChartsForMonth(ym);
+      } catch (err) {
+        dashLoaded = false;
+        Swal.fire("Error", `Cannot load dashboard data: ${err.message}`, "error");
+      }
+    }
 
     async function loadMyBookings(){
       const user=JSON.parse(localStorage.getItem("loggedInUser"));
-      if(!user){Swal.fire("กรุณา Login ก่อน","","warning").then(()=>window.location.href="login.html");return;}
-      document.getElementById("userInfo").innerText=`👤 ${user.username} (${user.role})`;
-      document.getElementById("jobHeader").innerText=`My Job (${formatDate(currentDate)})`;
+      if(!user){Swal.fire("à¸à¸£à¸¸à¸“à¸² Login à¸à¹ˆà¸­à¸™","","warning").then(()=>window.location.href="index.html");return;}
+      showLoader();
+      document.getElementById("userInfo").innerHTML = `
+        <span class="user-icon" aria-hidden="true"><span class="user-dot-head"></span><span class="user-dot-body"></span></span>
+        <span class="user-name">${user.username}</span>
+        <span class="user-role">${String(user.role || "INTERPRETER").toUpperCase()}</span>
+        <span class="user-caret">&#9662;</span>
+      `;
+      document.getElementById("jobHeader").innerText=`My Job`;
+      updateInterpreterDateButton();
       try{
-        showLoader();
-        const res=await fetch(API_URL+"?page=listBookings");
-        const bookings=await res.json();hideLoader();
+        const indicatorTask = updateFactoryIndicator();
+        const res = await fetch(API_URL+"?page=listBookings");
+        const bookings = await res.json();
+        await indicatorTask;
+        hideLoader();
         const myBookings=bookings.filter(b=>b.interpreterEmail===user.email);
         window.allMyBookings=myBookings;
         updateSummaryCards(myBookings);
-        const selected=formatDate(currentDate);
-        const todays=myBookings.filter(b=>b.date===selected&&b.status!=="CANCELED")
-          .sort((a,b)=>{
+        let filtered = [];
+        if (interpreterViewMode === "monthly") {
+          const y = currentDate.getFullYear();
+          const m = currentDate.getMonth() + 1;
+          filtered = myBookings.filter((b) => {
+            if (b.status === "CANCELED") return false;
+            const parts = String(b.date || "").split("-").map(Number);
+            return parts[0] === y && parts[1] === m;
+          });
+        } else {
+          const selected = formatDate(currentDate);
+          filtered = myBookings.filter(b => b.date === selected && b.status !== "CANCELED");
+        }
+        filtered = filtered.sort((a,b)=>{
             const [ah,am]=a.startTime.split(":").map(Number);
             const [bh,bm]=b.startTime.split(":").map(Number);
             return ah*60+am-(bh*60+bm);
           });
-        renderMyBookings(todays);
+        renderMyBookings(filtered);
       }catch(e){hideLoader();Swal.fire("Error",e.message,"error");}
     }
 
@@ -191,14 +3070,21 @@
       const e=new Date(s.getFullYear(),s.getMonth()+1,0);
       const t=b.filter(x=>x.date===today&&x.status!=="CANCELED").length;
       const m=b.filter(x=>{const d=new Date(x.date);return d>=s&&d<=e&&x.status!=="CANCELED";}).length;
-      document.getElementById("todayCard").innerText=`🗓️ Today: ${t}`;
-      document.getElementById("monthCard").innerText=`📆 Total This Month: ${m}`;
+      const todayCard = document.getElementById("todayCard");
+      const monthCard = document.getElementById("monthCard");
+      if (todayCard) todayCard.innerText = `Today: ${t}`;
+      if (monthCard) monthCard.innerText = `Total This Month: ${m}`;
     }
 
     function renderMyBookings(list){
       const c=document.getElementById("myBookingList");
       c.innerHTML="";
-      if(!list.length){c.innerHTML="<p style='text-align:center;color:#777;'>No jobs found</p>";return;}
+      if(!list.length){
+        c.innerHTML = interpreterViewMode === "monthly"
+          ? "<p style='text-align:center;color:#677892;'>No jobs found this month</p>"
+          : "<p style='text-align:center;color:#677892;'>No jobs found</p>";
+        return;
+      }
       list.forEach(b=>{
         const color=b.status==="BOOKED"?"booked":"canceled";
         c.innerHTML+=`
@@ -206,176 +3092,394 @@
             <div class="status-bar" style="background:${color==='booked'?'#28a745':'#dc3545'}"></div>
             <div class="booking-content">
               <div class="title">${b.title}</div>
-              <div><b>Date(Time):</b> ${b.date} (${b.startTime}-${b.endTime})</div>
-              <div><b>User:</b> ${b.userEmail||'—'}</div>
+              <div><b>Time:</b> ${formatRange(b.date, b.startTime, addOneMinute(b.endTime))}</div>
+              <div><b>User:</b> ${b.userEmail || "-"}</div>
+              <div><b>Location:</b> ${b.location || "-"}</div>
               <div><b>Status:</b> <span class="badge ${color}">${b.status}</span></div>
             </div>
           </div>`;
       });
     }
 
-    // 🏖️ Take Leave
-    async function openTakeLeave(){
-      const user=JSON.parse(localStorage.getItem("loggedInUser"));
-      if(!user){Swal.fire("Please login first","","warning");return;}
+    async function submitTakeLeave(user, form) {
+      if (!form) return { success: false };
 
-      const { value: form } = await Swal.fire({
-        title: "🏖️ Take Leave",
-        html: `
-          <div style='display:flex;flex-direction:column;gap:8px;text-align:left'>
-            <label>Date:</label>
-            <input id='leaveDate' type='date' class='swal2-input' style='width:80%'>
-
-            <label for="timeFrom">Time From:</label>
-            <select id="timeFrom" class='swal2-input' style='width:80%'>
-              <option value="" disabled selected>HH:MM</option>
-              <option value="07:00">07:00</option>
-              <option value="07:30">07:30</option>
-              <option value="08:00">08:00</option>
-              <option value="08:30">08:30</option>
-              <option value="09:00">09:00</option>
-              <option value="09:30">09:30</option>
-              <option value="10:00">10:00</option>
-              <option value="10:30">10:30</option>
-              <option value="11:00">11:00</option>
-              <option value="11:30">11:30</option>
-              <option value="12:00">12:00</option>
-              <option value="12:30">12:30</option>
-              <option value="13:00">13:00</option>
-              <option value="13:30">13:30</option>
-              <option value="14:00">14:00</option>
-              <option value="14:30">14:30</option>
-              <option value="15:00">15:00</option>
-              <option value="15:30">15:30</option>
-              <option value="16:00">16:00</option>
-              <option value="16:30">16:30</option>
-              <option value="17:00">17:00</option>
-              <option value="17:30">17:30</option>
-              <option value="18:00">18:00</option>
-              <option value="18:30">18:30</option>
-              <option value="19:00">19:00</option>
-              <option value="19:30">19:30</option>
-              <option value="20:00">20:00</option>
-            </select>
-
-            <label for="timeTo">Time To:</label>
-            <select id="timeTo" class='swal2-input' style='width:80%'>
-              <option value="" disabled selected>HH:MM</option>
-              <option value="07:29">07:30</option>
-              <option value="07:59">08:00</option>
-              <option value="08:29">08:30</option>
-              <option value="08:59">09:00</option>
-              <option value="09:29">09:30</option>
-              <option value="09:59">10:00</option>
-              <option value="10:29">10:30</option>
-              <option value="10:59">11:00</option>
-              <option value="11:29">11:30</option>
-              <option value="11:59">12:00</option>
-              <option value="12:29">12:30</option>
-              <option value="12:59">13:00</option>
-              <option value="13:29">13:30</option>
-              <option value="13:59">14:00</option>
-              <option value="14:29">14:30</option>
-              <option value="14:59">15:00</option>
-              <option value="15:29">15:30</option>
-              <option value="15:59">16:00</option>
-              <option value="16:29">16:30</option>
-              <option value="16:59">17:00</option>
-              <option value="17:29">17:30</option>
-              <option value="17:59">18:00</option>
-              <option value="18:29">18:30</option>
-              <option value="18:59">19:00</option>
-              <option value="19:29">19:30</option>
-              <option value="19:59">20:00</option>
-            </select>
-          </div>
-        `,
-        confirmButtonText: "Save",
-        showCancelButton: true,
-        focusConfirm: false,
-        preConfirm: () => {
-          const date = document.getElementById("leaveDate").value;
-          const start = document.getElementById("timeFrom").value;
-          const end = document.getElementById("timeTo").value;
-          if (!date || !start || !end) {
-            Swal.showValidationMessage("Please fill in date and time");
-            return false;
-          }
-          return { date, start, end };
-        },
-      });
-
-      if (!form) return;
-
-      // ✅ ตรวจเวลาซ้ำ
       const existing = (window.allMyBookings || []).filter(
         (b) => b.date === form.date && b.status !== "CANCELED"
       );
-      const s = parseTime(form.start),
-        e = parseTime(form.end);
+      const s = parseTime(form.start), e = parseTime(form.end);
       const overlap = existing.some((b) => {
-        const bs = parseTime(b.startTime),
-          be = parseTime(b.endTime);
+        const bs = parseTime(b.startTime), be = parseTime(b.endTime);
         return s < be && e > bs;
       });
       if (overlap) {
-        Swal.fire(
-          "⚠️ Duplicate Time",
-          "You already have a booking during this period.",
-          "warning"
-        );
-        return;
+        Swal.fire("Duplicate Time", "You already have a booking during this period.", "warning");
+        return { success: false };
       }
 
-try {
-  showLoader();
+      try {
+        showLoader();
+        let interpreterId = Object.keys(INTERPRETERS)
+          .find(id => INTERPRETERS[id].email.toLowerCase().trim() === user.email.toLowerCase().trim());
+        if (!interpreterId) interpreterId = user.id || "unknown";
 
-  // ✅ ใช้ข้อมูล user.id และ email เหมือน dashboard.html
-  let interpreterId = Object.keys(INTERPRETERS)
-  .find(id => INTERPRETERS[id].email.toLowerCase().trim() === user.email.toLowerCase().trim());
-if (!interpreterId) {
-  // ✅ fallback: ใช้ id จริงของผู้ใช้ใน sheet แทน
-  interpreterId = user.id || "unknown";
-}
+        const payload = new URLSearchParams();
+        payload.append("page", "newBooking");
+        payload.append("userId", user.id);
+        payload.append("userEmail", user.email);
+        payload.append("interpreterId", interpreterId);
+        payload.append("interpreterEmail", user.email);
+        payload.append("date", form.date);
+        payload.append("startTime", form.start);
+        payload.append("endTime", form.end);
+        payload.append("title", "Take leave");
+        payload.append("location", "-");
+        payload.append("status", "BOOKED");
+        payload.append("createdAt", new Date().toISOString());
 
+        const res = await fetch(API_URL, { method: "POST", body: payload });
+        const result = await res.json();
+        hideLoader();
 
-  const payload = new URLSearchParams();
-  payload.append("page", "newBooking");
-  payload.append("userId", user.id); // ✅ ใช้ id ของ user
-  payload.append("userEmail", user.email);
-  payload.append("interpreterId", interpreterId);
-  payload.append("interpreterEmail", user.email); // ✅ ใช้ userEmail เป็น interpreterEmail
-  payload.append("date", form.date);
-  payload.append("startTime", form.start);
-  payload.append("endTime", form.end);
-  payload.append("title", "Take leave");
-  payload.append("location", "-");
-  payload.append("status", "BOOKED");
-  payload.append("createdAt", new Date().toISOString());
+        if (result.success || result.status === "success") {
+          Swal.fire("Saved", "Your leave has been recorded.", "success");
+          await loadMyBookings();
+          refreshCalendarAndDashboardViews();
+          return { success: true };
+        }
+        Swal.fire("Error", result.message || "Cannot save leave", "error");
+        return { success: false };
+      } catch (err) {
+        hideLoader();
+        Swal.fire("Error", err.message, "error");
+        return { success: false };
+      }
+    }
 
+    async function submitEditLeave(user, booking, form) {
+      if (!form || !booking) return { success: false };
+      const s = parseTime(form.start), e = parseTime(form.end);
+      const overlap = (window.allMyBookings || []).some((b) => {
+        if (String(b.bookingId || "") === String(booking.bookingId || "")) return false;
+        if (String(b.date || "") !== String(form.date || "")) return false;
+        if (String(b.status || "").toUpperCase() === "CANCELED") return false;
+        const bs = parseTime(b.startTime), be = parseTime(b.endTime);
+        return s < be && e > bs;
+      });
+      if (overlap) {
+        Swal.fire("Duplicate Time", "You already have a booking during this period.", "warning");
+        return { success: false };
+      }
 
-  const res = await fetch(API_URL, { method: "POST", body: payload });
-  const result = await res.json();
-  hideLoader();
+      try {
+        showLoader();
+        const payload = new URLSearchParams();
+        payload.append("page", "editBooking");
+        payload.append("bookingId", String(booking.bookingId || ""));
+        payload.append("userId", String(booking.userId || user.id || ""));
+        payload.append("userEmail", String(booking.userEmail || user.email || ""));
+        payload.append("interpreterId", String(booking.interpreterId || user.id || ""));
+        payload.append("interpreterEmail", String(booking.interpreterEmail || user.email || ""));
+        payload.append("date", form.date);
+        payload.append("startTime", form.start);
+        payload.append("endTime", form.end);
+        payload.append("title", "Take leave");
+        payload.append("location", "-");
+        const res = await fetch(API_URL, { method: "POST", body: payload });
+        const result = await res.json();
+        hideLoader();
+        if (result.success || result.status === "success") {
+          Swal.fire("Saved", "Leave updated successfully.", "success");
+          await loadMyBookings();
+          refreshCalendarAndDashboardViews();
+          return { success: true };
+        }
+        Swal.fire("Error", result.message || "Cannot update leave", "error");
+        return { success: false };
+      } catch (err) {
+        hideLoader();
+        Swal.fire("Error", err.message, "error");
+        return { success: false };
+      }
+    }
 
-  if (result.success || result.status === "success") {
-    Swal.fire("✅ Saved!", "Your leave has been recorded.", "success");
-    loadMyBookings();
-    // ✅ รีเฟรช calendar ให้แสดงวันลาใหม่ทันที
-    const iframe = document.getElementById("calendarFrame");
-    if (iframe) iframe.src = "calendar.html?v=" + new Date().getTime();
-  } else {
-    Swal.fire("Error", result.message || "Cannot save leave", "error");
-  }
-} catch (err) {
-  hideLoader();
-  Swal.fire("Error", err.message, "error");
-}
-} 
+    async function cancelLeaveBooking(bookingId) {
+      try {
+        showLoader();
+        const payload = new URLSearchParams();
+        payload.append("page", "cancelBooking");
+        payload.append("bookingId", String(bookingId || ""));
+        const res = await fetch(API_URL, { method: "POST", body: payload });
+        const result = await res.json();
+        hideLoader();
+        if (result.success || result.status === "success") {
+          Swal.fire("Canceled", "Leave canceled successfully.", "success");
+          await loadMyBookings();
+          refreshCalendarAndDashboardViews();
+          return { success: true };
+        }
+        Swal.fire("Error", result.message || "Cannot cancel leave", "error");
+        return { success: false };
+      } catch (err) {
+        hideLoader();
+        Swal.fire("Error", err.message, "error");
+        return { success: false };
+      }
+    }
+
+    async function openTakeLeave(){
+      const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+      if (!user) { Swal.fire("Please login first", "", "warning"); return; }
+
+      const timeFromValues = [
+        "07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30",
+        "11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30",
+        "15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00"
+      ];
+      const timeToValues = [
+        "07:29","07:59","08:29","08:59","09:29","09:59","10:29","10:59",
+        "11:29","11:59","12:29","12:59","13:29","13:59","14:29","14:59",
+        "15:29","15:59","16:29","16:59","17:29","17:59","18:29","18:59","19:29","19:59"
+      ];
+      const fromOptions = `<option value="" selected disabled>HH:MM</option>` + timeFromValues.map((v) => `<option value="${v}">${v}</option>`).join("");
+      const toOptions = `<option value="" selected disabled>HH:MM</option>` + timeToValues.map((v) => `<option value="${v}">${addOneMinute(v)}</option>`).join("");
+
+      const getLeavesThisYear = () => {
+        const year = new Date().getFullYear();
+        return (window.allMyBookings || [])
+          .filter((b) => {
+            const dateVal = String(b?.date || "");
+            const titleVal = String(b?.title || "").trim().toLowerCase();
+            return titleVal === "take leave" && dateVal.startsWith(String(year) + "-");
+          })
+          .sort((a, b) => {
+            const ad = String(a.date || ""), bd = String(b.date || "");
+            if (ad !== bd) return bd.localeCompare(ad);
+            return String(b.startTime || "").localeCompare(String(a.startTime || ""));
+          });
+      };
+
+      const openEditLeaveForm = async (booking) => {
+        const { value: form } = await Swal.fire({
+          title: "Edit Take Leave",
+          html: `
+            <div class="take-leave-form">
+              <div class="take-leave-field">
+                <label class="take-leave-label" for="editLeaveDate">Date</label>
+                <input id="editLeaveDate" type="date" class="swal2-input take-leave-input" value="${escapeHtml(String(booking.date || ""))}">
+              </div>
+              <div class="take-leave-row">
+                <div class="take-leave-field">
+                  <label class="take-leave-label" for="editLeaveFrom">Time From</label>
+                  <select id="editLeaveFrom" class="swal2-input take-leave-input">${fromOptions}</select>
+                </div>
+                <div class="take-leave-field">
+                  <label class="take-leave-label" for="editLeaveTo">Time To</label>
+                  <select id="editLeaveTo" class="swal2-input take-leave-input">${toOptions}</select>
+                </div>
+              </div>
+            </div>
+          `,
+          customClass: {
+            popup: "swal-takeleave-popup",
+            title: "swal-takeleave-title",
+            confirmButton: "swal-takeleave-confirm",
+            cancelButton: "swal-takeleave-cancel"
+          },
+          buttonsStyling: false,
+          showCancelButton: true,
+          confirmButtonText: "Save",
+          cancelButtonText: "Back",
+          didOpen: () => {
+            const fromEl = document.getElementById("editLeaveFrom");
+            const toEl = document.getElementById("editLeaveTo");
+            if (fromEl) fromEl.value = String(booking.startTime || "");
+            if (toEl) toEl.value = String(booking.endTime || "");
+          },
+          preConfirm: () => {
+            const date = String(document.getElementById("editLeaveDate")?.value || "").trim();
+            const start = String(document.getElementById("editLeaveFrom")?.value || "").trim();
+            const end = String(document.getElementById("editLeaveTo")?.value || "").trim();
+            if (!date || !start || !end) {
+              Swal.showValidationMessage("Please fill in date and time");
+              return false;
+            }
+            if (parseTime(start) >= parseTime(end)) {
+              Swal.showValidationMessage("Start time must be less than end time");
+              return false;
+            }
+            return { date, start, end };
+          }
+        });
+        if (!form) return false;
+        const res = await submitEditLeave(user, booking, form);
+        return !!(res && res.success);
+      };
+
+      const openResult = await Swal.fire({
+        title: "Take Leave",
+        html: `
+          <div class="take-leave-tabs">
+            <button type="button" class="take-leave-tab-btn active" data-tab="add">Add new</button>
+            <button type="button" class="take-leave-tab-btn" data-tab="edit">Edit</button>
+          </div>
+          <div class="take-leave-panel active" id="takeLeaveAddPanel">
+            <div class="take-leave-form">
+              <div class="take-leave-field">
+                <label class="take-leave-label" for="leaveDate">Date</label>
+                <input id="leaveDate" type="date" class="swal2-input take-leave-input">
+              </div>
+              <div class="take-leave-row">
+                <div class="take-leave-field">
+                  <label class="take-leave-label" for="timeFrom">Time From</label>
+                  <select id="timeFrom" class="swal2-input take-leave-input">${fromOptions}</select>
+                </div>
+                <div class="take-leave-field">
+                  <label class="take-leave-label" for="timeTo">Time To</label>
+                  <select id="timeTo" class="swal2-input take-leave-input">${toOptions}</select>
+                </div>
+              </div>
+              <button type="button" class="take-leave-add-save" id="takeLeaveAddSave">Save Leave</button>
+            </div>
+          </div>
+          <div class="take-leave-panel" id="takeLeaveEditPanel">
+            <div class="take-leave-list" id="takeLeaveEditList"></div>
+          </div>
+        `,
+        customClass: {
+          popup: "swal-takeleave-popup",
+          title: "swal-takeleave-title"
+        },
+        showConfirmButton: false,
+        showCancelButton: false,
+        showCloseButton: true,
+        focusConfirm: false,
+        didOpen: () => {
+          const tabButtons = Array.from(document.querySelectorAll(".take-leave-tab-btn"));
+          const addPanel = document.getElementById("takeLeaveAddPanel");
+          const editPanel = document.getElementById("takeLeaveEditPanel");
+          const listEl = document.getElementById("takeLeaveEditList");
+          const addSaveBtn = document.getElementById("takeLeaveAddSave");
+
+          const switchTab = (tab) => {
+            tabButtons.forEach((btn) => btn.classList.toggle("active", btn.getAttribute("data-tab") === tab));
+            if (addPanel) addPanel.classList.toggle("active", tab === "add");
+            if (editPanel) editPanel.classList.toggle("active", tab === "edit");
+          };
+
+          const renderEditList = () => {
+            if (!listEl) return;
+            const rows = getLeavesThisYear();
+            if (!rows.length) {
+              listEl.innerHTML = `<div class="take-leave-empty">No leave records in this year.</div>`;
+              return;
+            }
+            listEl.innerHTML = rows.map((b) => {
+              const status = String(b.status || "").toUpperCase();
+              const canceled = status === "CANCELED";
+              const displayDate = formatDateLabelShort(String(b.date || ""));
+              const displayStart = String(b.startTime || "");
+              const displayEnd = addOneMinute(String(b.endTime || ""));
+              return `
+                <div class="take-leave-item" data-booking-id="${escapeHtml(String(b.bookingId || ""))}">
+                  <div class="take-leave-item-main">
+                    <div class="take-leave-item-date">${escapeHtml(displayDate)}</div>
+                    <div class="take-leave-item-time">${escapeHtml(displayStart)} - ${escapeHtml(displayEnd)}</div>
+                    <span class="take-leave-item-status ${canceled ? "canceled" : ""}">${escapeHtml(status || "BOOKED")}</span>
+                  </div>
+                  <div class="take-leave-item-actions">
+                    <button type="button" class="take-leave-item-btn edit" data-action="edit" ${canceled ? "disabled" : ""}>Edit</button>
+                    <button type="button" class="take-leave-item-btn cancel" data-action="cancel" ${canceled ? "disabled" : ""}>Cancel</button>
+                  </div>
+                </div>
+              `;
+            }).join("");
+
+            listEl.querySelectorAll(".take-leave-item-btn").forEach((btn) => {
+              btn.addEventListener("click", async () => {
+                const rowEl = btn.closest(".take-leave-item");
+                if (!rowEl) return;
+                const bid = String(rowEl.getAttribute("data-booking-id") || "");
+                if (!bid) return;
+                const booking = (window.allMyBookings || []).find((x) => String(x.bookingId || "") === bid);
+                if (!booking) return;
+                const action = btn.getAttribute("data-action");
+                if (action === "edit") {
+                  Swal.close();
+                  await openEditLeaveForm(booking);
+                  await openTakeLeave();
+                  return;
+                } else if (action === "cancel") {
+                  Swal.close();
+                  const confirm = await Swal.fire({
+                    title: "Cancel this leave?",
+                    text: `${formatDateLabelShort(String(booking.date || ""))} ${booking.startTime || ""}-${addOneMinute(booking.endTime || "")}`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, cancel",
+                    cancelButtonText: "Back"
+                  });
+                  if (confirm.isConfirmed) {
+                    await cancelLeaveBooking(booking.bookingId);
+                  }
+                  await openTakeLeave();
+                  return;
+                }
+              });
+            });
+          };
+
+          tabButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const tab = btn.getAttribute("data-tab") || "add";
+              switchTab(tab);
+              if (tab === "edit") renderEditList();
+            });
+          });
+
+          if (addSaveBtn) {
+            addSaveBtn.addEventListener("click", async () => {
+              const date = String(document.getElementById("leaveDate")?.value || "").trim();
+              const start = String(document.getElementById("timeFrom")?.value || "").trim();
+              const end = String(document.getElementById("timeTo")?.value || "").trim();
+              if (!date || !start || !end) {
+                Swal.fire("Warning", "Please fill in date and time", "warning");
+                return;
+              }
+              if (parseTime(start) >= parseTime(end)) {
+                Swal.fire("Warning", "Start time must be less than end time", "warning");
+                return;
+              }
+              const res = await submitTakeLeave(user, { date, start, end });
+              if (!res || !res.success) return;
+              const leaveDate = document.getElementById("leaveDate");
+              const fromEl = document.getElementById("timeFrom");
+              const toEl = document.getElementById("timeTo");
+              if (leaveDate) leaveDate.value = "";
+              if (fromEl) fromEl.value = "";
+              if (toEl) toEl.value = "";
+              switchTab("edit");
+              renderEditList();
+            });
+          }
+        }
+      });
+
+      return openResult;
+    }
 
     function parseTime(t){const [h,m]=t.split(":").map(Number);return h*60+m;}
 
+    bindUserMenu();
+    bindCalendarBridge();
+    bindInterpreterSidebar();
+    bindInterpreterDatePicker();
+    switchInterpreterView("dashboard");
     loadMyBookings();
   </script>
 </body>
 </html>
+
+
+
+
