@@ -268,19 +268,22 @@ async function getDashboardWorkAtByInterpreter(ymd) {
 
 function computeMonthChartData(ym) {
   const monthRows = dashAllBookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
-  const perDayCounts = {};
-  const monthCountsByInterpreter = { i001: 0, i003: 0, i004: 0 };
+  const perDayTotals = {};
+  const monthCategoryCounts = { CHP: 0, G1P: 0, "MS Team": 0, Other: 0 };
 
   monthRows.forEach((r) => {
     const d = String(r.date || "").replace(/^'/, "");
-    const iid = String(r.interpreterId || "");
-    if (!DASH_INTERPRETERS.includes(iid)) return;
-    monthCountsByInterpreter[iid] += 1;
-    if (!perDayCounts[d]) perDayCounts[d] = { i001: 0, i003: 0, i004: 0 };
-    perDayCounts[d][iid] += 1;
+    if (!d) return;
+    perDayTotals[d] = (perDayTotals[d] || 0) + 1;
+
+    const location = String(r.location || "").trim().toUpperCase();
+    if (location.startsWith("CHP-")) monthCategoryCounts.CHP += 1;
+    else if (location.startsWith("G1P-")) monthCategoryCounts.G1P += 1;
+    else if (location.includes("MS-TEAM") || location.includes("MS TEAM")) monthCategoryCounts["MS Team"] += 1;
+    else monthCategoryCounts.Other += 1;
   });
 
-  return { monthRows, perDayCounts, monthCountsByInterpreter };
+  return { monthRows, perDayTotals, monthCategoryCounts };
 }
 
 function renderDashboardInterpreterCards(todayRows, workAtByInterpreter = null) {
@@ -304,9 +307,9 @@ function renderDashboardChartsForMonth(ym) {
   if (!ym) return;
   dashSelectedMonth = ym;
   if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = formatDashMonthLabel(ym);
-  const { perDayCounts, monthCountsByInterpreter } = computeMonthChartData(ym);
-  buildDashboardDailyChart(perDayCounts, ym);
-  buildDashboardInterpreterChart(monthCountsByInterpreter);
+  const { perDayTotals, monthCategoryCounts } = computeMonthChartData(ym);
+  buildDashboardDailyChart(perDayTotals, ym);
+  buildDashboardInterpreterChart(monthCategoryCounts);
 }
 
 function formatDashMonthLabel(ym) {
@@ -384,31 +387,32 @@ function initDashMonthPicker(defaultYm) {
   }
 }
 
-function buildDashboardDailyChart(perDayCounts, ym) {
+function buildDashboardDailyChart(perDayTotals, ym) {
   const canvas = document.getElementById("dashDailyChart");
   if (!canvas || typeof Chart === "undefined") return;
   const ctx = canvas.getContext("2d");
   const [year, month] = ym.split("-").map(Number);
   const lastDay = new Date(year, month, 0).getDate();
   const labels = Array.from({ length: lastDay }, (_, i) => `${year}-${String(month).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`);
-  const colors = { i001: "#3b82f6", i003: "#10b981", i004: "#f59e0b" };
-
-  const datasets = DASH_INTERPRETERS.map((iid) => ({
-    label: DASH_INTERPRETER_NAMES[iid],
-    data: labels.map((day) => (perDayCounts[day] && perDayCounts[day][iid]) ? perDayCounts[day][iid] : 0),
-    borderColor: colors[iid],
-    backgroundColor: colors[iid],
-    borderWidth: 2,
-    tension: 0.25,
-    fill: false,
-    pointRadius: 2,
-    pointHoverRadius: 4
-  }));
+  const teamTotals = labels.map((day) => Number(perDayTotals[day] || 0));
 
   if (dashDailyChart) dashDailyChart.destroy();
   dashDailyChart = new Chart(ctx, {
     type: "line",
-    data: { labels: labels.map((d) => d.slice(-2)), datasets },
+    data: {
+      labels: labels.map((d) => d.slice(-2)),
+      datasets: [{
+        label: "Team Total",
+        data: teamTotals,
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.18)",
+        borderWidth: 2.5,
+        tension: 0.28,
+        fill: true,
+        pointRadius: 2.5,
+        pointHoverRadius: 4.5
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -435,12 +439,12 @@ function buildDashboardDailyChart(perDayCounts, ym) {
   });
 }
 
-function buildDashboardInterpreterChart(monthCounts) {
+function buildDashboardInterpreterChart(monthCategoryCounts) {
   const canvas = document.getElementById("dashInterpreterChart");
   if (!canvas || typeof Chart === "undefined") return;
   const ctx = canvas.getContext("2d");
-  const labels = DASH_INTERPRETERS.map((iid) => DASH_INTERPRETER_NAMES[iid]);
-  const values = DASH_INTERPRETERS.map((iid) => monthCounts[iid] || 0);
+  const labels = ["CHP", "G1P", "MS Team", "Other"];
+  const values = labels.map((k) => Number(monthCategoryCounts[k] || 0));
   if (dashInterpreterChart) dashInterpreterChart.destroy();
   dashInterpreterChart = new Chart(ctx, {
     type: "bar",
@@ -449,7 +453,7 @@ function buildDashboardInterpreterChart(monthCounts) {
       datasets: [{
         label: "Bookings",
         data: values,
-        backgroundColor: ["#3b82f6", "#10b981", "#f59e0b"],
+        backgroundColor: ["#3b82f6", "#10b981", "#8b5cf6", "#94a3b8"],
         borderRadius: 8
       }]
     },
