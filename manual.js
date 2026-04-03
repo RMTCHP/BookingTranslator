@@ -12,9 +12,9 @@
             ["1) Header: Manual และเมนูผู้ใช้", "ปุ่ม Manual ใช้เปิดคู่มือนี้ และเมนูชื่อผู้ใช้ใช้สำหรับ Change Password และ Logout"],
             ["2) แถบนำทางด้านซ้าย (Sidebar)", "ไอคอนบนใช้เข้า Dashboard และไอคอนล่างใช้เข้า My Bookings"],
             ["3) Summary Cards", "แสดงจำนวนงานรวมของเดือน, จำนวนงานวันนี้ และจำนวนล่ามที่ active"],
-            ["4) Today's Interpreter Jobs", "แสดงข้อมูลล่ามแต่ละคน ได้แก่ชื่อ, Job Total และ Work at (CHP/G1P/Leave/Not set)"],
-            ["5) กราฟ Bookings per Day", "ดูแนวโน้มจำนวน booking รายวันของแต่ละล่ามในเดือนที่เลือก"],
-            ["6) กราฟ Summary Bookings by Interpreter", "สรุปจำนวนงานรวมรายล่ามในเดือนเดียวกันแบบกราฟแท่ง"]
+            ["4) Today's Interpreter Jobs", "แสดงข้อมูลล่ามแต่ละคน ได้แก่ชื่อ, Today's Bookings และ Work at (CHP/G1P/Not set)"],
+            ["5) กราฟ Bookings per Day", "ดูแนวโน้มจำนวน booking รายวันแบบยอดรวมทั้งทีมในเดือนที่เลือก"],
+            ["6) กราฟ Team Booking Channels", "สรุปจำนวนงานตามช่องทาง/พื้นที่งาน (CHP, G1P, MS Team, Other) ในเดือนเดียวกันแบบกราฟแท่ง"]
           ]
         },
         {
@@ -59,9 +59,9 @@
             ["1) Header: Manual and User Menu", "Use Manual to open this guide. User menu provides Change Password and Logout."],
             ["2) Left Sidebar Navigation", "Top icon opens Dashboard. Bottom icon opens My Bookings."],
             ["3) Summary Cards", "Shows total bookings this month, bookings today, and active interpreter count."],
-            ["4) Today's Interpreter Jobs", "Displays each interpreter's name, Job Total, and Work at (CHP/G1P/Leave/Not set)."],
-            ["5) Bookings per Day Chart", "Shows daily booking trend by interpreter for the selected month."],
-            ["6) Summary Bookings by Interpreter", "Bar chart summary of monthly booking totals per interpreter."]
+            ["4) Today's Interpreter Jobs", "Displays each interpreter's name, Today's Bookings, and Work at (CHP/G1P/Not set)."],
+            ["5) Bookings per Day Chart", "Shows daily team total booking trend for the selected month."],
+            ["6) Team Booking Channels", "Bar chart summary by booking channel/location group (CHP, G1P, MS Team, Other) for the selected month."]
           ]
         },
         {
@@ -106,9 +106,9 @@
             ["1) ヘッダー: Manual とユーザーメニュー", "Manualボタンでこのガイドを開きます。ユーザーメニューではChange PasswordとLogoutができます。"],
             ["2) 左サイドバー", "上のアイコンはDashboard、下のアイコンはMy Bookingsを開きます。"],
             ["3) Summary Cards", "今月の予約件数、本日の予約件数、稼働中通訳者数を表示します。"],
-            ["4) Today's Interpreter Jobs", "各通訳者の名前、Job Total、Work at（CHP/G1P/Leave/Not set）を表示します。"],
-            ["5) Bookings per Day グラフ", "選択月の日別予約推移を表示します。"],
-            ["6) Summary Bookings by Interpreter", "通訳者ごとの月間予約件数を棒グラフで表示します。"]
+            ["4) Today's Interpreter Jobs", "各通訳者の名前、Today's Bookings、Work at（CHP/G1P/Not set）を表示します。"],
+            ["5) Bookings per Day グラフ", "選択月のチーム合計の日別予約推移を表示します。"],
+            ["6) Team Booking Channels", "選択月の予約チャネル/場所区分（CHP, G1P, MS Team, Other）を棒グラフで表示します。"]
           ]
         },
         {

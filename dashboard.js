@@ -295,7 +295,7 @@ function renderDashboardInterpreterCards(todayRows, workAtByInterpreter = null) 
     const locEl = document.getElementById(`dash${iid.toUpperCase()}Loc`);
     if (!jobEl || !locEl) return;
 
-    jobEl.textContent = `Job Total: ${totalJobsToday}`;
+    jobEl.textContent = `Today's Bookings: ${totalJobsToday}`;
     const rawWorkAt = String(workMap[iid] || "Not set");
     const workAt = rawWorkAt === "-" ? "Not set" : rawWorkAt;
     const badgeClass = workAt === "CHP" ? "work-at-badge chp" : (workAt === "G1P" ? "work-at-badge g1p" : "work-at-badge empty");
@@ -306,7 +306,10 @@ function renderDashboardInterpreterCards(todayRows, workAtByInterpreter = null) 
 function renderDashboardChartsForMonth(ym) {
   if (!ym) return;
   dashSelectedMonth = ym;
-  if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = formatDashMonthLabel(ym);
+  const monthLabel = formatDashMonthLabel(ym);
+  if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = monthLabel;
+  const dashChannelMonthLabel = document.getElementById("dashChannelMonthLabel");
+  if (dashChannelMonthLabel) dashChannelMonthLabel.textContent = monthLabel;
   const { perDayTotals, monthCategoryCounts } = computeMonthChartData(ym);
   buildDashboardDailyChart(perDayTotals, ym);
   buildDashboardInterpreterChart(monthCategoryCounts);
