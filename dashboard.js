@@ -36,6 +36,7 @@ let bookingViewInitialized = false;
 let newBookingWorkAtByInterpreter = {};
 const calendarWorkAtCacheByMonth = {};
 const leaveInterpreterCacheByMonth = {};
+const dashboardFactoryPlanCache = new Map();
 
 const dashMonthPickerWrap = document.getElementById("dashMonthPickerWrap");
 const dashMonthPickerBtn = document.getElementById("dashMonthPickerBtn");
@@ -209,6 +210,7 @@ function switchWorkspaceView(view) {
     if (!dashLoaded || dashboardNeedsRefresh) {
       showLoader();
       dashLoaded = false;
+      if (dashboardNeedsRefresh) dashboardFactoryPlanCache.clear();
       loadDashboardPanel();
     }
     return;
@@ -260,10 +262,17 @@ async function getDashboardWorkAtByInterpreter(ymd) {
       const interpreterEmail = getInterpreterEmail(iid);
       if (!interpreterEmail) return [iid, "-"];
       try {
-        const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(monthKey)}`;
-        const res = await fetch(url);
-        const result = await res.json();
-        const map = result && result.success && result.data ? result.data : {};
+        const cacheKey = `${String(interpreterEmail).toLowerCase()}|${monthKey}`;
+        if (!dashboardFactoryPlanCache.has(cacheKey)) {
+          const req = (async () => {
+            const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(monthKey)}`;
+            const res = await fetch(url);
+            const result = await res.json();
+            return result && result.success && result.data ? result.data : {};
+          })().catch(() => ({}));
+          dashboardFactoryPlanCache.set(cacheKey, req);
+        }
+        const map = await dashboardFactoryPlanCache.get(cacheKey);
         const raw = String(map[ymd] || "").trim().toUpperCase();
         const normalized = (raw === "CHP" || raw === "G1P" || raw === "CHP | G1P" || raw === "G1P | CHP")
           ? raw
@@ -507,6 +516,7 @@ async function loadDashboardPanel() {
   showLoader();
   try {
     const { ymd, ym } = dashLocalDateParts();
+    const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
     const res = await fetch(`${API_URL}?page=listBookings`);
     const rows = await res.json();
     const bookedRows = Array.isArray(rows)
@@ -541,8 +551,8 @@ async function loadDashboardPanel() {
       if (ready) renderDashboardChartsForMonth(ym);
     }
 
-    // Load Work at asynchronously after dashboard data is visible.
-    getDashboardWorkAtByInterpreter(ymd)
+    // Work at request started earlier; apply result asynchronously when ready.
+    workAtPromise
       .then((workMap) => {
         renderDashboardInterpreterCards(todayRows, workMap);
       })
