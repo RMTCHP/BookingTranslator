@@ -1274,9 +1274,18 @@
       background: rgba(255, 255, 255, 0.12);
     }
     .user-caret {
-      font-size: 10px;
       color: #cdddf4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
       transform: translateY(1px);
+    }
+    .user-caret svg {
+      width: 12px;
+      height: 12px;
+      display: block;
     }
 
     #loader {
@@ -3166,7 +3175,11 @@
         <span class="user-icon" aria-hidden="true"><span class="user-dot-head"></span><span class="user-dot-body"></span></span>
         <span class="user-name">${user.username}</span>
         <span class="user-role">${String(user.role || "INTERPRETER").toUpperCase()}</span>
-        <span class="user-caret">&#9662;</span>
+        <span class="user-caret" aria-hidden="true">
+          <svg viewBox="0 0 12 12" fill="none">
+            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </span>
       `;
       document.getElementById("jobHeader").innerText=`My Job`;
       updateInterpreterDateButton();

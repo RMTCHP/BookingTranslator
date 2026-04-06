@@ -185,7 +185,11 @@ function renderHeaderUserInfo() {
     <span class="user-icon" aria-hidden="true"><span class="user-dot-head"></span><span class="user-dot-body"></span></span>
     <span class="user-name">${user.username}</span>
     <span class="user-role">${user.role}</span>
-    <span class="user-caret">?</span>
+    <span class="user-caret" aria-hidden="true">
+      <svg viewBox="0 0 12 12" fill="none">
+        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </span>
   `;
 }
 
@@ -1093,7 +1097,14 @@ if (list.length === 0) {
     : "You have no booking schedule for today.";
   c.innerHTML = `
     <div class="booking-empty">
-      <div class="booking-empty-icon">??</div>
+      <div class="booking-empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="3.5" y="4.5" width="17" height="16" rx="3" stroke="currentColor" stroke-width="1.6"></rect>
+          <path d="M7.5 2.8V6.2M16.5 2.8V6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+          <path d="M3.8 9H20.2" stroke="currentColor" stroke-width="1.6"></path>
+          <path d="M8 12.2H8.01M12 12.2H12.01M16 12.2H16.01M8 15.6H8.01M12 15.6H12.01M16 15.6H16.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+        </svg>
+      </div>
       <div class="booking-empty-title">${title}</div>
       <div class="booking-empty-desc">${desc}</div>
     </div>
