@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -1900,7 +1900,7 @@
               <div class="dashboard-card">
                 <h3>Active Interpreters</h3>
                 <p id="dashTotalInterpreter">3</p>
-                <span class="sub">SOM SAN â€¢ POOKY SAN â€¢ L SAN</span>
+                <span class="sub">SOM SAN • POOKY SAN • L SAN</span>
               </div>
             </div>
 
@@ -1974,7 +1974,7 @@
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec";
     let currentDate=new Date();
     let interpreterPickerMonth = currentDate.getMonth();
     let interpreterPickerYear = currentDate.getFullYear();
@@ -3160,7 +3160,7 @@
 
     async function loadMyBookings(){
       const user=JSON.parse(localStorage.getItem("loggedInUser"));
-      if(!user){Swal.fire("à¸à¸£à¸¸à¸“à¸² Login à¸à¹ˆà¸­à¸™","","warning").then(()=>window.location.href="index.html");return;}
+      if(!user){Swal.fire("กรุณา Login ก่อน","","warning").then(()=>window.location.href="index.html");return;}
       showLoader();
       document.getElementById("userInfo").innerHTML = `
         <span class="user-icon" aria-hidden="true"><span class="user-dot-head"></span><span class="user-dot-body"></span></span>

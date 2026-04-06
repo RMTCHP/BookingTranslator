@@ -2,926 +2,1131 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ðŸ“ˆ Dashboard - Interpreter Booking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- SweetAlert2 -->
+  <title>Resonac Interpreter Booking System</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <script src="chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="manual.css?v=20260402-1">
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f8fafc;
-      margin: 0;
-      padding: 0;
-      color: #0f172a;
+    .admin-view { display: none; }
+    .admin-panel {
+      background: #fff;
+      border: 1px solid #d5e3f3;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(8, 30, 58, 0.08);
     }
-
-    .container {
-      max-width: 1100px;
-      margin: 25px auto;
-      background: #ffffff;
-      padding: 25px 40px;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(15,23,42,0.12);
-      position: relative;
+    .admin-panel h2 {
+      margin: 0 0 12px;
+      color: #173b68;
+      font-size: 30px;
+      font-weight: 800;
     }
-
-    h2 {
-      margin: 0;
-      color: #0f172a;
-    }
-
-    .card-box {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-top: 20px;
-    }
-
-    .card {
-      background: linear-gradient(135deg, #e0f2fe, #eff6ff);
-      padding: 18px 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(15,23,42,0.08);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      right: -30px;
-      top: -30px;
-      width: 80px;
-      height: 80px;
-      border-radius: 999px;
-      background: rgba(59,130,246,0.12);
-    }
-
-    .card h3 {
-      margin: 0;
-      font-size: 14px;
-      color: #1e293b;
-      font-weight: 600;
-    }
-
-    .card p {
-      font-size: 26px;
-      margin-top: 8px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .card span.sub {
-      font-size: 11px;
-      color: #64748b;
-    }
-
-    /* Chart area */
-    .chart-section {
-      margin-top: 30px;
-    }
-
-    .chart-card {
-      background: #f9fafb;
-      padding: 16px 18px 14px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(15,23,42,0.05);
-      margin-bottom: 20px;
-    }
-
-    .chart-card h3 {
-      margin: 0 0 8px;
-      font-size: 15px;
-      color: #0f172a;
+    .admin-toolbar {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .chart-subtitle {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 6px;
-    }
-
-    .chart-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 6px;
       gap: 10px;
       flex-wrap: wrap;
+      align-items: end;
+      margin-bottom: 14px;
     }
-
-    .chart-actions button,
-    .mode-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 12px;
+    .admin-filter {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 180px;
+    }
+    .admin-filter label {
       font-size: 12px;
+      font-weight: 700;
+      color: #355275;
+    }
+    .admin-filter input,
+    .admin-filter select {
+      min-height: 36px;
+      border: 1px solid #c9d8eb;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: #1c2f45;
+      background: #fff;
+    }
+    .admin-action-btn {
+      min-height: 36px;
+      border: 1px solid #c2d5ed;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
       cursor: pointer;
-      background: #e0f2fe;
-      color: #0369a1;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      color: #123f73;
+      background: #eef5ff;
+      transition: all .18s ease;
     }
-
-    .chart-actions button:hover,
-    .mode-btn:hover {
-      background: #bfdbfe;
+    .admin-action-btn:hover {
+      background: #dfeeff;
+      border-color: #9cbde5;
+      transform: translateY(-1px);
     }
-
-    .mode-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+    .admin-action-btn.primary {
+      color: #fff;
+      border-color: #163c6d;
+      background: linear-gradient(145deg, #1f4e8c, #163b6a);
     }
-
-    .mode-label {
-      font-size: 11px;
-      color: #6b7280;
+    .admin-action-btn.primary:hover {
+      filter: brightness(1.04);
+      box-shadow: 0 8px 16px rgba(16, 45, 86, 0.2);
     }
-
-    .mode-btn {
-      background: #e5e7eb;
-      color: #374151;
-      padding: 4px 10px;
+    .admin-action-btn.success {
+      color: #ffffff;
+      border-color: #1e7a3e;
+      background: linear-gradient(145deg, #2aa24f, #1f8a43);
     }
-
-    .mode-btn.active {
-      background: #0ea5e9;
-      color: #f9fafb;
+    .admin-action-btn.success:hover {
+      filter: brightness(1.04);
+      box-shadow: 0 8px 16px rgba(23, 117, 53, 0.25);
     }
-
-    .chart-wrapper {
-      position: relative;
-      width: 100%;
-      height: 280px;
+    .admin-table-wrap {
+      overflow: auto;
+      border: 1px solid #d4e2f2;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
-    .chart-wrapper canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    /* Interpreter bar chart wrapper */
-    .chart-wrapper-small {
-      position: relative;
-      width: 100%;
-      height: 230px;
-    }
-    .chart-wrapper-small canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    table {
+    .admin-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 24px;
+      min-width: 760px;
+      table-layout: fixed;
+    }
+    .admin-table th,
+    .admin-table td {
+      border-bottom: 1px solid #e7eef8;
+      padding: 11px 12px;
       font-size: 13px;
-    }
-
-    th, td {
-      padding: 9px 8px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    th {
-      background: #f1f5f9;
+      color: #1f3146;
       text-align: left;
-      font-weight: 600;
-      color: #0f172a;
+      vertical-align: middle;
+      word-break: break-word;
+    }
+    .admin-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: linear-gradient(180deg, #eef5ff 0%, #e8f0fb 100%);
+      color: #1d456f;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      border-bottom: 1px solid #d1dff0;
+    }
+    .admin-table tbody tr:nth-child(even) td {
+      background: #fbfdff;
+    }
+    .admin-table tbody tr:hover td {
+      background: #edf5ff;
+      transition: background-color .12s ease;
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    #reportTable th:nth-child(1),
+    #reportTable td:nth-child(1) {
+      width: 110px;
+      white-space: nowrap;
+    }
+    #reportTable th:nth-child(2),
+    #reportTable td:nth-child(2),
+    #reportTable th:nth-child(3),
+    #reportTable td:nth-child(3) {
+      width: 90px;
+      white-space: nowrap;
+      text-align: center;
+    }
+    #reportTable th:nth-child(4),
+    #reportTable td:nth-child(4) {
+      width: 340px;
+    }
+    #reportTable th:nth-child(5),
+    #reportTable td:nth-child(5) {
+      width: 180px;
+    }
+    #reportTable th:nth-child(6),
+    #reportTable td:nth-child(6) {
+      width: 130px;
+      white-space: nowrap;
+    }
+    #reportTable th:nth-child(7),
+    #reportTable td:nth-child(7) {
+      width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .admin-empty-message {
+      text-align: center !important;
+      font-weight: 800;
+      color: #2b4d73;
+      padding: 26px 12px !important;
+      vertical-align: middle !important;
+      background: #f7fbff;
+    }
+    .admin-table-actions {
+      display: inline-flex;
+      gap: 8px;
+    }
+    .admin-mini-btn {
+      border: 1px solid #c7d7ea;
+      border-radius: 8px;
+      min-height: 30px;
+      padding: 4px 10px;
       font-size: 12px;
-      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      background: #f7fbff;
+      color: #214b78;
     }
-
-    tr:nth-child(even) td {
-      background: #f9fafb;
+    .admin-mini-btn:hover { background: #e7f1ff; }
+    .admin-mini-btn.danger {
+      border-color: #efc3c8;
+      color: #9f2432;
+      background: #fff3f5;
     }
-
-    /* Loading overlay */
-    #loading {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.7);
-      backdrop-filter: blur(2px);
-      justify-content: center;
+    .admin-mini-btn.danger:hover { background: #ffe7eb; }
+    .admin-user-swal-popup {
+      border-radius: 14px;
+      border: 1px solid #d5e3f3;
+      box-shadow: 0 16px 34px rgba(8, 30, 58, 0.2);
+      padding: 16px 18px 14px;
+    }
+    .admin-user-swal-title {
+      color: #183f6d;
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .admin-user-swal-html {
+      text-align: left;
+      margin-top: 4px !important;
+    }
+    .admin-user-form {
+      display: grid;
+      gap: 10px;
+    }
+    .admin-user-field {
+      display: grid;
+      gap: 5px;
+    }
+    .admin-user-field label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #355275;
+      letter-spacing: 0.2px;
+    }
+    .admin-user-field input,
+    .admin-user-field select {
+      min-height: 40px;
+      border: 1px solid #c9d8eb;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: #1c2f45;
+      background: #ffffff;
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .admin-user-field input:focus,
+    .admin-user-field select:focus {
+      border-color: #78a7dc;
+      box-shadow: 0 0 0 3px rgba(67, 134, 206, 0.16);
+    }
+    .admin-user-field input[disabled] {
+      color: #647b98;
+      background: #f3f7fc;
+    }
+    .admin-user-swal-confirm {
+      min-width: 110px !important;
+      border-radius: 10px !important;
+      font-weight: 800 !important;
+      background: linear-gradient(145deg, #1f4e8c, #163b6a) !important;
+      border: 1px solid #163c6d !important;
+      box-shadow: 0 8px 18px rgba(16, 45, 86, 0.24);
+    }
+    .admin-user-swal-cancel {
+      min-width: 110px !important;
+      border-radius: 10px !important;
+      font-weight: 700 !important;
+      color: #234f7c !important;
+      background: #edf4fb !important;
+      border: 1px solid #c6d9ef !important;
+    }
+    .admin-panel-head {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      border-radius: 12px;
-      z-index: 5;
+      gap: 12px;
+      margin-bottom: 14px;
     }
-    .spinner {
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      border: 4px solid #e5e7eb;
-      border-top-color: #0ea5e9;
-      animation: spin 0.8s linear infinite;
+    .admin-inline-filter {
+      margin-bottom: 12px;
+      max-width: 320px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width: 900px) {
-      .container {
-        padding: 18px 16px;
-        margin: 15px auto;
-      }
-      .card-box {
-        grid-template-columns: 1fr;
-      }
+    .admin-inline-filter input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #c9d8eb;
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-size: 14px;
+      color: #1c2f45;
+      background: #fff;
+      transition: border-color .12s ease, box-shadow .12s ease;
     }
-    .status-badge {
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  display: inline-block;
-  text-transform: uppercase;
-  color: white;
-}
-
-.status-booked {
-  background: #22c55e; /* green */
-}
-
-.status-canceled {
-  background: #ef4444; /* red */
-}
-
-.status-other {
-  background: #6b7280; /* gray */
-}
-
+    .admin-inline-filter input:focus {
+      border-color: #78a7dc;
+      box-shadow: 0 0 0 3px rgba(67, 134, 206, 0.16);
+      outline: none;
+    }
   </style>
 </head>
 <body>
-
-<!-- à¹‚à¸«à¸¥à¸” Layout (Navbar + Tabs) -->
-<div id="layout"></div>
-
-<script>
-fetch("layout.html")
-  .then(res => res.text())
-  .then(html => {
-    document.getElementById("layout").innerHTML = html;
-
-    // Active Tab = Dashboard
-    document.getElementById("tab-dashboard").classList.add("active");
-
-    // Menu navigation
-    document.getElementById("tab-dashboard").onclick = () => location.href = "dashboardadmin.html";
-    document.getElementById("tab-report").onclick   = () => location.href = "report.html";
-    document.getElementById("tab-admin").onclick    = () => location.href = "admin.html";
-  });
-</script>
-
-<div class="container">
-  <div id="loading"><div class="spinner"></div></div>
-
-  <h2>ðŸ“ˆ Dashboard Overview</h2>
-
-  <!-- Summary Cards -->
-  <div class="card-box">
-    <div class="card">
-      <h3>Total Bookings (This Month)</h3>
-      <p id="totalMonth">0</p>
-      <span class="sub" id="monthLabel"></span>
+  <div class="navbar">
+    <div class="title">
+      <img src="images/Icon.png" alt="System Icon" class="navbar-title-icon">
+      <span>Resonac Interpreter Booking System</span>
     </div>
-    <div class="card">
-      <h3>Total Bookings (Today)</h3>
-      <p id="totalToday">0</p>
-      <span class="sub" id="todayLabel"></span>
-    </div>
-    <div class="card">
-      <h3>Active Interpreters</h3>
-      <p id="totalInterpreter">4</p>
-      <span class="sub">SOM SAN â€¢ GOOK SAN â€¢ POOKY SAN â€¢ L SAN</span>
+    <div class="navbar-right">
+      <button type="button" class="manual-btn" id="manualBtn" aria-label="Manual">Manual</button>
+      <div class="user-menu" id="userMenu">
+        <button type="button" class="user-info user-menu-btn" id="userInfo" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="user-menu-dropdown" id="userMenuDropdown">
+          <button type="button" id="menuChangePassword">Change Password</button>
+          <button type="button" id="menuLogout">Logout</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Charts -->
-  <div class="chart-section">
+  <div class="workspace-shell">
+    <aside class="left-sidebar" aria-label="Main navigation">
+      <button type="button" id="navDashboard" class="side-nav-btn active" aria-label="Dashboard" title="Dashboard" data-tooltip="Dashboard">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 18V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M10 18V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M16 18V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M22 18V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </button>
+      <button type="button" id="navMyBooking" class="side-nav-btn" aria-label="My Booking" title="My Booking" data-tooltip="My Booking">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 6.5C4 5.67 4.67 5 5.5 5H11.5C12.33 5 13 5.67 13 6.5V19H5.5C4.67 19 4 18.33 4 17.5V6.5Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M20 6.5C20 5.67 19.33 5 18.5 5H12.5C11.67 5 11 5.67 11 6.5V19H18.5C19.33 19 20 18.33 20 17.5V6.5Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+      </button>
+      <button type="button" id="navReport" class="side-nav-btn" aria-label="Report" title="Report" data-tooltip="Report">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M5 19V7.5C5 6.67 5.67 6 6.5 6H17.5C18.33 6 19 6.67 19 7.5V19H5Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8 10.5H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M8 14H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M8 17.5H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </button>
+      <button type="button" id="navUserManagement" class="side-nav-btn" aria-label="User Management" title="User Management" data-tooltip="User Management">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M3.5 18C4.2 14.9 6.2 13.2 9 13.2C11.8 13.2 13.8 14.9 14.5 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="17.5" cy="9.5" r="2.2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M15.2 17.8C15.6 15.8 16.9 14.7 18.7 14.7C20 14.7 21.1 15.3 21.7 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </button>
+    </aside>
 
-    <!-- Bookings per Day (line chart, full width) -->
-    <div class="chart-card">
-      <h3>
-        ðŸ“Š Bookings per Day (This Month)
-        <span class="mode-group">
-          <span class="mode-label">Mode:</span>
-          <button type="button" id="modeCountBtn" class="mode-btn active" onclick="setDailyMode('count')">
-            ðŸ§¾ Bookings
+    <div class="workspace-content">
+      <div class="main booking-focus" id="bookingView" style="display:none;">
+        <!-- My Bookings -->
+        <div class="mybooking">
+          <button class="new-booking-btn" onclick="openNewBookingModal()" aria-label="New Booking" title="New Booking">
+            <span class="new-booking-icon">＋</span>
           </button>
-          <button type="button" id="modeHoursBtn" class="mode-btn" onclick="setDailyMode('hours')">
-            â± Working Hours
-          </button>
-        </span>
-      </h3>
-      <div class="chart-subtitle">
-        One line per interpreter â€¢ Click legend labels to hide/show lines â€¢ Gray dashed line = daily average
+          <div class="mybooking-header">
+            <h3 id="myBookingTitle">My Bookings</h3>
+            <div class="nav-buttons">
+              <div class="my-date-picker-wrap" id="myDatePickerWrap">
+                <button type="button" id="myDateBtn" class="nav-btn my-date-btn" aria-label="Select date"></button>
+                <div class="my-date-picker-popover" id="myDatePickerPopover" aria-hidden="true">
+                  <div class="my-date-picker-header">
+                    <button type="button" id="myDateMonthPrev" class="my-date-month-nav" aria-label="Previous month">&#10094;</button>
+                    <span id="myDatePickerMonthYear"></span>
+                    <button type="button" id="myDateMonthNext" class="my-date-month-nav" aria-label="Next month">&#10095;</button>
+                  </div>
+                  <div class="my-date-weekdays">
+                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                  </div>
+                  <div class="my-date-grid" id="myDateGrid"></div>
+                  <div class="my-date-footer">
+                    <button type="button" id="myDateAllMonthBtn" class="my-date-all-month-btn">All this month</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="myBookingList"></div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar-box">
+          <iframe id="calendarFrame" src="calendar.html"></iframe>
+        </div>
       </div>
-      <div class="chart-wrapper">
-        <canvas id="dailyChart"></canvas>
+
+      <section id="dashboardView" class="dashboard-coming-soon" style="display:block;">
+        <div class="dashboard-panel">
+          <div class="dashboard-head">
+            <h2>Dashboard Overview</h2>
+          </div>
+
+          <div class="dashboard-top-layout">
+            <div class="dashboard-summary-col">
+              <div class="dashboard-card">
+                <h3>Total Bookings (This Month)</h3>
+                <p id="dashTotalMonth">0</p>
+                <span class="sub" id="dashMonthLabel">-</span>
+              </div>
+              <div class="dashboard-card">
+                <h3>Total Bookings (Today)</h3>
+                <p id="dashTotalToday">0</p>
+                <span class="sub" id="dashTodayLabel">-</span>
+              </div>
+              <div class="dashboard-card">
+                <h3>Active Interpreters</h3>
+                <p id="dashTotalInterpreter">3</p>
+                <span class="sub">SOM SAN • POOKY SAN • L SAN</span>
+              </div>
+            </div>
+
+            <div class="dashboard-interpreter-col">
+              <h3 class="dashboard-side-title">Today's Interpreter Jobs</h3>
+              <div class="interpreter-card-list">
+                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/SOMSAN.JPG" alt="SOM SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">SOM SAN</div>
+                    <div class="interpreter-job" id="dashI001Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI001Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>
+                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/POOKYSAN.JPG" alt="POOKY SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">POOKY SAN</div>
+                    <div class="interpreter-job" id="dashI003Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI003Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>
+                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/LSAN.JPG" alt="L SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">L SAN</div>
+                    <div class="interpreter-job" id="dashI004Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI004Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-chart-section">
+            <div class="dashboard-chart-card">
+              <h3>
+                <span>Bookings per Day</span>
+                <div class="dash-month-picker-wrap" id="dashMonthPickerWrap">
+                  <button type="button" id="dashMonthPickerBtn" class="dashboard-month-btn" aria-label="Select month"></button>
+                  <div class="dash-month-picker-popover" id="dashMonthPickerPopover" aria-hidden="true">
+                    <div class="dash-month-picker-header">
+                      <button type="button" id="dashMonthYearPrev" class="dash-month-year-nav" aria-label="Previous year">&#10094;</button>
+                      <span id="dashMonthPickerYear"></span>
+                      <button type="button" id="dashMonthYearNext" class="dash-month-year-nav" aria-label="Next year">&#10095;</button>
+                    </div>
+                    <div class="dash-month-grid" id="dashMonthGrid"></div>
+                  </div>
+                </div>
+              </h3>
+              <div class="dashboard-chart-wrapper">
+                <canvas id="dashDailyChart"></canvas>
+              </div>
+            </div>
+
+            <div class="dashboard-chart-card">
+              <h3>
+                <span>Team Booking Channels</span>
+                <span id="dashChannelMonthLabel">-</span>
+              </h3>
+              <div class="dashboard-chart-wrapper-small">
+                <canvas id="dashInterpreterChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="reportView" class="admin-view">
+        <div class="admin-panel">
+          <h2>Interpreter Report Summary</h2>
+          <div class="admin-toolbar">
+            <div class="admin-filter">
+              <label for="reportInterpreter">Interpreter</label>
+              <select id="reportInterpreter">
+                <option value="">All Interpreters</option>
+              </select>
+            </div>
+            <div class="admin-filter">
+              <label for="reportStartDate">Start Date</label>
+              <input type="date" id="reportStartDate">
+            </div>
+            <div class="admin-filter">
+              <label for="reportEndDate">End Date</label>
+              <input type="date" id="reportEndDate">
+            </div>
+            <button type="button" class="admin-action-btn primary" id="reportSearchBtn">Search</button>
+            <button type="button" class="admin-action-btn success" id="reportExportBtn">Export Excel</button>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="reportTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Title</th>
+                  <th>Location</th>
+                  <th>Interpreter</th>
+                  <th>User Request</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="userManagementView" class="admin-view">
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>User Management</h2>
+            <button type="button" class="admin-action-btn primary" id="addUserBtn">Add new</button>
+          </div>
+          <div class="admin-inline-filter">
+            <input type="text" id="userSearchUsername" placeholder="Search by Username">
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="userTable">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="loader"><div></div></div>
+
+  <!-- Modal All Bookings -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>My All Bookings</h3>
+        <span class="close" onclick="closeModal()">&times;</span>
       </div>
-      <div class="chart-actions">
-        <span style="font-size:11px;color:#6b7280;">
-          Tooltip format adapts to selected mode (bookings or hours)
-        </span>
-        <button type="button" onclick="downloadDailyChart()">
-          â¬‡ï¸ Download PNG
+      <table id="myBookingTable">
+        <thead>
+          <tr>
+            <th>Title Meeting</th>
+            <th>Time</th>
+            <th>Interpreter</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- New Booking Modal -->
+  <div id="newBookingModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h3>New Booking</h3>
+        <span class="close" onclick="closeNewBookingModal()">&times;</span>
+      </div>
+      <form id="bookingForm">
+        <label>Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <label for="interpreterId">Interpreter:</label>
+        <select id="interpreterId" name="interpreterId" required>
+          <option value="" disabled selected>Select date first</option>
+        </select>
+
+        <div class="time-row">
+          <div class="time-field">
+            <label for="timeFrom">Time From:</label>
+            <select id="timeFrom" name="startTime" required>
+              <option value="" disabled selected>HH:MM</option>
+              <option value="07:00">07:00</option>
+              <option value="07:30">07:30</option>
+              <option value="08:00">08:00</option>
+              <option value="08:30">08:30</option>
+              <option value="09:00">09:00</option>
+              <option value="09:30">09:30</option>
+              <option value="10:00">10:00</option>
+              <option value="10:30">10:30</option>
+              <option value="11:00">11:00</option>
+              <option value="11:30">11:30</option>
+              <option value="12:00">12:00</option>
+              <option value="12:30">12:30</option>
+              <option value="13:00">13:00</option>
+              <option value="13:30">13:30</option>
+              <option value="14:00">14:00</option>
+              <option value="14:30">14:30</option>
+              <option value="15:00">15:00</option>
+              <option value="15:30">15:30</option>
+              <option value="16:00">16:00</option>
+              <option value="16:30">16:30</option>
+              <option value="17:00">17:00</option>
+              <option value="17:30">17:30</option>
+              <option value="18:00">18:00</option>
+              <option value="18:30">18:30</option>
+              <option value="19:00">19:00</option>
+              <option value="19:30">19:30</option>
+              <option value="20:00">20:00</option>
+            </select>
+          </div>
+
+          <div class="time-field">
+            <label for="timeTo">Time To:</label>
+            <select id="timeTo" name="endTime" required>
+              <option value="" disabled selected>HH:MM</option>
+              <option value="07:29">07:30</option>
+              <option value="07:59">08:00</option>
+              <option value="08:29">08:30</option>
+              <option value="08:59">09:00</option>
+              <option value="09:29">09:30</option>
+              <option value="09:59">10:00</option>
+              <option value="10:29">10:30</option>
+              <option value="10:59">11:00</option>
+              <option value="11:29">11:30</option>
+              <option value="11:59">12:00</option>
+              <option value="12:29">12:30</option>
+              <option value="12:59">13:00</option>
+              <option value="13:29">13:30</option>
+              <option value="13:59">14:00</option>
+              <option value="14:29">14:30</option>
+              <option value="14:59">15:00</option>
+              <option value="15:29">15:30</option>
+              <option value="15:59">16:00</option>
+              <option value="16:29">16:30</option>
+              <option value="16:59">17:00</option>
+              <option value="17:29">17:30</option>
+              <option value="17:59">18:00</option>
+              <option value="18:29">18:30</option>
+              <option value="18:59">19:00</option>
+              <option value="19:29">19:30</option>
+              <option value="19:59">20:00</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- âœ… à¹€à¸žà¸´à¹ˆà¸¡ Title Meeting -->
+        <label for="title">Title Meeting:</label>
+        <input type="text" id="title" name="title" required>
+        
+        <label for="location">Location:</label>
+        <select id="location" name="location" required>
+          <option value="" disabled selected>Select Location</option>
+          <option>Factory General Area</option>
+          <option>Work outside</option>
+          <option>MS-Team</option>
+          <option value="__SPECIFY__">Specify...</option>
+          <option>CHP-M201-Rajapruek</option>
+          <option>CHP-M202-Fuengfah</option>
+          <option>CHP-M203-Koson</option>
+          <option>CHP-M204-Lilawadee</option>
+          <option>CHP-M205-Training Center</option>
+          <option>CHP-M301-Anchan</option>
+          <option>CHP-M302-Supanniga</option>
+          <option>CHP-M303-Bualuang</option>
+          <option>G1P-Guest-Room</option>
+          <option>G1P-Meeting1</option>
+          <option>G1P-Meeting2</option>
+          <option>G1P-Meeting3</option>
+          <option>G1P-Meeting4</option>
+          <option>G1P-Meeting5</option>
+        </select>
+        <input type="text" id="locationSpecify" placeholder="Specify location" style="display:none;" autocomplete="off">
+
+        <button type="submit" class="booking-submit-btn">
+          Submit
         </button>
-      </div>
+      </form>
     </div>
-
-    <!-- Bookings per Interpreter (bar chart) -->
-    <div class="chart-card">
-      <h3>
-        ðŸ‘¥ Bookings per Interpreter (This Month)
-        <span class="mode-group">
-          <span class="mode-label">Mode:</span>
-          <button type="button" id="iModeCountBtn" class="mode-btn active" onclick="setInterpreterMode('count')">
-            ðŸ§¾ Bookings
-          </button>
-          <button type="button" id="iModeHoursBtn" class="mode-btn" onclick="setInterpreterMode('hours')">
-            â± Working Hours
-          </button>
-        </span>
-      </h3>
-      <div class="chart-subtitle">
-        Total confirmed bookings (BOOKED) or total working hours per interpreter (leave & canceled excluded)
-      </div>
-      <div class="chart-wrapper-small">
-        <canvas id="interpreterChart"></canvas>
-      </div>
-    </div>
-
   </div>
 
-  <h3 style="margin-top: 26px;">ðŸ“‹ Latest Bookings â€“ Displaying the 10 most recent submissions</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Start</th>
-        <th>End</th>
-        <th>Title</th>
-        <th>Location</th>
-        <th>User</th>
-        <th>Interpreter</th>
-        <th>Status</th>  
-      </tr>
-    </thead>
-    <tbody id="latestTable"></tbody>
-  </table>
-</div>
-
+<script src="dashboard.js?v=20260406-2"></script>
+<script src="manual.js?v=20260402-3"></script>
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec";
-const loading  = document.getElementById("loading");
-const show  = () => loading.style.display = "flex";
-const hide  = () => loading.style.display = "none";
+  let adminReportRows = [];
+  let adminUsers = [];
+  const ADMIN_ACTIVE_INTERPRETERS = ["i001", "i003", "i004"];
 
-const interpreterNames = {
-  i001: "SOM SAN",
-  i002: "GOOK SAN",
-  i003: "POOKY SAN",
-  i004: "L SAN"
-};
+  function adminEscape(v) {
+    return String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
-// Chart instances
-let dailyChart = null;
-let interpreterChart = null;
-
-// à¹‚à¸«à¸¡à¸”à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸à¸£à¸²à¸Ÿà¸£à¸²à¸¢à¸§à¸±à¸™
-let currentDailyMode = "count";
-
-// à¹‚à¸«à¸¡à¸”à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸à¸£à¸²à¸Ÿ per Interpreter
-let currentInterpreterMode = "count";
-
-// à¹€à¸à¹‡à¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸³à¸«à¸£à¸±à¸š redraw à¹€à¸§à¸¥à¸²à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”
-let perDayCountsGlobal = {};
-let perDayMinutesGlobal = {};
-let globalInterpreters = ["i001","i002","i003","i004"];
-let globalYearStr = "";
-let globalMonthStr = "";
-let interpreterCountGlobal = null;  // à¹€à¸à¹‡à¸šà¸„à¹ˆà¸² count à¸•à¹ˆà¸­ interpreter
-
-// ===== Utility functions =====
-
-// à¹€à¸žà¸´à¹ˆà¸¡ 1 à¸™à¸²à¸—à¸µà¹ƒà¸«à¹‰à¹€à¸§à¸¥à¸²
-function addOneMinute(t) {
-  if (!t || t.indexOf(":") === -1) return t;
-  let [h, m] = t.split(":").map(Number);
-  m++;
-  if (m >= 60) { m = 0; h++; }
-  if (h >= 24) h = 0;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-// à¹à¸›à¸¥à¸‡ HH:MM -> à¸™à¸²à¸—à¸µ
-function timeToMinutes(t) {
-  if (!t || t.indexOf(":") === -1) return 0;
-  const [h, m] = t.split(":").map(Number);
-  return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m);
-}
-
-// à¹à¸›à¸¥à¸‡à¸Šà¸±à¹ˆà¸§à¹‚à¸¡à¸‡ (à¸•à¸±à¸§à¹€à¸¥à¸‚à¸—à¸¨à¸™à¸´à¸¢à¸¡) -> H:MM à¸ªà¸³à¸«à¸£à¸±à¸šà¹à¸ªà¸”à¸‡ tooltip à¹‚à¸«à¸¡à¸” hours
-function formatHoursHM(hoursValue) {
-  const totalMinutes = Math.round((hoursValue || 0) * 60);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  return `${h}:${String(m).padStart(2,"0")} hr`;
-}
-
-async function loadDashboard() {
-  show();
-  try {
-    const res  = await fetch(`${scriptURL}?page=listBookings`);
-    const data = await res.json();
-
-    const today   = new Date().toISOString().split("T")[0];  // YYYY-MM-DD
-    const month   = today.substring(0, 7);                   // YYYY-MM
-    const yearStr = month.split("-")[0];
-    const monthStr= month.split("-")[1];
-
-    globalYearStr  = yearStr;
-    globalMonthStr = monthStr;
-
-    document.getElementById("todayLabel").innerText = today;
-    document.getElementById("monthLabel").innerText = `Month: ${month}`;
-
-    let countToday = 0;
-    let countMonth = 0;
-
-    // à¸ªà¸³à¸«à¸£à¸±à¸šà¸à¸£à¸²à¸Ÿ Bookings per day per interpreter
-    // à¹à¸šà¸š Count à¹à¸¥à¸°à¹à¸šà¸š Minutes
-    const perDayCounts = {};   // { 'YYYY-MM-DD': { i001: n, ... } }
-    const perDayMinutes = {};  // { 'YYYY-MM-DD': { i001: minutes, ... } }
-    const interpreters = ["i001","i002","i003","i004"];
-
-    // à¸ªà¸³à¸«à¸£à¸±à¸š bar chart à¸•à¹ˆà¸­ interpreter (à¹ƒà¸Šà¹‰ Count)
-    const interpreterCount = {
-      i001: 0,
-      i002: 0,
-      i003: 0,
-      i004: 0,
-      other: 0
-    };
-
-    data.forEach(row => {
-
-      const rawDate = row.date || "";
-      const rowDate = String(rawDate).replace(/^'/, "");
-      if (!rowDate) return;
-
-      const titleStr = String(row.title || "").toLowerCase();
-      const isLeave =
-        titleStr.includes("take leave") ||
-        titleStr.includes("leave") ||
-        titleStr.includes("à¸¥à¸²");
-
-      // (1) à¸•à¸±à¸” Leave à¸­à¸­à¸
-      if (isLeave) return;
-
-      const status = String(row.status || "").toUpperCase();
-      const iid    = row.interpreterId;
-
-      // (2) à¸•à¹‰à¸­à¸‡à¹€à¸›à¹‡à¸™ BOOKED à¹€à¸—à¹ˆà¸²à¸™à¸±à¹‰à¸™
-      if (status !== "BOOKED") return;
-
-      // (3) BOOKED â†’ à¹ƒà¸Šà¹‰à¹ƒà¸™ countMonth / countToday
-      if (rowDate.startsWith(month)) countMonth++;
-      if (rowDate === today) countToday++;
-
-      // Build perDayCounts / perDayMinutes
-      if (rowDate.startsWith(month)) {
-
-        if (!perDayCounts[rowDate])
-          perDayCounts[rowDate] = { i001:0, i002:0, i003:0, i004:0 };
-
-        if (!perDayMinutes[rowDate])
-          perDayMinutes[rowDate] = { i001:0, i002:0, i003:0, i004:0 };
-
-        if (iid && perDayCounts[rowDate].hasOwnProperty(iid))
-          perDayCounts[rowDate][iid]++;
-
-        // à¸„à¸³à¸™à¸§à¸“à¸Šà¸±à¹ˆà¸§à¹‚à¸¡à¸‡
-        const start = row.startTime || "";
-        const end   = row.endTime   || "";
-
-        if (start && end && perDayMinutes[rowDate].hasOwnProperty(iid)) {
-
-          const startM = timeToMinutes(start);
-          const endM = timeToMinutes(addOneMinute(end));
-
-          let diff = Math.max(0, endM - startM);
-
-          // à¸•à¸±à¸”à¸žà¸±à¸à¹€à¸—à¸µà¹ˆà¸¢à¸‡ 12:00â€“13:00
-          if (startM < 780 && endM > 720) {
-            diff -= 60;
-            if (diff < 0) diff = 0;
-          }
-
-          perDayMinutes[rowDate][iid] += diff;
-        }
-      }
-
-      // Bookings per interpreter chart (Count)
-      if (iid && interpreterCount.hasOwnProperty(iid))
-        interpreterCount[iid]++;
-      else if (iid)
-        interpreterCount.other++;
-
+  function adminSetActiveNav(view) {
+    const ids = ["navDashboard", "navMyBooking", "navReport", "navUserManagement"];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("active", id === view);
     });
+  }
 
-    document.getElementById("totalMonth").innerText      = countMonth;
-    document.getElementById("totalToday").innerText      = countToday;
-    document.getElementById("totalInterpreter").innerText= 4;
+  function adminShowView(view) {
+    const bookingView = document.getElementById("bookingView");
+    const dashboardView = document.getElementById("dashboardView");
+    const reportView = document.getElementById("reportView");
+    const userView = document.getElementById("userManagementView");
+    if (!bookingView || !dashboardView || !reportView || !userView) return;
 
-    // à¹€à¸à¹‡à¸šà¸¥à¸‡ global à¹€à¸žà¸·à¹ˆà¸­à¹ƒà¸Šà¹‰à¸•à¸­à¸™à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”
-    perDayCountsGlobal   = perDayCounts;
-    perDayMinutesGlobal  = perDayMinutes;
-    globalInterpreters   = interpreters;
-    interpreterCountGlobal = interpreterCount;
+    reportView.style.display = "none";
+    userView.style.display = "none";
 
-    // ====== Latest Bookings (à¹ƒà¸Šà¹‰ createdAt) â€“ à¸•à¸£à¸‡à¸™à¸µà¹‰à¹‚à¸Šà¸§à¹Œà¸—à¸±à¹‰à¸‡à¸«à¸¡à¸” à¹„à¸¡à¹ˆà¸•à¸±à¸” leave/canceled ======
-    const latest = data
-      .filter(r => r.createdAt)
+    if (view === "navDashboard") {
+      switchWorkspaceView("dashboard");
+      adminSetActiveNav("navDashboard");
+      return;
+    }
+    if (view === "navMyBooking") {
+      switchWorkspaceView("booking");
+      adminSetActiveNav("navMyBooking");
+      return;
+    }
+    bookingView.style.display = "none";
+    dashboardView.style.display = "none";
+    if (view === "navReport") {
+      reportView.style.display = "block";
+      adminSetActiveNav("navReport");
+      initReportFilters();
+      return;
+    }
+    if (view === "navUserManagement") {
+      userView.style.display = "block";
+      adminSetActiveNav("navUserManagement");
+      loadUserManagement();
+    }
+  }
+
+  function getAdminUser() {
+    return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+  }
+
+  async function enforceAdminAccess() {
+    const user = getAdminUser();
+    const role = String(user?.role || "").toUpperCase();
+    if (role === "ADMIN") return true;
+    localStorage.removeItem("loggedInUser");
+    await Swal.fire({
+      icon: "warning",
+      title: "Access denied",
+      text: "This page is for admin only.",
+      confirmButtonText: "OK"
+    });
+    window.location.href = "index.html";
+    return false;
+  }
+
+  function initReportFilters() {
+    const select = document.getElementById("reportInterpreter");
+    if (select) {
+      const opts = ADMIN_ACTIVE_INTERPRETERS
+        .map((iid) => `<option value="${adminEscape(iid)}">${adminEscape(getInterpreterName(iid))}</option>`)
+        .join("");
+      select.innerHTML = `<option value="">All Interpreters</option>${opts}`;
+    }
+    const tbody = document.querySelector("#reportTable tbody");
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" class="admin-empty-message">Please select the criteria and click Search.</td></tr>`;
+    }
+    adminReportRows = [];
+  }
+
+  async function searchReportSummary() {
+    showLoader();
+    try {
+      const res = await fetch(`${API_URL}?page=listBookings`);
+      const rows = await res.json();
+      adminReportRows = (Array.isArray(rows) ? rows : []).filter((r) =>
+        ADMIN_ACTIVE_INTERPRETERS.includes(String(r.interpreterId || "").trim())
+      );
+      renderReportTable();
+    } catch (err) {
+      Swal.fire("Error", err.message || "Cannot load report", "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  function getFilteredReportRows() {
+    const interpreter = String(document.getElementById("reportInterpreter")?.value || "").trim();
+    const startDate = String(document.getElementById("reportStartDate")?.value || "").trim();
+    const endDate = String(document.getElementById("reportEndDate")?.value || "").trim();
+    return (adminReportRows || [])
+      .filter((r) => String(r.status || "").toUpperCase() === "BOOKED")
+      .filter((r) => !interpreter || String(r.interpreterId || "").trim() === interpreter)
+      .filter((r) => !startDate || String(r.date || "").replace(/^'/, "") >= startDate)
+      .filter((r) => !endDate || String(r.date || "").replace(/^'/, "") <= endDate)
       .sort((a, b) => {
-        const da = new Date(String(a.createdAt).replace(/^'/,''));
-        const db = new Date(String(b.createdAt).replace(/^'/,''));
-        return db - da;  // à¸¥à¹ˆà¸²à¸ªà¸¸à¸”à¸à¹ˆà¸­à¸™
-      })
-      .slice(0, 10);
-
-    const tbody = document.getElementById("latestTable");
-    tbody.innerHTML = "";
-
-    latest.forEach(r => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${String(r.date || "").replace(/^'/,'')}</td>
-        <td>${r.startTime || ""}</td>
-        <td>${addOneMinute(r.endTime || "")}</td>
-        <td>${r.title || ""}</td>
-        <td>${r.location || ""}</td>
-        <td>${r.userEmail || ""}</td>
-        <td>${interpreterNames[r.interpreterId] || r.interpreterId || ""}</td>
-        <td>${r.status || ""}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    // ====== Build Charts (à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™à¹‚à¸«à¸¡à¸” Count à¸—à¸±à¹‰à¸‡à¸ªà¸­à¸‡à¸à¸£à¸²à¸Ÿ) ======
-    currentDailyMode = "count";
-    currentInterpreterMode = "count";
-
-    document.getElementById("modeCountBtn").classList.add("active");
-    document.getElementById("modeHoursBtn").classList.remove("active");
-    document.getElementById("iModeCountBtn").classList.add("active");
-    document.getElementById("iModeHoursBtn").classList.remove("active");
-
-    buildDailyChart(perDayCountsGlobal, perDayMinutesGlobal, globalInterpreters, globalYearStr, globalMonthStr, currentDailyMode);
-    buildInterpreterChart(interpreterCountGlobal, currentInterpreterMode);
-
-  } catch (err) {
-    console.error(err);
-    Swal.fire("âŒ Error", "Cannot load dashboard data", "error");
-  } finally {
-    hide();
-  }
-}
-
-/**
- * à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”à¹à¸ªà¸”à¸‡à¸œà¸¥à¸à¸£à¸²à¸Ÿà¸£à¸²à¸¢à¸§à¸±à¸™ (Count / Hours)
- */
-function setDailyMode(mode) {
-  if (mode === currentDailyMode) return;
-  currentDailyMode = mode;
-
-  // à¸›à¸£à¸±à¸šà¸›à¸¸à¹ˆà¸¡à¹‚à¸«à¸¡à¸”
-  document.getElementById("modeCountBtn").classList.toggle("active", mode === "count");
-  document.getElementById("modeHoursBtn").classList.toggle("active", mode === "hours");
-
-  // à¸§à¸²à¸”à¸à¸£à¸²à¸Ÿà¹ƒà¸«à¸¡à¹ˆà¸•à¸²à¸¡à¹‚à¸«à¸¡à¸”
-  buildDailyChart(perDayCountsGlobal, perDayMinutesGlobal, globalInterpreters, globalYearStr, globalMonthStr, currentDailyMode);
-}
-
-/**
- * à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹‚à¸«à¸¡à¸”à¸à¸£à¸²à¸Ÿ per Interpreter (Count / Hours)
- */
-function setInterpreterMode(mode) {
-  if (mode === currentInterpreterMode) return;
-  currentInterpreterMode = mode;
-
-  document.getElementById("iModeCountBtn").classList.toggle("active", mode === "count");
-  document.getElementById("iModeHoursBtn").classList.toggle("active", mode === "hours");
-
-  buildInterpreterChart(interpreterCountGlobal, currentInterpreterMode);
-}
-
-/**
- * Create line chart: Bookings per Day (This Month)
- * - One line per interpreter
- * - Custom tooltip
- * - Average line
- * - à¸£à¸­à¸‡à¸£à¸±à¸š 2 à¹‚à¸«à¸¡à¸”: count / hours
- */
-function buildDailyChart(perDayCounts, perDayMinutes, interpreters, yearStr, monthStr, mode) {
-  const ctx = document.getElementById("dailyChart").getContext("2d");
-
-  const year  = parseInt(yearStr || (new Date().getFullYear()), 10);
-  const month = parseInt(monthStr || (new Date().getMonth()+1), 10);
-  const lastDay = new Date(year, month, 0).getDate();
-
-  const fullLabels = [];
-  for (let d = 1; d <= lastDay; d++) {
-    const dd = String(d).padStart(2,"0");
-    fullLabels.push(`${yearStr}-${monthStr}-${dd}`); // YYYY-MM-DD
-  }
-
-  const colorMap = {
-    i001: "#007bff",
-    i002: "#28a745",
-    i003: "#fd7e14",
-    i004: "#e83e8c"
-  };
-
-  const datasets = interpreters.map(iid => {
-    const label = interpreterNames[iid] || iid;
-    const color = colorMap[iid] || "#64748b";
-
-    const data = fullLabels.map(day => {
-      if (mode === "count") {
-        const obj = perDayCounts[day] || {};
-        return obj[iid] || 0;
-      } else {
-        const obj = perDayMinutes[day] || {};
-        const mins = obj[iid] || 0;
-        return mins / 60.0;
-      }
-    });
-
-    return {
-      label,
-      data,
-      borderColor: color,
-      backgroundColor: color,
-      tension: 0.35,
-      fill: false,
-      borderWidth: 2,
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      pointHitRadius: 12
-    };
-  });
-
-  // à¸„à¹ˆà¸²à¹€à¸‰à¸¥à¸µà¹ˆà¸¢à¸•à¹ˆà¸­à¸§à¸±à¸™ (à¸£à¸§à¸¡à¸—à¸¸à¸à¸¥à¹ˆà¸²à¸¡)
-  const totalsPerDay = fullLabels.map(day => {
-    if (mode === "count") {
-      const obj = perDayCounts[day] || {};
-      return interpreters.reduce((sum, iid) => sum + (obj[iid] || 0), 0);
-    } else {
-      const obj = perDayMinutes[day] || {};
-      const totalMinutes = interpreters.reduce((sum, iid) => sum + (obj[iid] || 0), 0);
-      return totalMinutes / 60.0;
-    }
-  });
-
-  const totalAll = totalsPerDay.reduce((a,b)=>a+b,0);
-  const avg = fullLabels.length > 0 ? (totalAll / fullLabels.length) : 0;
-
-  datasets.push({
-    label: "AVG per Day",
-    data: fullLabels.map(()=> avg),
-    borderColor: "#6c757d",
-    borderWidth: 2,
-    borderDash: [5,5],
-    pointRadius: 0,
-    tension: 0,
-    fill: false
-  });
-
-  if (dailyChart) dailyChart.destroy();
-
-  dailyChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: fullLabels.map(d => d.substring(8)),
-      datasets
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: "nearest",
-        intersect: false
-      },
-      plugins: {
-        legend: {
-          display: true,
-          position: "bottom",
-          labels: {
-            usePointStyle: true,
-            padding: 16,
-            font: {
-              size: 12
-            }
-          }
-        },
-        tooltip: {
-          backgroundColor: "rgba(15,23,42,0.94)",
-          borderColor: "#1d4ed8",
-          borderWidth: 1,
-          padding: 10,
-          displayColors: true,
-          callbacks: {
-            title: (items) => {
-              if (!items.length) return "";
-              const idx = items[0].dataIndex;
-              const day = fullLabels[idx];
-              return `Date: ${day}`;
-            },
-            label: (ctx) => {
-              const label = ctx.dataset.label || "";
-              const value = ctx.parsed.y ?? 0;
-
-              if (label === "AVG per Day") {
-                if (currentDailyMode === "count") {
-                  return ` ${label}: ${value.toFixed(2)} bookings/day`;
-                } else {
-                  return ` ${label}: ${formatHoursHM(value)}/day`;
-                }
-              }
-
-              if (currentDailyMode === "count") {
-                const unit = value === 1 ? "booking" : "bookings";
-                return ` ${label}: ${value} ${unit}`;
-              } else {
-                return ` ${label}: ${formatHoursHM(value)}`;
-              }
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            color: "rgba(148,163,184,0.25)",
-            drawBorder: false
-          },
-          ticks: {
-            color: "#4b5563",
-            maxTicksLimit: 15
-          }
-        },
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: "rgba(148,163,184,0.2)",
-            drawBorder: false
-          },
-          ticks: {
-            color: "#4b5563",
-            precision: 0
-          }
-        }
-      }
-    }
-  });
-}
-
-/**
- * Bar chart: Bookings / Hours per Interpreter (This Month)
- */
-function buildInterpreterChart(interpreterCount, mode) {
-  const ctx = document.getElementById("interpreterChart").getContext("2d");
-
-  const labels = [
-    "SOM SAN",
-    "GOOK SAN",
-    "POOKY SAN",
-    "L SAN"
-  ];
-
-  // à¹€à¸•à¸£à¸µà¸¢à¸¡à¸„à¹ˆà¸²à¹ƒà¸™à¹à¸•à¹ˆà¸¥à¸°à¹‚à¸«à¸¡à¸”
-  let values;
-  if (mode === "count") {
-    values = [
-      interpreterCount.i001,
-      interpreterCount.i002,
-      interpreterCount.i003,
-      interpreterCount.i004
-    ];
-  } else {
-    // Hours mode: à¸£à¸§à¸¡ minutes à¸ˆà¸²à¸ perDayMinutesGlobal à¹à¸¥à¹‰à¸§à¹à¸›à¸¥à¸‡à¹€à¸›à¹‡à¸™à¸Šà¸±à¹ˆà¸§à¹‚à¸¡à¸‡
-    const minutesByInterpreter = {
-      i001: 0,
-      i002: 0,
-      i003: 0,
-      i004: 0
-    };
-
-    Object.values(perDayMinutesGlobal).forEach(dayObj => {
-      globalInterpreters.forEach(iid => {
-        minutesByInterpreter[iid] += dayObj[iid] || 0;
+        const ad = String(a.date || ""), bd = String(b.date || "");
+        if (ad !== bd) return ad.localeCompare(bd);
+        return String(a.startTime || "").localeCompare(String(b.startTime || ""));
       });
-    });
-
-    values = [
-      minutesByInterpreter.i001 / 60.0,
-      minutesByInterpreter.i002 / 60.0,
-      minutesByInterpreter.i003 / 60.0,
-      minutesByInterpreter.i004 / 60.0
-    ];
   }
 
-  const colors = [
-    "#007bff",
-    "#28a745",
-    "#fd7e14",
-    "#e83e8c"
-  ];
-
-  if (interpreterChart) interpreterChart.destroy();
-
-  interpreterChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: mode === "count" ? "Bookings" : "Working Hours",
-        data: values,
-        backgroundColor: colors.map(c => c + "cc"),
-        borderColor: colors,
-        borderWidth: 1,
-        borderRadius: 6,
-        maxBarThickness: 40
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "rgba(15,23,42,0.94)",
-          borderColor: "#0f172a",
-          borderWidth: 1,
-          callbacks: {
-            label: (ctx) => {
-              const v = ctx.parsed.y ?? 0;
-              if (currentInterpreterMode === "count") {
-                const unit = v === 1 ? "booking" : "bookings";
-                return ` ${v} ${unit}`;
-              } else {
-                return ` ${formatHoursHM(v)}`;
-              }
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: { color: "#4b5563" }
-        },
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: "rgba(148,163,184,0.25)"
-          },
-          ticks: {
-            color: "#4b5563",
-            precision: 0
-          }
-        }
-      }
+  function renderReportTable() {
+    const tbody = document.querySelector("#reportTable tbody");
+    if (!tbody) return;
+    const rows = getFilteredReportRows();
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="7">No data found</td></tr>`;
+      return;
     }
+    tbody.innerHTML = rows.map((r) => `
+      <tr>
+        <td>${adminEscape(String(r.date || "").replace(/^'/, ""))}</td>
+        <td>${adminEscape(r.startTime || "")}</td>
+        <td>${adminEscape(addOneMinuteToTime(r.endTime || ""))}</td>
+        <td>${adminEscape(r.title || "")}</td>
+        <td>${adminEscape(r.location || "")}</td>
+        <td>${adminEscape(getInterpreterName(r.interpreterId || ""))}</td>
+        <td>${adminEscape(r.userEmail || "")}</td>
+      </tr>
+    `).join("");
+  }
+
+  function exportReportExcel() {
+    const rows = getFilteredReportRows();
+    if (!rows.length) {
+      Swal.fire("Info", "No report data to export.", "info");
+      return;
+    }
+    const exportRows = rows.map((r) => ({
+      "Date": String(r.date || "").replace(/^'/, ""),
+      "Start Time": String(r.startTime || ""),
+      "End Time": String(addOneMinuteToTime(r.endTime || "")),
+      "Title": String(r.title || ""),
+      "Location": String(r.location || ""),
+      "Interpreter": String(getInterpreterName(r.interpreterId || "")),
+      "User Request": String(r.userEmail || "")
+    }));
+    const fileName = `interpreter_report_${formatDateTimeForFileName(new Date())}.xlsx`;
+
+    if (typeof XLSX === "undefined" || !XLSX?.utils) {
+      Swal.fire("Error", "XLSX library is not loaded.", "error");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    XLSX.writeFile(workbook, fileName);
+  }
+
+  function formatDateTimeForFileName(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    const hh = String(dateObj.getHours()).padStart(2, "0");
+    const mm = String(dateObj.getMinutes()).padStart(2, "0");
+    const ss = String(dateObj.getSeconds()).padStart(2, "0");
+    return `${y}-${m}-${d}_${hh}-${mm}-${ss}`;
+  }
+
+  function addOneMinuteToTime(timeValue) {
+    const m = String(timeValue || "").match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return String(timeValue || "");
+    let hh = Number(m[1]);
+    let mm = Number(m[2]) + 1;
+    if (mm >= 60) {
+      mm = 0;
+      hh += 1;
+    }
+    hh = hh % 24;
+    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  }
+
+  function renderUserManagementTable() {
+    const tbody = document.querySelector("#userTable tbody");
+    if (!tbody) return;
+    const keyword = String(document.getElementById("userSearchUsername")?.value || "").trim().toLowerCase();
+    const activeUsers = adminUsers.filter((u) => String(u.active || "").toLowerCase() !== "no");
+    const filteredUsers = activeUsers.filter((u) => {
+      if (!keyword) return true;
+      return String(u.username || "").toLowerCase().includes(keyword);
+    });
+    if (!filteredUsers.length) {
+      tbody.innerHTML = `<tr><td colspan="4">${keyword ? "No matching users found" : "No users found"}</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = filteredUsers.map((u) => `
+      <tr>
+        <td>${adminEscape(u.username || "")}</td>
+        <td>${adminEscape(u.email || "")}</td>
+        <td>${adminEscape(String(u.role || "").toUpperCase())}</td>
+        <td>
+          <div class="admin-table-actions">
+            <button type="button" class="admin-mini-btn" onclick="openEditUserSwal('${adminEscape(u.email || "")}')">Edit</button>
+            <button type="button" class="admin-mini-btn danger" onclick="deleteUserSwal('${adminEscape(u.email || "")}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  async function loadUserManagement() {
+    showLoader();
+    try {
+      const res = await fetch(`${API_URL}?page=listUsers`);
+      const rows = await res.json();
+      adminUsers = Array.isArray(rows) ? rows : [];
+      renderUserManagementTable();
+    } catch (err) {
+      Swal.fire("Error", err.message || "Cannot load users", "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  async function adminPost(params) {
+    const form = new URLSearchParams();
+    Object.entries(params || {}).forEach(([k, v]) => form.append(k, String(v ?? "")));
+    const res = await fetch(API_URL, { method: "POST", body: form });
+    return res.json();
+  }
+
+  async function openAddUserSwal() {
+    const { value: formValues } = await Swal.fire({
+      title: "Add New User",
+      html: `
+        <div class="admin-user-form">
+          <div class="admin-user-field">
+            <label for="adm_username">Username</label>
+            <input id="adm_username" placeholder="Enter username">
+          </div>
+          <div class="admin-user-field">
+            <label for="adm_email">Email</label>
+            <input id="adm_email" placeholder="Enter email">
+          </div>
+          <div class="admin-user-field">
+            <label for="adm_password">Password</label>
+            <input id="adm_password" type="password" placeholder="Enter password">
+          </div>
+          <div class="admin-user-field">
+            <label for="adm_role">Role</label>
+            <select id="adm_role">
+              <option value="ADMIN">Admin</option>
+              <option value="INTERPRETER">Interpreter</option>
+              <option value="USER" selected>User</option>
+            </select>
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Add User",
+      customClass: {
+        popup: "admin-user-swal-popup",
+        title: "admin-user-swal-title",
+        htmlContainer: "admin-user-swal-html",
+        confirmButton: "admin-user-swal-confirm",
+        cancelButton: "admin-user-swal-cancel"
+      },
+      preConfirm: () => {
+        const username = document.getElementById("adm_username").value.trim();
+        const email = document.getElementById("adm_email").value.trim();
+        const password = document.getElementById("adm_password").value;
+        const role = document.getElementById("adm_role").value;
+        if (!username || !email || !password || !role) {
+          Swal.showValidationMessage("Please fill all fields");
+          return false;
+        }
+        return { username, email, password, role };
+      }
+    });
+    if (!formValues) return;
+    try {
+      showLoader();
+      const passwordHash = await sha256Text(formValues.password);
+      const result = await adminPost({
+        page: "registerUser",
+        username: formValues.username,
+        email: formValues.email,
+        passwordHash,
+        role: formValues.role
+      });
+      if (!result.success) throw new Error(result.message || "Cannot add user");
+      await loadUserManagement();
+      Swal.fire("Success", result.message || "User added", "success");
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  async function openEditUserSwal(email) {
+    const user = adminUsers.find((u) => String(u.email || "").toLowerCase() === String(email || "").toLowerCase());
+    if (!user) return;
+    const { value: formValues } = await Swal.fire({
+      title: "Edit User",
+      html: `
+        <div class="admin-user-form">
+          <div class="admin-user-field">
+            <label>Username</label>
+            <input value="${adminEscape(user.username || "")}" disabled>
+          </div>
+          <div class="admin-user-field">
+            <label>Email</label>
+            <input value="${adminEscape(user.email || "")}" disabled>
+          </div>
+          <div class="admin-user-field">
+            <label for="edit_password">New Password (optional)</label>
+            <input id="edit_password" type="password" placeholder="Enter new password">
+          </div>
+          <div class="admin-user-field">
+            <label for="edit_role">Role</label>
+            <select id="edit_role">
+              <option value="ADMIN" ${String(user.role).toUpperCase() === "ADMIN" ? "selected" : ""}>Admin</option>
+              <option value="INTERPRETER" ${String(user.role).toUpperCase() === "INTERPRETER" ? "selected" : ""}>Interpreter</option>
+              <option value="USER" ${String(user.role).toUpperCase() === "USER" ? "selected" : ""}>User</option>
+            </select>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Save Changes",
+      customClass: {
+        popup: "admin-user-swal-popup",
+        title: "admin-user-swal-title",
+        htmlContainer: "admin-user-swal-html",
+        confirmButton: "admin-user-swal-confirm",
+        cancelButton: "admin-user-swal-cancel"
+      },
+      preConfirm: () => ({
+        password: document.getElementById("edit_password").value,
+        role: document.getElementById("edit_role").value
+      })
+    });
+    if (!formValues) return;
+    const actor = getAdminUser();
+    try {
+      showLoader();
+      const payload = {
+        page: "adminUpdateUser",
+        actorEmail: actor && actor.email ? actor.email : "",
+        targetEmail: user.email,
+        role: formValues.role
+      };
+      if (formValues.password) payload.passwordHash = await sha256Text(formValues.password);
+      const result = await adminPost(payload);
+      if (!result.success) throw new Error(result.message || "Cannot update user");
+      await loadUserManagement();
+      Swal.fire("Success", result.message || "User updated", "success");
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  async function deleteUserSwal(email) {
+    const user = adminUsers.find((u) => String(u.email || "").toLowerCase() === String(email || "").toLowerCase());
+    if (!user) return;
+    const confirm = await Swal.fire({
+      title: "Delete user?",
+      text: `Delete ${user.username || user.email}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      confirmButtonColor: "#d33"
+    });
+    if (!confirm.isConfirmed) return;
+    const actor = getAdminUser();
+    try {
+      showLoader();
+      const result = await adminPost({
+        page: "adminDeleteUser",
+        actorEmail: actor && actor.email ? actor.email : "",
+        targetEmail: user.email
+      });
+      if (!result.success) throw new Error(result.message || "Cannot delete user");
+      await loadUserManagement();
+      Swal.fire("Deleted", result.message || "User deleted", "success");
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const allowed = await enforceAdminAccess();
+    if (!allowed) return;
+
+    const navReport = document.getElementById("navReport");
+    const navUser = document.getElementById("navUserManagement");
+    const navDashboard = document.getElementById("navDashboard");
+    const navMyBooking = document.getElementById("navMyBooking");
+    if (navDashboard) navDashboard.addEventListener("click", () => adminShowView("navDashboard"));
+    if (navMyBooking) navMyBooking.addEventListener("click", () => adminShowView("navMyBooking"));
+    if (navReport) navReport.addEventListener("click", () => adminShowView("navReport"));
+    if (navUser) navUser.addEventListener("click", () => adminShowView("navUserManagement"));
+
+    const reportSearchBtn = document.getElementById("reportSearchBtn");
+    const reportExportBtn = document.getElementById("reportExportBtn");
+    const addUserBtn = document.getElementById("addUserBtn");
+    const userSearchUsername = document.getElementById("userSearchUsername");
+    if (reportSearchBtn) reportSearchBtn.addEventListener("click", searchReportSummary);
+    if (reportExportBtn) reportExportBtn.addEventListener("click", exportReportExcel);
+    if (addUserBtn) addUserBtn.addEventListener("click", openAddUserSwal);
+    if (userSearchUsername) userSearchUsername.addEventListener("input", renderUserManagementTable);
   });
-}
-
-/** Download line chart as PNG */
-function downloadDailyChart() {
-  if (!dailyChart) return;
-  const link = document.createElement("a");
-  link.href = dailyChart.toBase64Image("image/png", 1);
-  link.download = "bookings_per_day.png";
-  link.click();
-}
-
-window.onload = loadDashboard;
 </script>
 
 </body>
 </html>
+
+
+
+
 
 
 

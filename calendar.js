@@ -1,4 +1,4 @@
-﻿// =================== CONFIG ===================
+// =================== CONFIG ===================
 const calendarDays = document.getElementById('calendarDays');
 const monthYear = document.getElementById('monthYear');
 const monthPickerWrap = document.getElementById('monthPickerWrap');
@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec";
 
 const INTERPRETER_MAP = {
   i001: "somSan",
@@ -103,7 +103,7 @@ async function fetchBookings() {
     const res = await fetch(API_URL + "?page=listBookings");
     allBookings = await res.json();
   } catch (err) {
-    console.error("âŒ fetchBookings error:", err);
+    console.error("❌ fetchBookings error:", err);
   } finally {
     spinner.style.display = 'none';
   }
@@ -141,14 +141,14 @@ async function renderCalendar(month, year, slideDirection = "") {
   const todayMonth = today.getMonth();
   const todayYear = today.getFullYear();
 
-  // à¸Šà¹ˆà¸­à¸‡à¸§à¹ˆà¸²à¸‡à¸à¹ˆà¸­à¸™à¸§à¸±à¸™à¸—à¸µà¹ˆ 1
+  // ช่องว่างก่อนวันที่ 1
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.classList.add('calendar-day');
     calendarDays.appendChild(emptyCell);
   }
 
-  // à¸§à¸™à¸§à¸±à¸™à¸—à¸µà¹ˆà¹ƒà¸™à¹€à¸”à¸·à¸­à¸™
+  // วนวันที่ในเดือน
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${('0' + (month + 1)).slice(-2)}-${('0' + day).slice(-2)}`;
     const dayCell = document.createElement('div');
@@ -159,7 +159,7 @@ async function renderCalendar(month, year, slideDirection = "") {
       dayCell.classList.add('today');
     }
 
-    // âœ… à¸£à¸§à¸¡à¸—à¸±à¹‰à¸‡ Booked à¹à¸¥à¸° Unavailable (à¹„à¸¡à¹ˆà¸ªà¸™à¸•à¸±à¸§à¸žà¸´à¸¡à¸žà¹Œà¹ƒà¸«à¸à¹ˆ/à¹€à¸¥à¹‡à¸)
+    // ✅ รวมทั้ง Booked และ Unavailable (ไม่สนตัวพิมพ์ใหญ่/เล็ก)
     const events = allBookings.filter(b => {
       const status = (b.status || '').toUpperCase();
       return b.date === dateStr && (status === "BOOKED" || status === "UNAVAILABLE");
@@ -179,7 +179,7 @@ async function renderCalendar(month, year, slideDirection = "") {
     if (events.length > 0) {
       dayCell.classList.add('has-event');
 
-      // à¸™à¸±à¸šà¸ˆà¸³à¸™à¸§à¸™à¸‡à¸²à¸™à¸•à¹ˆà¸­ interpreter
+      // นับจำนวนงานต่อ interpreter
       const count = { somSan: 0, gookSan: 0, pookySan: 0, lSan: 0 };
       events.forEach(ev => {
         if (ev.interpreterId === "i001") { count.somSan++; }
@@ -193,7 +193,7 @@ async function renderCalendar(month, year, slideDirection = "") {
         return `${name} [${state}] = ${jobs} Job`;
       };
 
-      // Tooltip à¹à¸ªà¸”à¸‡à¸ˆà¸³à¸™à¸§à¸™à¸‡à¸²à¸™
+      // Tooltip แสดงจำนวนงาน
       dayCell.title =
         `${tooltipLine("SOM SAN", i001Factory, count.somSan)}\n` +
       //  `GOOK SAN = ${count.gookSan} Job\n` +
@@ -234,7 +234,7 @@ async function renderCalendarWithLoader(month, year, slideDirection = "") {
 function loadEventsForDay(dateStr) {
   spinner.style.display = 'block';
 
-  // à¹€à¸„à¸¥à¸µà¸¢à¸£à¹Œà¸•à¸²à¸£à¸²à¸‡à¹€à¸à¹ˆà¸²
+  // เคลียร์ตารางเก่า
   timeSlots.forEach(time => {
     document.getElementById(`somSan_${time}`).innerHTML = '';
     document.getElementById(`gookSan_${time}`).innerHTML = '';
@@ -242,7 +242,7 @@ function loadEventsForDay(dateStr) {
     document.getElementById(`lSan_${time}`).innerHTML = '';
   });
 
-  // âœ… à¸”à¸¶à¸‡à¸—à¸±à¹‰à¸‡ BOOKED + UNAVAILABLE (à¹„à¸¡à¹ˆà¸ªà¸™à¸•à¸±à¸§à¸žà¸´à¸¡à¸žà¹Œ)
+  // ✅ ดึงทั้ง BOOKED + UNAVAILABLE (ไม่สนตัวพิมพ์)
   const events = allBookings.filter(b => {
     const status = (b.status || '').toUpperCase();
     return b.date === dateStr && (status === "BOOKED" || status === "UNAVAILABLE");

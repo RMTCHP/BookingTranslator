@@ -1,4 +1,4 @@
-﻿const API_URL = "https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec"; 
 
 function showLoader(){ document.getElementById("loader").style.display="flex"; }
 function hideLoader(){ document.getElementById("loader").style.display="none"; }
@@ -185,7 +185,7 @@ function renderHeaderUserInfo() {
     <span class="user-icon" aria-hidden="true"><span class="user-dot-head"></span><span class="user-dot-body"></span></span>
     <span class="user-name">${user.username}</span>
     <span class="user-role">${user.role}</span>
-    <span class="user-caret">▾</span>
+    <span class="user-caret">?</span>
   `;
 }
 
@@ -790,12 +790,12 @@ function openNewBookingModal(){
   const title = header.querySelector("h3");
   const form = document.getElementById("bookingForm");
 
-  // âœ… à¸£à¸µà¹€à¸‹à¹‡à¸•à¸Ÿà¸­à¸£à¹Œà¸¡à¹à¸¥à¸°à¹‚à¸«à¸¡à¸”
+  // ✅ รีเซ็ตฟอร์มและโหมด
   form.reset();
   form.setAttribute("data-mode", "new");
   form.removeAttribute("data-id");
 
-  // âœ… à¸¥à¸šà¸›à¸¸à¹ˆà¸¡ Save/Edit à¸­à¸­à¸à¸–à¹‰à¸²à¸¡à¸µ
+  // ✅ ลบปุ่ม Save/Edit ออกถ้ามี
   const oldButtons = document.getElementById("editButtons");
   if (oldButtons) oldButtons.remove();
 
@@ -822,10 +822,10 @@ function closeNewBookingModal(){
   modal.classList.remove("is-edit");
   title.innerText = "New Booking";
 
-  // âœ… à¹à¸ªà¸”à¸‡à¸›à¸¸à¹ˆà¸¡ Submit à¸à¸¥à¸±à¸šà¸¡à¸²
+  // ✅ แสดงปุ่ม Submit กลับมา
   if (submitBtn) submitBtn.style.display = "inline-block";
 
-  // âœ… à¸¥à¸šà¸›à¸¸à¹ˆà¸¡ edit à¸”à¹‰à¸²à¸™à¸¥à¹ˆà¸²à¸‡à¸–à¹‰à¸²à¸¡à¸µ
+  // ✅ ลบปุ่ม edit ด้านล่างถ้ามี
   const oldButtons = document.getElementById("editButtons");
   if (oldButtons) oldButtons.remove();
 
@@ -836,7 +836,7 @@ function closeNewBookingModal(){
 async function loadMyBookings(){
   const user=JSON.parse(localStorage.getItem("loggedInUser"));
   if(!user){
-    Swal.fire("à¸à¸£à¸¸à¸“à¸² Login à¸à¹ˆà¸­à¸™","","warning").then(()=>window.location.href="index.html");
+    Swal.fire("กรุณา Login ก่อน","","warning").then(()=>window.location.href="index.html");
     return;
   }
   renderHeaderUserInfo();
@@ -863,7 +863,7 @@ async function loadMyBookings(){
   }
 }
   
-let viewMode = "today"; // "today" à¸«à¸£à¸·à¸­ "monthly"
+let viewMode = "today"; // "today" หรือ "monthly"
 
 function changeViewMode() {
   viewMode = "today";
@@ -1093,7 +1093,7 @@ if (list.length === 0) {
     : "You have no booking schedule for today.";
   c.innerHTML = `
     <div class="booking-empty">
-      <div class="booking-empty-icon">📅</div>
+      <div class="booking-empty-icon">??</div>
       <div class="booking-empty-title">${title}</div>
       <div class="booking-empty-desc">${desc}</div>
     </div>
@@ -1160,7 +1160,7 @@ function renderAllMyBookings(){
   });
 }
 
-// ---------------------- ðŸ”¹ NAVIGATION DATE CONTROL ðŸ”¹ ----------------------
+// ---------------------- 🔹 NAVIGATION DATE CONTROL 🔹 ----------------------
 let currentViewDate = new Date();
 let myPickerMonth = currentViewDate.getMonth();
 let myPickerYear = currentViewDate.getFullYear();
@@ -1225,7 +1225,7 @@ async function loadMyBookingsForDate(dateObj){
       );
     }
 
-    // à¹€à¸£à¸µà¸¢à¸‡à¹€à¸§à¸¥à¸²
+    // เรียงเวลา
     filtered.sort((a,b)=>{
       const [ah,am]=a.startTime.split(":").map(Number);
       const [bh,bm]=b.startTime.split(":").map(Number);
@@ -1239,7 +1239,7 @@ async function loadMyBookingsForDate(dateObj){
   }
 }
 
-updateBookingHeader(); // âœ… à¹€à¸£à¸µà¸¢à¸à¸•à¸­à¸™à¹‚à¸«à¸¥à¸”
+updateBookingHeader(); // ✅ เรียกตอนโหลด
 
 function updateMyDateButton() {
   if (!myDateBtn) return;
@@ -1371,7 +1371,7 @@ async function openEditBooking(id){
   const title = header.querySelector("h3");
   const f = document.getElementById("bookingForm");
 
-  // âœ… à¸¥à¸šà¸›à¸¸à¹ˆà¸¡à¹€à¸”à¸´à¸¡à¸à¹ˆà¸­à¸™à¹€à¸žà¸´à¹ˆà¸¡à¹ƒà¸«à¸¡à¹ˆ
+  // ✅ ลบปุ่มเดิมก่อนเพิ่มใหม่
   const oldButtons = document.getElementById("editButtons");
   if (oldButtons) oldButtons.remove();
 
@@ -1379,11 +1379,11 @@ async function openEditBooking(id){
   modal.classList.add("is-edit");
   title.innerText = "Edit Booking";
 
-  // âœ… à¸‹à¹ˆà¸­à¸™à¸›à¸¸à¹ˆà¸¡ Submit à¸•à¸­à¸™à¹€à¸›à¹‡à¸™à¹‚à¸«à¸¡à¸” Edit
+  // ✅ ซ่อนปุ่ม Submit ตอนเป็นโหมด Edit
   const submitBtn = f.querySelector("button[type='submit']");
   if (submitBtn) submitBtn.style.display = "none";
 
-  // âœ… à¹ƒà¸ªà¹ˆà¸„à¹ˆà¸²à¹€à¸”à¸´à¸¡à¹ƒà¸™à¸Šà¹ˆà¸­à¸‡
+  // ✅ ใส่ค่าเดิมในช่อง
   f.setAttribute("data-mode","edit");
   f.setAttribute("data-id", id);
   f.date.value = data.date;
@@ -1395,7 +1395,7 @@ async function openEditBooking(id){
   f.title.value = data.title;
   setLocationValueForForm(f, data.location);
 
-  // âœ… à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸‰à¸žà¸²à¸°à¸›à¸¸à¹ˆà¸¡ Save Edit à¹€à¸—à¹ˆà¸²à¸™à¸±à¹‰à¸™
+  // ✅ เพิ่มเฉพาะปุ่ม Save Edit เท่านั้น
   const div = document.createElement("div");
   div.id = "editButtons";
   div.className = "edit-actions";
@@ -1411,13 +1411,13 @@ async function openEditBooking(id){
   modal.style.display = "block";
 }
 
-// âœ… à¸¥à¹‰à¸²à¸‡ email à¹„à¸¡à¹ˆà¹ƒà¸«à¹‰à¸¡à¸µ ' à¸«à¸£à¸·à¸­à¸Šà¹ˆà¸­à¸‡à¸§à¹ˆà¸²à¸‡
+// ✅ ล้าง email ไม่ให้มี ' หรือช่องว่าง
 function sanitizeEmail(email) {
   if (!email) return "";
   return String(email).replace(/^'/, "").replace(/'$/, "").trim();
 }
 
-// ---------------------- ðŸ”¹ SAVE EDIT (Final Clean Version) ðŸ”¹ ----------------------
+// ---------------------- 🔹 SAVE EDIT (Final Clean Version) 🔹 ----------------------
 async function saveEditBooking(bookingId){
   const f = document.getElementById("bookingForm");
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
@@ -1431,7 +1431,7 @@ async function saveEditBooking(bookingId){
     saveBtn.innerText = "Saving...";
   }
 
-  // âœ… à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸„à¹ˆà¸²à¸§à¹ˆà¸²à¸‡
+  // ✅ ตรวจสอบค่าว่าง
   const dateVal = f.date.value;
   const interpreterVal = f.interpreterId.value;
   const startVal = f.timeFrom.value;
@@ -1440,7 +1440,7 @@ async function saveEditBooking(bookingId){
   const locationVal = getResolvedLocationValue(f);
 
   if(!dateVal || !interpreterVal || !startVal || !endVal || !titleVal || !locationVal){
-    Swal.fire("âš ï¸ Warning","Please fill in all required fields.","warning");
+    Swal.fire("⚠️ Warning","Please fill in all required fields.","warning");
     resetSaveButton();
     return;
   }
@@ -1451,16 +1451,16 @@ async function saveEditBooking(bookingId){
     return;
   }
 
-  // âœ… à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¹€à¸§à¸¥à¸²à¹€à¸£à¸´à¹ˆà¸¡ < à¹€à¸§à¸¥à¸²à¸ªà¸´à¹‰à¸™à¸ªà¸¸à¸”
+  // ✅ ตรวจสอบเวลาเริ่ม < เวลาสิ้นสุด
   const startMins = parseInt(startVal.split(":")[0]) * 60 + parseInt(startVal.split(":")[1]);
   const endMins   = parseInt(endVal.split(":")[0]) * 60 + parseInt(endVal.split(":")[1]);
   if (startMins >= endMins) {
-    Swal.fire("âš ï¸ Warning", "Start time must be less than end time", "warning");
+    Swal.fire("⚠️ Warning", "Start time must be less than end time", "warning");
     resetSaveButton();
     return;
   }
 
-  // âœ… à¹€à¸•à¸£à¸µà¸¢à¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¹ˆà¸‡à¹à¸à¹‰à¹„à¸‚
+  // ✅ เตรียมข้อมูลส่งแก้ไข
   const form = new URLSearchParams();
   form.append("page","editBooking");
   form.append("bookingId", bookingId);
@@ -1516,7 +1516,7 @@ async function saveEditBooking(bookingId){
 }
 
 
-// ---------------------- ðŸ”¹ SUBMIT NEW BOOKING (FINAL VERSION) ðŸ”¹ ----------------------
+// ---------------------- 🔹 SUBMIT NEW BOOKING (FINAL VERSION) 🔹 ----------------------
 document.getElementById("bookingForm").addEventListener("submit", async function(e){ 
   e.preventDefault();
   const mode = this.getAttribute("data-mode");
@@ -1525,7 +1525,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   const submitBtn = this.querySelector("button[type='submit']");
   submitBtn.disabled = true;
-  submitBtn.style.background = "#999";   // âœ… à¹€à¸›à¸¥à¸µà¹ˆà¸¢à¸™à¹€à¸›à¹‡à¸™à¹€à¸—à¸²
+  submitBtn.style.background = "#999";   // ✅ เปลี่ยนเป็นเทา
   submitBtn.style.cursor = "not-allowed";
   submitBtn.innerText = "Submitting...";
 
@@ -1535,7 +1535,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
   const interpreterVal = this.interpreterId.value;
   const locationVal = getResolvedLocationValue(this);
 
-  // âœ… à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¹€à¸§à¸¥à¸²
+  // ✅ ตรวจสอบเวลา
   if (!startVal || !endVal){
     Swal.fire("Warning","Please select time range","warning");
     submitBtn.disabled=false;
@@ -1564,7 +1564,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
     return;
   }
 
-  // âœ… à¹€à¸•à¸£à¸µà¸¢à¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¹ˆà¸‡à¹„à¸› backend
+  // ✅ เตรียมข้อมูลส่งไป backend
   const form = new URLSearchParams();
   form.append("page","newBooking");
   form.append("userId", user.id);
@@ -1585,10 +1585,10 @@ document.getElementById("bookingForm").addEventListener("submit", async function
     const data = await res.json();
     hideLoader();
 
-    // âœ… à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸œà¸¥à¸¥à¸±à¸žà¸˜à¹Œà¸ˆà¸²à¸ backend
+    // ✅ ตรวจสอบผลลัพธ์จาก backend
     if (data.success){
       dashboardNeedsRefresh = true;
-      // âœ… à¸„à¸·à¸™à¸„à¹ˆà¸²à¸›à¸¸à¹ˆà¸¡à¸à¸¥à¸±à¸šà¸à¹ˆà¸­à¸™à¸›à¸´à¸” modal
+      // ✅ คืนค่าปุ่มกลับก่อนปิด modal
       submitBtn.disabled = false;
       submitBtn.style.background = "#28a745";
       submitBtn.style.cursor = "pointer";
@@ -1603,7 +1603,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
       });
 
     } else if (data.message && data.message.includes("Duplicate")) {
-      // âš ï¸ à¸à¸£à¸“à¸µ Booking à¸‹à¹‰à¸³
+      // ⚠️ กรณี Booking ซ้ำ
       Swal.fire({
         title: "Duplicate Booking",
         text: data.message,
@@ -1612,7 +1612,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
       });
 
     } else {
-      // âŒ à¸à¸£à¸“à¸µ Error à¸­à¸·à¹ˆà¸™ à¹†
+      // ❌ กรณี Error อื่น ๆ
       Swal.fire("Error", data.message,"error");
     }
 
@@ -1621,7 +1621,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
     Swal.fire("Error", err.message,"error");
 
   } finally {
-    // âœ… à¸„à¸·à¸™à¸›à¸¸à¹ˆà¸¡à¸à¸¥à¸±à¸šà¸ªà¸¹à¹ˆà¸ªà¸–à¸²à¸™à¸°à¸›à¸à¸•à¸´ (à¸à¸±à¸™à¸à¸£à¸“à¸µ error à¸«à¸£à¸·à¸­ modal à¸›à¸´à¸”à¸à¹ˆà¸­à¸™)
+    // ✅ คืนปุ่มกลับสู่สถานะปกติ (กันกรณี error หรือ modal ปิดก่อน)
     submitBtn.disabled = false;
     submitBtn.style.background = "#28a745";
     submitBtn.style.cursor = "pointer";
@@ -1655,7 +1655,7 @@ function addOneMinute(timeStr) {
   return `${hh}:${mm}`;
 }
 
-// ---------------------- ðŸ”¹ CANCEL BOOKING ðŸ”¹ ----------------------
+// ---------------------- 🔹 CANCEL BOOKING 🔹 ----------------------
 async function cancelBooking(bookingId) {
   const confirmResult = await Swal.fire({
     title: "Are you sure?",
@@ -1704,7 +1704,7 @@ bindUserMenu();
 bindWorkspaceSidebar();
 bindMyDatePicker();
 switchWorkspaceView("dashboard");
-console.log("âœ… Booking System Loaded:", new Date().toLocaleString());
+console.log("✅ Booking System Loaded:", new Date().toLocaleString());
 
 
 
