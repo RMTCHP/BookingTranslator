@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwYn26RJ7FXL4UQP9pGUxIwsHKU7FFApFwjsdtSr-KAIxpI-xDPM9abBtxtYosfiPM/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec";
 
 const INTERPRETER_MAP = {
   i001: "somSan",
@@ -57,6 +57,8 @@ function normalizeFactoryValue(raw) {
   const v = String(raw || "").trim().toUpperCase();
   if (v === "CHP") return "CHP";
   if (v === "G1P") return "G1P";
+  if (v === "CHP | G1P") return "CHP | G1P";
+  if (v === "G1P | CHP") return "G1P | CHP";
   if (v === "LEAVE") return "Leave";
   return "Not set";
 }
@@ -421,5 +423,7 @@ async function init(){
   await renderCalendarWithLoader(currentMonth, currentYear);
 }
 init();
+
+
 
 

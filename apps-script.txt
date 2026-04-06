@@ -251,9 +251,9 @@ if (page === 'editBooking') {
     });
 
     Object.keys(plans || {}).forEach((dateKey) => {
-      const value = String(plans[dateKey] || "").toUpperCase();
+      const value = normalizeFactoryWorkAt_(plans[dateKey]);
       if (!dateKey.startsWith(yearMonth + "-")) return;
-      if (value !== "CHP" && value !== "G1P") return;
+      if (!value || value === "NONE") return;
       const existingRow = byDate[dateKey];
       if (existingRow) {
         sheet.getRange(existingRow, map.workAt + 1).setValue(value);
@@ -420,10 +420,10 @@ function doGet(e) {
       const row = data[i];
       const rowEmail = String(row[map.interpreterEmail] || "").trim().toLowerCase();
       const rowDate = String(row[map.date] || "").replace(/^'/, "").trim();
-      const rowWorkAt = String(row[map.workAt] || "").toUpperCase().trim();
+      const rowWorkAt = normalizeFactoryWorkAt_(row[map.workAt]);
       if (rowEmail !== interpreterEmail) continue;
       if (!rowDate.startsWith(yearMonth + "-")) continue;
-      if (rowWorkAt === "CHP" || rowWorkAt === "G1P") {
+      if (rowWorkAt === "CHP" || rowWorkAt === "G1P" || rowWorkAt === "CHP | G1P" || rowWorkAt === "G1P | CHP") {
         result[rowDate] = rowWorkAt;
       }
     }
@@ -526,6 +526,17 @@ function getUserRoleByEmail_(email) {
     }
   }
   return "";
+}
+
+function normalizeFactoryWorkAt_(value) {
+  const v = String(value || "").trim().toUpperCase();
+  if (!v) return "NONE";
+  if (v === "CHP" || v === "G1P" || v === "NONE" || v === "LEAVE") return v;
+  const compact = v.replace(/\s+/g, "");
+  if (compact === "CHP|G1P") return "CHP | G1P";
+  if (compact === "G1P|CHP") return "G1P | CHP";
+  if (v === "NOT SET" || v === "-") return "NONE";
+  return "NONE";
 }
 
 function editBooking_(e) {

@@ -1,4 +1,4 @@
-﻿const API_URL = "https://script.google.com/macros/s/AKfycbwYn26RJ7FXL4UQP9pGUxIwsHKU7FFApFwjsdtSr-KAIxpI-xDPM9abBtxtYosfiPM/exec"; 
+﻿const API_URL = "https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec"; 
 
 function showLoader(){ document.getElementById("loader").style.display="flex"; }
 function hideLoader(){ document.getElementById("loader").style.display="none"; }
@@ -27,6 +27,7 @@ const DASH_INTERPRETER_NAMES = {
 let dashDailyChart = null;
 let dashInterpreterChart = null;
 let dashLoaded = false;
+let dashboardNeedsRefresh = false;
 let dashAllBookedRows = [];
 let dashSelectedMonth = "";
 let dashPickerYear = new Date().getFullYear();
@@ -201,7 +202,11 @@ function switchWorkspaceView(view) {
     dashboardView.style.display = "block";
     dashboardView.style.opacity = "1";
     dashboardView.style.transform = "translateY(0)";
-    loadDashboardPanel();
+    if (!dashLoaded || dashboardNeedsRefresh) {
+      showLoader();
+      dashLoaded = false;
+      loadDashboardPanel();
+    }
     return;
   }
 
@@ -256,7 +261,9 @@ async function getDashboardWorkAtByInterpreter(ymd) {
         const result = await res.json();
         const map = result && result.success && result.data ? result.data : {};
         const raw = String(map[ymd] || "").trim().toUpperCase();
-        const normalized = raw === "CHP" || raw === "G1P" ? raw : "-";
+        const normalized = (raw === "CHP" || raw === "G1P" || raw === "CHP | G1P" || raw === "G1P | CHP")
+          ? raw
+          : "-";
         return [iid, normalized];
       } catch (_) {
         return [iid, "-"];
@@ -295,11 +302,15 @@ function renderDashboardInterpreterCards(todayRows, workAtByInterpreter = null) 
     const locEl = document.getElementById(`dash${iid.toUpperCase()}Loc`);
     if (!jobEl || !locEl) return;
 
-    jobEl.textContent = `Today's Bookings: ${totalJobsToday}`;
+    jobEl.innerHTML = `<span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">${totalJobsToday}</span>`;
     const rawWorkAt = String(workMap[iid] || "Not set");
     const workAt = rawWorkAt === "-" ? "Not set" : rawWorkAt;
-    const badgeClass = workAt === "CHP" ? "work-at-badge chp" : (workAt === "G1P" ? "work-at-badge g1p" : "work-at-badge empty");
-    locEl.innerHTML = `Work at: <span class="${badgeClass}">${escapeHtml(workAt)}</span>`;
+    let badgeClass = "work-at-badge empty";
+    if (workAt === "CHP") badgeClass = "work-at-badge chp";
+    else if (workAt === "G1P") badgeClass = "work-at-badge g1p";
+    else if (workAt === "CHP | G1P") badgeClass = "work-at-badge mixed-chp-g1p";
+    else if (workAt === "G1P | CHP") badgeClass = "work-at-badge mixed-g1p-chp";
+    locEl.innerHTML = `<span class="interpreter-meta-label">Work at</span><span class="${badgeClass}">${escapeHtml(workAt)}</span>`;
   });
 }
 
@@ -522,9 +533,8 @@ async function loadDashboardPanel() {
     if (typeof Chart !== "undefined") {
       renderDashboardChartsForMonth(ym);
     } else {
-      ensureDashboardChartLibrary().then((ready) => {
-        if (ready) renderDashboardChartsForMonth(ym);
-      });
+      const ready = await ensureDashboardChartLibrary();
+      if (ready) renderDashboardChartsForMonth(ym);
     }
 
     // Load Work at asynchronously after dashboard data is visible.
@@ -533,6 +543,7 @@ async function loadDashboardPanel() {
         renderDashboardInterpreterCards(todayRows, workMap);
       })
       .catch(() => {});
+    dashboardNeedsRefresh = false;
   } catch (err) {
     dashLoaded = false;
     Swal.fire("Error", `Cannot load dashboard data: ${err.message}`, "error");
@@ -605,6 +616,27 @@ function setLocationValueForForm(form, locationValue) {
   }
 }
 
+function getInterpreterStatusBadgeInfo(rawWorkAt) {
+  const raw = String(rawWorkAt || "").trim().toUpperCase();
+  const compact = raw.replace(/\s+/g, "");
+  if (raw === "LEAVE") {
+    return { label: "Leave", badgeClass: "leave" };
+  }
+  if (raw === "CHP") {
+    return { label: "CHP (All day)", badgeClass: "chp" };
+  }
+  if (raw === "G1P") {
+    return { label: "G1P (All day)", badgeClass: "g1p" };
+  }
+  if (compact === "CHP|G1P") {
+    return { label: "CHP (Morning), G1P (Afternoon)", badgeClass: "split-chp-g1p" };
+  }
+  if (compact === "G1P|CHP") {
+    return { label: "G1P (Morning), CHP (Afternoon)", badgeClass: "split-g1p-chp" };
+  }
+  return { label: "Not set", badgeClass: "unset" };
+}
+
 function renderInterpreterOptionsForNewBooking(workAtMap = {}, selectedId = "") {
   const select = document.getElementById("interpreterId");
   if (!select) return;
@@ -614,10 +646,9 @@ function renderInterpreterOptionsForNewBooking(workAtMap = {}, selectedId = "") 
   const firstSelected = selected ? "" : "selected";
   const optionHtml = NEW_BOOKING_INTERPRETERS.map((iid) => {
     const name = getInterpreterName(iid);
-    const workAt = String((workAtMap && workAtMap[iid]) || "Not set").trim() || "Not set";
-    const label = workAt.toLowerCase() === "leave"
-      ? `${name} (Leave)`
-      : `${name} (Work at: ${workAt})`;
+    const workAt = String((workAtMap && workAtMap[iid]) || "").trim();
+    const statusText = getInterpreterStatusBadgeInfo(workAt).label;
+    const label = `${name} [Work at: ${statusText}]`;
     const selectedAttr = selected === iid ? "selected" : "";
     return `<option value="${iid}" ${selectedAttr}>${escapeHtml(label)}</option>`;
   }).join("");
@@ -677,7 +708,21 @@ function getFactoryCodeFromLocation(locationValue) {
   return "";
 }
 
-async function validateInterpreterFactoryBeforeSubmit(dateVal, interpreterId, locationVal) {
+function resolveFactoryByStartTime(workAtValue, startTime) {
+  const raw = String(workAtValue || "").trim().toUpperCase();
+  if (raw === "CHP" || raw === "G1P") return raw;
+  if (raw !== "CHP | G1P" && raw !== "G1P | CHP") return "";
+  const parts = raw.split("|").map((v) => String(v || "").trim());
+  const amFactory = parts[0] || "";
+  const pmFactory = parts[1] || "";
+  const m = String(startTime || "").match(/^(\d{1,2}):(\d{2})/);
+  const hh = m ? Number(m[1]) : 0;
+  const mm = m ? Number(m[2]) : 0;
+  const mins = (hh * 60) + mm;
+  return mins < 12 * 60 ? amFactory : pmFactory;
+}
+
+async function validateInterpreterFactoryBeforeSubmit(dateVal, interpreterId, locationVal, startTimeVal) {
   const locationFactory = getFactoryCodeFromLocation(locationVal);
   if (!locationFactory || !interpreterId) return true;
 
@@ -685,7 +730,7 @@ async function validateInterpreterFactoryBeforeSubmit(dateVal, interpreterId, lo
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return true;
 
   let workAt = String(newBookingWorkAtByInterpreter[interpreterId] || "").toUpperCase().trim();
-  if (!workAt || (workAt !== "CHP" && workAt !== "G1P")) {
+  if (!workAt || (workAt !== "CHP" && workAt !== "G1P" && workAt !== "CHP | G1P" && workAt !== "G1P | CHP")) {
     try {
       const map = await getDashboardWorkAtByInterpreter(ymd);
       workAt = String(map[interpreterId] || "").toUpperCase().trim();
@@ -693,8 +738,9 @@ async function validateInterpreterFactoryBeforeSubmit(dateVal, interpreterId, lo
       workAt = "";
     }
   }
-  if (workAt !== "CHP" && workAt !== "G1P") return true;
-  if (workAt === locationFactory) return true;
+  const effectiveFactory = resolveFactoryByStartTime(workAt, startTimeVal);
+  if (effectiveFactory !== "CHP" && effectiveFactory !== "G1P") return true;
+  if (effectiveFactory === locationFactory) return true;
 
   await Swal.fire({
     icon: "warning",
@@ -911,6 +957,8 @@ function openCalendarDetailsSwal(dateStr, events, workAtByInterpreter = null) {
     const v = String(raw || "").trim().toUpperCase();
     if (v === "CHP") return "CHP";
     if (v === "G1P") return "G1P";
+    if (v === "CHP | G1P") return "CHP | G1P";
+    if (v === "G1P | CHP") return "G1P | CHP";
     if (v === "LEAVE") return "Leave";
     return "Not set";
   };
@@ -1397,7 +1445,7 @@ async function saveEditBooking(bookingId){
     return;
   }
 
-  const okFactory = await validateInterpreterFactoryBeforeSubmit(dateVal, interpreterVal, locationVal);
+  const okFactory = await validateInterpreterFactoryBeforeSubmit(dateVal, interpreterVal, locationVal, startVal);
   if (!okFactory) {
     resetSaveButton();
     return;
@@ -1433,6 +1481,7 @@ async function saveEditBooking(bookingId){
     hideLoader();
 
     if(data.success){
+      dashboardNeedsRefresh = true;
       Swal.fire("Updated","Booking updated successfully!","success").then(()=>{
         closeNewBookingModal();
         loadMyBookings();
@@ -1506,7 +1555,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
     return;
   }
 
-  const okFactory = await validateInterpreterFactoryBeforeSubmit(dateVal, interpreterVal, locationVal);
+  const okFactory = await validateInterpreterFactoryBeforeSubmit(dateVal, interpreterVal, locationVal, startVal);
   if (!okFactory) {
     submitBtn.disabled=false;
     submitBtn.style.background="#28a745";
@@ -1538,6 +1587,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
 
     // âœ… à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸œà¸¥à¸¥à¸±à¸žà¸˜à¹Œà¸ˆà¸²à¸ backend
     if (data.success){
+      dashboardNeedsRefresh = true;
       // âœ… à¸„à¸·à¸™à¸„à¹ˆà¸²à¸›à¸¸à¹ˆà¸¡à¸à¸¥à¸±à¸šà¸à¹ˆà¸­à¸™à¸›à¸´à¸” modal
       submitBtn.disabled = false;
       submitBtn.style.background = "#28a745";
@@ -1630,6 +1680,7 @@ async function cancelBooking(bookingId) {
     hideLoader();
 
     if (data.success) {
+      dashboardNeedsRefresh = true;
       Swal.fire("Canceled", data.message, "success").then(() => {
         loadMyBookings();
         renderAllMyBookings();
@@ -1654,6 +1705,8 @@ bindWorkspaceSidebar();
 bindMyDatePicker();
 switchWorkspaceView("dashboard");
 console.log("âœ… Booking System Loaded:", new Date().toLocaleString());
+
+
 
 
 

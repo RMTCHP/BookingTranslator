@@ -380,35 +380,54 @@
       width: 100%;
       min-width: 0;
       display: grid;
-      gap: 4px;
+      gap: 8px;
       text-align: left;
       align-content: start;
-      padding: 8px 10px 10px;
+      padding: 10px 12px 12px;
     }
     .interpreter-name {
-      font-size: 18px;
-      line-height: 1.1;
-      color: #15365f;
+      font-size: 19px;
+      line-height: 1.05;
+      color: #123960;
       font-weight: 800;
+      letter-spacing: 0.2px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e4edf8;
     }
     .interpreter-job {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
       font-size: 12px;
       color: #1f2c3d;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 700;
+      line-height: 1.2;
     }
     .interpreter-location {
       font-size: 11px;
       color: #62738d;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
+      justify-content: space-between;
+      width: 100%;
       gap: 6px;
+    }
+    .interpreter-meta-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.45px;
+      color: #6b7f96;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .interpreter-meta-value {
+      font-size: 13px;
+      line-height: 1.2;
+      color: #2a3f56;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
     }
     .work-at-badge {
       display: inline-flex;
@@ -437,6 +456,19 @@
       border-color: #85d0a0;
       color: #0f6f3c;
       box-shadow: 0 4px 10px rgba(19, 129, 70, 0.16);
+    }
+    .work-at-badge.mixed,
+    .work-at-badge.mixed-chp-g1p {
+      background: linear-gradient(90deg, #e5f3ff 0 50%, #e8f8ee 50% 100%);
+      border-color: #9dc4e6;
+      color: #1f4d3c;
+      box-shadow: 0 4px 10px rgba(44, 99, 157, 0.16);
+    }
+    .work-at-badge.mixed-g1p-chp {
+      background: linear-gradient(90deg, #e8f8ee 0 50%, #e5f3ff 50% 100%);
+      border-color: #9dc4e6;
+      color: #1f4d3c;
+      box-shadow: 0 4px 10px rgba(32, 104, 108, 0.16);
     }
     .work-at-badge.empty {
       background: #f4f6f8;
@@ -605,7 +637,16 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      padding-top: 16px;
+      padding-top: 70px;
+    }
+    .job-action-buttons {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 2;
     }
 
     .job-summary { display: flex; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
@@ -733,15 +774,8 @@
       color: #365274;
       font-weight: 700;
     }
-    .factory-indicator span {
-      color: #0f6f68;
-      background: #e8f8f6;
-      border: 1px solid #bde4df;
-      border-radius: 999px;
-      padding: 2px 8px;
-      font-weight: 700;
+    .factory-indicator .factory-value-badge {
       margin-left: 6px;
-      display: inline-block;
     }
     .swal-factory-popup {
       border-radius: 16px !important;
@@ -925,17 +959,21 @@
       border: 1px solid #d4e1f1;
       border-radius: 10px;
       background: #fbfdff;
-      min-height: 68px;
-      padding: 6px 8px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: flex-start;
+      min-height: 84px;
+      padding: 8px 8px 7px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      align-items: stretch;
       gap: 8px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
     }
     .factory-day-card.today {
       border-color: #e1cb7c;
       background: #fff9e3;
+    }
+    .factory-day-card.today[data-selected="NONE"] {
+      border-color: #d4e1f1;
+      background: #f4f6f8;
     }
     .factory-day-card.factory-chp {
       background: #e5f3ff;
@@ -945,6 +983,14 @@
       background: #e8f8ee;
       border-color: #8fd4a9;
     }
+    .factory-day-card.factory-chp-g1p {
+      background: linear-gradient(90deg, #e5f3ff 0 50%, #e8f8ee 50% 100%);
+      border-color: #9dc4e6;
+    }
+    .factory-day-card.factory-g1p-chp {
+      background: linear-gradient(90deg, #e8f8ee 0 50%, #e5f3ff 50% 100%);
+      border-color: #9dc4e6;
+    }
     .factory-day-card.factory-leave-locked {
       background: #fff3e3;
       border-color: #e2bf8c;
@@ -953,38 +999,47 @@
       display: flex;
       justify-content: flex-start;
       align-items: center;
-      flex: 0 0 38px;
+      width: 100%;
+      min-height: 24px;
     }
     .factory-day-num {
-      font-size: 24px;
+      font-size: 40px;
       font-weight: 800;
       color: #123b68;
-      line-height: 1;
+      line-height: 0.9;
       letter-spacing: 0.2px;
       display: block;
       white-space: nowrap;
     }
     .factory-choice-group {
       display: flex;
-      justify-content: flex-start;
+      justify-content: stretch;
       align-items: center;
-      gap: 6px;
+      gap: 0;
       margin-top: 0;
-      flex: 0 0 auto;
+      width: 100%;
     }
     .factory-cycle-btn {
       border: 1px solid #c6d8ee;
       background: #f7fbff;
       color: #24476f;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      width: 52px;
-      min-width: 52px;
-      height: 40px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 800;
+      width: 100%;
+      min-width: 0;
+      height: 34px;
       cursor: pointer;
-      transition: all 0.16s ease;
-      padding: 0;
+      transition: all 0.16s ease, transform 0.14s ease;
+      padding: 0 8px;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(18, 50, 84, 0.08);
+    }
+    .factory-cycle-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(19, 54, 92, 0.12);
     }
     .factory-cycle-btn[data-state="CHP"] {
       background: #dff1ff;
@@ -995,6 +1050,16 @@
       background: #e8f8ee;
       border-color: #85d0a0;
       color: #0f6f3c;
+    }
+    .factory-cycle-btn[data-state="CHP | G1P"] {
+      background: linear-gradient(90deg, #dff1ff 0 50%, #e8f8ee 50% 100%);
+      border-color: #9cc3e6;
+      color: #124a6b;
+    }
+    .factory-cycle-btn[data-state="G1P | CHP"] {
+      background: linear-gradient(90deg, #e8f8ee 0 50%, #dff1ff 50% 100%);
+      border-color: #9cc3e6;
+      color: #124a6b;
     }
     .factory-cycle-btn[data-state="NONE"] {
       background: #f4f6f8;
@@ -1758,6 +1823,24 @@
     <div class="workspace-content">
       <div class="main" id="jobView">
         <div class="mybooking">
+          <div class="job-action-buttons">
+            <button class="date-nav-btn factory-btn" onclick="openFactorySelector()" aria-label="Factory" title="Factory">
+              <svg class="factory-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 21V8.5C3 7.67 3.67 7 4.5 7H11V21H3Z" fill="currentColor" opacity="0.95"/>
+                <path d="M11 21V11.5L16.7 9.1C17.7 8.7 18.8 9.4 18.8 10.5V21H11Z" fill="currentColor"/>
+                <path d="M18.8 21V14.5H21V21H18.8Z" fill="currentColor" opacity="0.9"/>
+                <rect x="5.2" y="9.2" width="1.7" height="1.7" fill="#123a69"/>
+                <rect x="8" y="9.2" width="1.7" height="1.7" fill="#123a69"/>
+                <rect x="5.2" y="12" width="1.7" height="1.7" fill="#123a69"/>
+                <rect x="8" y="12" width="1.7" height="1.7" fill="#123a69"/>
+              </svg>
+            </button>
+            <button class="date-nav-btn take-leave-btn" onclick="openTakeLeave()" aria-label="Take Leave" title="Take Leave">
+              <svg class="take-leave-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M22 16.5V15l-8-4.5V5.5a1.5 1.5 0 0 0-3 0v5L3 15v1.5l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5l8 2.5z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
           <div class="mybooking-header">
             <h3 id="jobHeader">
               <svg class="job-title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1767,22 +1850,6 @@
               My Job
             </h3>
             <div class="job-header-controls">
-              <button class="date-nav-btn factory-btn" onclick="openFactorySelector()" aria-label="Factory" title="Factory">
-                <svg class="factory-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 21V8.5C3 7.67 3.67 7 4.5 7H11V21H3Z" fill="currentColor" opacity="0.95"/>
-                  <path d="M11 21V11.5L16.7 9.1C17.7 8.7 18.8 9.4 18.8 10.5V21H11Z" fill="currentColor"/>
-                  <path d="M18.8 21V14.5H21V21H18.8Z" fill="currentColor" opacity="0.9"/>
-                  <rect x="5.2" y="9.2" width="1.7" height="1.7" fill="#123a69"/>
-                  <rect x="8" y="9.2" width="1.7" height="1.7" fill="#123a69"/>
-                  <rect x="5.2" y="12" width="1.7" height="1.7" fill="#123a69"/>
-                  <rect x="8" y="12" width="1.7" height="1.7" fill="#123a69"/>
-                </svg>
-              </button>
-              <button class="date-nav-btn take-leave-btn" onclick="openTakeLeave()" aria-label="Take Leave" title="Take Leave">
-                <svg class="take-leave-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M22 16.5V15l-8-4.5V5.5a1.5 1.5 0 0 0-3 0v5L3 15v1.5l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5l8 2.5z" fill="currentColor"/>
-                </svg>
-              </button>
               <div class="interpreter-date-picker-wrap" id="interpreterDatePickerWrap">
                 <button type="button" class="date-nav-btn interpreter-date-btn" id="interpreterDateBtn" aria-label="Select date"></button>
                 <div class="interpreter-date-popover" id="interpreterDatePopover" aria-hidden="true">
@@ -1844,24 +1911,24 @@
                   <img class="interpreter-avatar-img" src="images/SOMSAN.JPG" alt="SOM SAN">
                   <div class="interpreter-info">
                     <div class="interpreter-name">SOM SAN</div>
-                    <div class="interpreter-job" id="dashI001Job">Today's Bookings: 0</div>
-                    <div class="interpreter-location" id="dashI001Loc">Work at: <span class="work-at-badge empty">Not set</span></div>
+                    <div class="interpreter-job" id="dashI001Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI001Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
                   </div>
                 </article>
                 <article class="interpreter-card">
                   <img class="interpreter-avatar-img" src="images/POOKYSAN.JPG" alt="POOKY SAN">
                   <div class="interpreter-info">
                     <div class="interpreter-name">POOKY SAN</div>
-                    <div class="interpreter-job" id="dashI003Job">Today's Bookings: 0</div>
-                    <div class="interpreter-location" id="dashI003Loc">Work at: <span class="work-at-badge empty">Not set</span></div>
+                    <div class="interpreter-job" id="dashI003Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI003Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
                   </div>
                 </article>
                 <article class="interpreter-card">
                   <img class="interpreter-avatar-img" src="images/LSAN.JPG" alt="L SAN">
                   <div class="interpreter-info">
                     <div class="interpreter-name">L SAN</div>
-                    <div class="interpreter-job" id="dashI004Job">Today's Bookings: 0</div>
-                    <div class="interpreter-location" id="dashI004Loc">Work at: <span class="work-at-badge empty">Not set</span></div>
+                    <div class="interpreter-job" id="dashI004Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI004Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
                   </div>
                 </article>
               </div>
@@ -1907,7 +1974,7 @@
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbwYn26RJ7FXL4UQP9pGUxIwsHKU7FFApFwjsdtSr-KAIxpI-xDPM9abBtxtYosfiPM/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbxHYHV7Ou-0DhTwTqdOs74GrqfOubZGNC0NLPn4e6jof9B6hsOyDeJwvGnk9mFiuRg/exec";
     let currentDate=new Date();
     let interpreterPickerMonth = currentDate.getMonth();
     let interpreterPickerYear = currentDate.getFullYear();
@@ -1938,6 +2005,7 @@
     let dashDailyChart = null;
     let dashInterpreterChart = null;
     let dashLoaded = false;
+    let dashboardNeedsRefresh = false;
     let dashAllBookedRows = [];
     let dashSelectedMonth = "";
     let dashPickerYear = new Date().getFullYear();
@@ -1957,7 +2025,18 @@
       i003: { name: "POOKY SAN",email: "waraporn.yokao.xlbmb@resonac.com" },
       i004: { name: "L SAN",    email: "prataksara.poolsawad.xmpuh@resonac.com" }
     };
-    const FACTORY_VALUES = ["CHP", "G1P"];
+    const FACTORY_VALUES = ["CHP", "G1P", "CHP | G1P", "G1P | CHP"];
+    function normalizeFactoryValue(rawValue, allowNone = true) {
+      const v = String(rawValue || "").trim().toUpperCase();
+      if (!v) return allowNone ? "NONE" : "";
+      if (v === "CHP" || v === "G1P") return v;
+      if (v === "LEAVE") return "LEAVE";
+      if (v === "NONE" || v === "NOT SET" || v === "-") return allowNone ? "NONE" : "";
+      const compact = v.replace(/\s+/g, "");
+      if (compact === "CHP|G1P") return "CHP | G1P";
+      if (compact === "G1P|CHP") return "G1P | CHP";
+      return allowNone ? "NONE" : "";
+    }
     const CALENDAR_SLOT_KEYS = [
       "0700_0730","0730_0800","0800_0830","0830_0900","0900_0930","0930_1000",
       "1000_1030","1030_1100","1100_1130","1130_1200","1200_1230","1230_1300",
@@ -2055,8 +2134,8 @@
       if (!monthMap || typeof monthMap !== "object") return null;
       const out = {};
       Object.entries(monthMap).forEach(([ymd, row]) => {
-        const raw = String(row && row[userId] ? row[userId] : "").trim().toUpperCase();
-        if (raw === "CHP" || raw === "G1P") out[ymd] = raw;
+        const normalized = normalizeFactoryValue(row && row[userId] ? row[userId] : "", false);
+        if (FACTORY_VALUES.includes(normalized)) out[ymd] = normalized;
       });
       return out;
     }
@@ -2071,7 +2150,12 @@
         return fromCalendar;
       }
       const result = await fetchFactoryPlan(user.email, ym);
-      const map = result && result.success && result.data ? result.data : {};
+      const rawMap = result && result.success && result.data ? result.data : {};
+      const map = {};
+      Object.entries(rawMap || {}).forEach(([ymd, value]) => {
+        const normalized = normalizeFactoryValue(value, false);
+        if (FACTORY_VALUES.includes(normalized)) map[ymd] = normalized;
+      });
       interpreterFactoryPlanCache[cacheKey] = map;
       return map;
     }
@@ -2093,21 +2177,32 @@
       factoryIndicator.style.display = "block";
       const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
       if (!user || !user.email) {
-        factoryIndicator.innerHTML = "Work at:<span>Not set</span>";
+        factoryIndicator.innerHTML = 'Work at:<span class="work-at-badge empty factory-value-badge">Not set</span>';
         return;
       }
       const selectedDate = currentDate instanceof Date ? currentDate : new Date();
       const selectedYmd = formatDate(selectedDate);
       const yearMonth = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}`;
       const map = await getFactoryPlanForUserMonth(user, yearMonth);
-      const selected = map[selectedYmd] || "Not set";
-      factoryIndicator.innerHTML = `Work at:<span>${escapeHtml(selected)}</span>`;
+      const selected = normalizeFactoryValue(map[selectedYmd] || "", true);
+      const valueText = selected === "NONE" ? "Not set" : selected;
+      let badgeClass = "work-at-badge empty";
+      if (selected === "CHP") badgeClass = "work-at-badge chp";
+      else if (selected === "G1P") badgeClass = "work-at-badge g1p";
+      else if (selected === "CHP | G1P") badgeClass = "work-at-badge mixed-chp-g1p";
+      else if (selected === "G1P | CHP") badgeClass = "work-at-badge mixed-g1p-chp";
+      factoryIndicator.innerHTML = `Work at:<span class="${badgeClass} factory-value-badge">${escapeHtml(valueText)}</span>`;
     }
     function refreshCalendarAndDashboardViews() {
       const iframe = document.getElementById("calendarFrame");
       if (iframe) iframe.src = "calendar.html?v=" + new Date().getTime();
-      dashLoaded = false;
-      loadDashboardPanel();
+      dashboardNeedsRefresh = true;
+      const dashboardVisible = !!(dashboardView && getComputedStyle(dashboardView).display !== "none");
+      if (dashboardVisible) {
+        showLoader();
+        dashLoaded = false;
+        loadDashboardPanel();
+      }
     }
 
     async function openFactorySelector() {
@@ -2149,16 +2244,33 @@
           .map((b) => String(b.date || ""))
       );
 
+      const getFactoryStateLabel = (value) => {
+        const v = normalizeFactoryValue(value, true);
+        if (v === "NONE") return "None";
+        if (v === "CHP") return "CHP";
+        if (v === "G1P") return "G1P";
+        if (v === "CHP | G1P") return "CHP | G1P";
+        if (v === "G1P | CHP") return "G1P | CHP";
+        if (v === "LEAVE") return "Leave";
+        return "None";
+      };
+
       const dayCardsHtml = dates.map((ymd) => {
         const [yy, mm, dd] = ymd.split("-").map(Number);
         const dayNumber = String(dd);
         const isLeaveLocked = leaveDates.has(ymd);
-        const selected = isLeaveLocked ? "LEAVE" : (map[ymd] || "NONE");
+        const selected = isLeaveLocked ? "LEAVE" : normalizeFactoryValue(map[ymd] || "", true);
         const todayClass = ymd === formatDate(new Date()) ? "today" : "";
         const selectedClass = isLeaveLocked
           ? "factory-leave-locked"
-          : (selected === "CHP" ? "factory-chp" : (selected === "G1P" ? "factory-g1p" : ""));
-        const stateText = selected;
+          : (selected === "CHP"
+            ? "factory-chp"
+            : (selected === "G1P"
+              ? "factory-g1p"
+              : (selected === "CHP | G1P"
+                ? "factory-chp-g1p"
+                : (selected === "G1P | CHP" ? "factory-g1p-chp" : ""))));
+        const stateText = getFactoryStateLabel(selected);
         return `
           <div class="factory-day-card ${todayClass} ${selectedClass}" data-date="${ymd}" data-month="${monthKey}" data-selected="${selected}" data-locked="${isLeaveLocked ? "1" : "0"}">
             <div class="factory-day-top">
@@ -2219,18 +2331,20 @@
         showCancelButton: true,
         confirmButtonText: "Save",
         didOpen: () => {
-          const cycleOrder = ["NONE", "CHP", "G1P"];
+          const cycleOrder = ["NONE", "CHP", "G1P", "CHP | G1P", "G1P | CHP"];
           const cards = Array.from(document.querySelectorAll(".factory-day-card[data-date]"));
           const applyCardValue = (card, value) => {
             if ((card.dataset.locked || "0") === "1") return;
             card.dataset.selected = value;
-            card.classList.remove("factory-chp", "factory-g1p");
+            card.classList.remove("factory-chp", "factory-g1p", "factory-chp-g1p", "factory-g1p-chp");
             if (value === "CHP") card.classList.add("factory-chp");
             if (value === "G1P") card.classList.add("factory-g1p");
+            if (value === "CHP | G1P") card.classList.add("factory-chp-g1p");
+            if (value === "G1P | CHP") card.classList.add("factory-g1p-chp");
             const btn = card.querySelector(".factory-cycle-btn");
             if (btn) {
               btn.dataset.state = value;
-              btn.textContent = value;
+              btn.textContent = getFactoryStateLabel(value);
             }
           };
 
@@ -2350,7 +2464,7 @@
               calendarWorkAtCacheByMonth[monthKey][ymd] = { i001: "Not set", i003: "Not set", i004: "Not set" };
             }
             const val = cleaned[ymd] || "Not set";
-            if (val === "CHP" || val === "G1P") {
+            if (FACTORY_VALUES.includes(val)) {
               calendarWorkAtCacheByMonth[monthKey][ymd][userId] = val;
             } else if (calendarWorkAtCacheByMonth[monthKey][ymd][userId] !== "Leave") {
               calendarWorkAtCacheByMonth[monthKey][ymd][userId] = "Not set";
@@ -2392,6 +2506,8 @@
         const v = String(raw || "").trim().toUpperCase();
         if (v === "CHP") return "CHP";
         if (v === "G1P") return "G1P";
+        if (v === "CHP | G1P") return "CHP | G1P";
+        if (v === "G1P | CHP") return "G1P | CHP";
         if (v === "LEAVE") return "Leave";
         return "Not set";
       };
@@ -2765,7 +2881,11 @@
       navMyJob.classList.toggle("active", !isDashboard);
       jobView.style.display = isDashboard ? "none" : "grid";
       dashboardView.style.display = isDashboard ? "block" : "none";
-      if (isDashboard) loadDashboardPanel();
+      if (isDashboard && (!dashLoaded || dashboardNeedsRefresh)) {
+        showLoader();
+        dashLoaded = false;
+        loadDashboardPanel();
+      }
     }
 
     function bindInterpreterSidebar(){
@@ -2793,8 +2913,7 @@
             const res = await fetch(url);
             const result = await res.json();
             const map = result && result.success && result.data ? result.data : {};
-            const raw = String(map[ymd] || "").trim().toUpperCase();
-            const normalized = raw === "CHP" || raw === "G1P" ? raw : "-";
+            const normalized = normalizeFactoryValue(map[ymd] || "", false);
             return [iid, normalized];
           } catch (_) {
             return [iid, "-"];
@@ -2985,6 +3104,7 @@
     async function loadDashboardPanel() {
       if (dashLoaded) return;
       dashLoaded = true;
+      showLoader();
       try {
         const { ymd, ym } = dashLocalDateParts();
         const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
@@ -3016,18 +3136,25 @@
           const jobEl = document.getElementById(`dash${iid.toUpperCase()}Job`);
           const locEl = document.getElementById(`dash${iid.toUpperCase()}Loc`);
           if (!jobEl || !locEl) return;
-          jobEl.textContent = `Today's Bookings: ${totalJobsToday}`;
+          jobEl.innerHTML = `<span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">${totalJobsToday}</span>`;
           const rawWorkAt = String(workAtByInterpreter[iid] || "Not set");
           const workAt = rawWorkAt === "-" ? "Not set" : rawWorkAt;
-          const badgeClass = workAt === "CHP" ? "work-at-badge chp" : (workAt === "G1P" ? "work-at-badge g1p" : "work-at-badge empty");
-          locEl.innerHTML = `Work at: <span class="${badgeClass}">${escapeHtml(workAt)}</span>`;
+          let badgeClass = "work-at-badge empty";
+          if (workAt === "CHP") badgeClass = "work-at-badge chp";
+          else if (workAt === "G1P") badgeClass = "work-at-badge g1p";
+          else if (workAt === "CHP | G1P") badgeClass = "work-at-badge mixed-chp-g1p";
+          else if (workAt === "G1P | CHP") badgeClass = "work-at-badge mixed-g1p-chp";
+          locEl.innerHTML = `<span class="interpreter-meta-label">Work at</span><span class="${badgeClass}">${escapeHtml(workAt)}</span>`;
         });
 
         initDashMonthPicker(ym);
         renderDashboardChartsForMonth(ym);
+        dashboardNeedsRefresh = false;
       } catch (err) {
         dashLoaded = false;
         Swal.fire("Error", `Cannot load dashboard data: ${err.message}`, "error");
+      } finally {
+        hideLoader();
       }
     }
 
@@ -3489,6 +3616,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
