@@ -1983,7 +1983,7 @@
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbwoG3Dv7Up_NCWz37_u1AVGpYjBAmZQa8LoqJMf5dAGo7n-sndA9WgAVOhOdyw1kA/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec";
     let currentDate=new Date();
     let interpreterPickerMonth = currentDate.getMonth();
     let interpreterPickerYear = currentDate.getFullYear();
@@ -2948,6 +2948,14 @@
       return dashboardBookingCache[ym];
     }
 
+    function getDashboardWorkAtFromPlans(factoryPlans, ymd) {
+      const plans = factoryPlans || {};
+      return Object.fromEntries(DASH_INTERPRETERS.map((iid) => {
+        const normalized = normalizeFactoryValue(plans[iid] && plans[iid][ymd] || "", false);
+        return [iid, normalized || "-"];
+      }));
+    }
+
     function computeMonthChartData(ym, rows = dashAllBookedRows) {
       const monthRows = (Array.isArray(rows) ? rows : []).filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
       const perDayTotals = {};
@@ -3134,9 +3142,18 @@
       showLoader();
       try {
         const { ymd, ym } = dashLocalDateParts();
-        const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
-        const bookedRows = await getDashboardBookingsForMonth(ym, dashboardNeedsRefresh);
-        const workAtByInterpreter = await workAtPromise;
+        if (dashboardNeedsRefresh) {
+          delete dashboardFactoryPlansCache[ym];
+          delete dashboardBookingCache[ym];
+        }
+        const res = await fetch(`${API_URL}?page=getDashboardData&yearMonth=${encodeURIComponent(ym)}`);
+        const dashboardData = await res.json();
+        if (!dashboardData || !dashboardData.success) throw new Error((dashboardData && dashboardData.message) || "Cannot load dashboard data");
+        const bookedRows = Array.isArray(dashboardData.bookings) ? dashboardData.bookings : [];
+        const factoryPlans = dashboardData.factoryPlans || {};
+        dashboardBookingCache[ym] = Promise.resolve(bookedRows);
+        dashboardFactoryPlansCache[ym] = Promise.resolve(factoryPlans);
+        const workAtByInterpreter = getDashboardWorkAtFromPlans(factoryPlans, ymd);
         dashAllBookedRows = bookedRows;
 
         const monthRows = bookedRows;

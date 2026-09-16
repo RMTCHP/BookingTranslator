@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwoG3Dv7Up_NCWz37_u1AVGpYjBAmZQa8LoqJMf5dAGo7n-sndA9WgAVOhOdyw1kA/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec"; 
 
 async function fetchJsonWithRetry(url, options = {}, retries = 1) {
   let lastError;
@@ -320,6 +320,15 @@ async function getDashboardBookingsForMonth(ym, forceReload = false) {
   return dashboardBookingCache.get(ym);
 }
 
+function getDashboardWorkAtFromPlans(factoryPlans, ymd) {
+  const plans = factoryPlans || {};
+  return Object.fromEntries(DASH_INTERPRETERS.map((iid) => {
+    const raw = String(plans[iid] && plans[iid][ymd] || "").trim().toUpperCase();
+    const normalized = (raw === "CHP" || raw === "G1P" || raw === "CHP | G1P" || raw === "G1P | CHP") ? raw : "-";
+    return [iid, normalized];
+  }));
+}
+
 function computeMonthChartData(ym, rows = dashAllBookedRows) {
   const monthRows = (Array.isArray(rows) ? rows : []).filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
   const perDayTotals = {};
@@ -552,8 +561,16 @@ async function loadDashboardPanel() {
   showLoader();
   try {
     const { ymd, ym } = dashLocalDateParts();
-    const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
-    const bookedRows = await getDashboardBookingsForMonth(ym, dashboardNeedsRefresh);
+    if (dashboardNeedsRefresh) {
+      dashboardFactoryPlanCache.delete(ym);
+      dashboardBookingCache.delete(ym);
+    }
+    const dashboardData = await fetchJsonWithRetry(`${API_URL}?page=getDashboardData&yearMonth=${encodeURIComponent(ym)}`);
+    if (!dashboardData || !dashboardData.success) throw new Error((dashboardData && dashboardData.message) || "Cannot load dashboard data");
+    const bookedRows = Array.isArray(dashboardData.bookings) ? dashboardData.bookings : [];
+    const factoryPlans = dashboardData.factoryPlans || {};
+    dashboardBookingCache.set(ym, Promise.resolve(bookedRows));
+    dashboardFactoryPlanCache.set(ym, Promise.resolve(factoryPlans));
     dashAllBookedRows = bookedRows;
 
     const monthRows = bookedRows;
@@ -572,8 +589,7 @@ async function loadDashboardPanel() {
     if (monthLabelEl) monthLabelEl.textContent = ym;
     if (todayLabelEl) todayLabelEl.textContent = ymd;
 
-    // Render cards immediately to avoid blocking dashboard first paint.
-    renderDashboardInterpreterCards(todayRows);
+    renderDashboardInterpreterCards(todayRows, getDashboardWorkAtFromPlans(factoryPlans, ymd));
 
     initDashMonthPicker(ym);
     if (typeof Chart !== "undefined") {
@@ -583,12 +599,6 @@ async function loadDashboardPanel() {
       if (ready) renderDashboardChartsForMonth(ym);
     }
 
-    // Work at request started earlier; apply result asynchronously when ready.
-    workAtPromise
-      .then((workMap) => {
-        renderDashboardInterpreterCards(todayRows, workMap);
-      })
-      .catch(() => {});
     dashboardNeedsRefresh = false;
   } catch (err) {
     dashLoaded = false;

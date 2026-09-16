@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwoG3Dv7Up_NCWz37_u1AVGpYjBAmZQa8LoqJMf5dAGo7n-sndA9WgAVOhOdyw1kA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec";
 
 async function fetchJson(url, retries = 1) {
   let lastError;
@@ -88,14 +88,12 @@ async function fetchBookings(month = currentMonth, year = currentYear) {
   spinner.style.display = 'block';
   try {
     const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
-    // Keep the two stable endpoints independent; the combined request can time out on large sheets.
-    const [bookings, factoryResult] = await Promise.all([
-      fetchJson(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(yearMonth)}`),
-      fetchJson(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(yearMonth)}`)
-    ]);
-    allBookings = Array.isArray(bookings) ? bookings : [];
-    calendarFactoryPlans = factoryResult && factoryResult.success && factoryResult.data
-      ? factoryResult.data
+    // Dashboard and Calendar share the same monthly server cache.
+    const result = await fetchJson(`${API_URL}?page=getCalendarData&yearMonth=${encodeURIComponent(yearMonth)}`);
+    if (!result || !result.success) throw new Error((result && result.message) || "Cannot load calendar");
+    allBookings = Array.isArray(result.bookings) ? result.bookings : [];
+    calendarFactoryPlans = result.factoryPlans
+      ? result.factoryPlans
       : { i001: {}, i003: {}, i004: {} };
   } catch (err) {
     console.error("❌ fetchBookings error:", err);
