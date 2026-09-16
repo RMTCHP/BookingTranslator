@@ -1,5 +1,38 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec"; 
 
+async function fetchJsonWithRetry(url, options = {}, retries = 1) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, { cache: "no-store", ...options });
+      const body = await response.text();
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
+      try { return JSON.parse(body); }
+      catch (_) { throw new Error("The server returned an invalid response"); }
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  throw lastError;
+}
+
+async function verifyCreatedBooking(snapshot) {
+  const month = String(snapshot.date || "").slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(month)) return false;
+  const rows = await fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(month)}`, {}, 2);
+  return Array.isArray(rows) && rows.some((row) =>
+    String(row.userId || "") === String(snapshot.userId || "") &&
+    String(row.interpreterId || "") === String(snapshot.interpreterId || "") &&
+    String(row.date || "") === String(snapshot.date || "") &&
+    String(row.startTime || "") === String(snapshot.startTime || "") &&
+    String(row.endTime || "") === String(snapshot.endTime || "") &&
+    String(row.title || "") === String(snapshot.title || "") &&
+    String(row.location || "") === String(snapshot.location || "") &&
+    String(row.status || "").toUpperCase() === "BOOKED"
+  );
+}
+
 function showLoader(){ document.getElementById("loader").style.display="flex"; }
 function hideLoader(){ document.getElementById("loader").style.display="none"; }
 function logout(){ localStorage.removeItem("loggedInUser"); window.location.href="index.html"; }
@@ -856,8 +889,7 @@ async function loadMyBookings(){
 
   try{
     showLoader();
-    const res=await fetch(API_URL+"?page=listBookings");
-    const bookings=await res.json();
+    const bookings=await fetchJsonWithRetry(API_URL+"?page=listBookings");
     hideLoader();
 
     const today=new Date().toISOString().split("T")[0];
@@ -1225,8 +1257,7 @@ async function loadMyBookingsForDate(dateObj){
 
   try {
     showLoader();
-    const res = await fetch(API_URL+"?page=listBookings");
-    const bookings = await res.json();
+    const bookings = await fetchJsonWithRetry(API_URL+"?page=listBookings");
     hideLoader();
 
     let filtered = [];
@@ -1598,6 +1629,15 @@ document.getElementById("bookingForm").addEventListener("submit", async function
   form.append("location", locationVal);
   form.append("status", "BOOKED");
   form.append("createdAt", new Date().toISOString());
+  const bookingSnapshot = {
+    userId: user.id,
+    interpreterId: interpreterVal,
+    date: dateVal,
+    startTime: startVal,
+    endTime: endVal,
+    title: this.title.value,
+    location: locationVal
+  };
 
   try {
     showLoader();
@@ -1616,10 +1656,10 @@ document.getElementById("bookingForm").addEventListener("submit", async function
 
       closeNewBookingModal();
       this.reset();
+      loadMyBookings();
+      refreshCalendarFrame();
       Swal.fire("Success", data.message,"success").then(()=>{
-        loadMyBookings();
-        const iframe=document.getElementById("calendarFrame");
-        if(iframe) iframe.src="calendar.html";
+        // The booking list and calendar were refreshed immediately after saving.
       });
 
     } else if (data.message && data.message.includes("Duplicate")) {
@@ -1638,7 +1678,22 @@ document.getElementById("bookingForm").addEventListener("submit", async function
 
   } catch(err) {
     hideLoader();
-    Swal.fire("Error", err.message,"error");
+    // Apps Script can occasionally return an HTML error page after committing a booking.
+    // Verify the saved row before presenting an error, without replaying the POST request.
+    try {
+      if (await verifyCreatedBooking(bookingSnapshot)) {
+        dashboardNeedsRefresh = true;
+        closeNewBookingModal();
+        this.reset();
+        loadMyBookings();
+        refreshCalendarFrame();
+        Swal.fire("Success", "Booking successful", "success");
+      } else {
+        Swal.fire("Error", err.message,"error");
+      }
+    } catch (_) {
+      Swal.fire("Error", err.message,"error");
+    }
 
   } finally {
     // ✅ คืนปุ่มกลับสู่สถานะปกติ (กันกรณี error หรือ modal ปิดก่อน)

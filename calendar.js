@@ -17,6 +17,23 @@ const refreshButton = document.querySelector('.refresh');
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec";
 
+async function fetchJson(url, retries = 1) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      const body = await response.text();
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
+      try { return JSON.parse(body); }
+      catch (_) { throw new Error("The server returned an invalid response"); }
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  throw lastError;
+}
+
 const INTERPRETER_MAP = {
   i001: "somSan",
   i002: "gookSan",
@@ -71,11 +88,15 @@ async function fetchBookings(month = currentMonth, year = currentYear) {
   spinner.style.display = 'block';
   try {
     const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
-    const res = await fetch(`${API_URL}?page=getCalendarMonth&yearMonth=${encodeURIComponent(yearMonth)}`);
-    const result = await res.json();
-    if (!result || !result.success) throw new Error((result && result.message) || "Cannot load calendar");
-    allBookings = Array.isArray(result.bookings) ? result.bookings : [];
-    calendarFactoryPlans = result.factoryPlans || { i001: {}, i003: {}, i004: {} };
+    // Keep the two stable endpoints independent; the combined request can time out on large sheets.
+    const [bookings, factoryResult] = await Promise.all([
+      fetchJson(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(yearMonth)}`),
+      fetchJson(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(yearMonth)}`)
+    ]);
+    allBookings = Array.isArray(bookings) ? bookings : [];
+    calendarFactoryPlans = factoryResult && factoryResult.success && factoryResult.data
+      ? factoryResult.data
+      : { i001: {}, i003: {}, i004: {} };
   } catch (err) {
     console.error("❌ fetchBookings error:", err);
   } finally {
