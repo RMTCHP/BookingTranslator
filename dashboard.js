@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxVMM2pS32JG5XuJj9yiw9wCgOIiVsGjffZt4Oiid_xzYSzIT6Y2TisipEU1Z1y5ck/exec"; 
 
 async function fetchJsonWithRetry(url, options = {}, retries = 1) {
   let lastError;
@@ -40,6 +40,22 @@ function logout(){ localStorage.removeItem("loggedInUser"); window.location.href
 function refreshCalendarFrame() {
   const iframe = document.getElementById("calendarFrame");
   if (iframe) iframe.src = "calendar.html";
+}
+
+function invalidateCalendarSessionCache() {
+  for (let i = sessionStorage.length - 1; i >= 0; i--) {
+    const key = sessionStorage.key(i);
+    if (key && key.indexOf("calendarData:") === 0) sessionStorage.removeItem(key);
+  }
+}
+
+function getCalendarSessionData(yearMonth) {
+  try {
+    const raw = sessionStorage.getItem(`calendarData:${yearMonth}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 const userMenu = document.getElementById("userMenu");
@@ -569,6 +585,8 @@ async function loadDashboardPanel() {
     if (!dashboardData || !dashboardData.success) throw new Error((dashboardData && dashboardData.message) || "Cannot load dashboard data");
     const bookedRows = Array.isArray(dashboardData.bookings) ? dashboardData.bookings : [];
     const factoryPlans = dashboardData.factoryPlans || {};
+    const calendarBookings = Array.isArray(dashboardData.calendarBookings) ? dashboardData.calendarBookings : bookedRows;
+    sessionStorage.setItem(`calendarData:${ym}`, JSON.stringify({ bookings: calendarBookings, factoryPlans }));
     dashboardBookingCache.set(ym, Promise.resolve(bookedRows));
     dashboardFactoryPlanCache.set(ym, Promise.resolve(factoryPlans));
     dashAllBookedRows = bookedRows;
@@ -898,11 +916,15 @@ async function loadMyBookings(){
   renderHeaderUserInfo();
 
   try{
-    showLoader();
-    const bookings=await fetchJsonWithRetry(API_URL+"?page=listBookings");
-    hideLoader();
+    const { ymd: today, ym } = dashLocalDateParts();
+    const cachedData = getCalendarSessionData(ym);
+    const hasCachedBookings = cachedData && Array.isArray(cachedData.bookings);
+    if (!hasCachedBookings) showLoader();
+    const bookings = hasCachedBookings
+      ? cachedData.bookings
+      : await fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}&userEmail=${encodeURIComponent(user.email || "")}`);
+    if (!hasCachedBookings) hideLoader();
 
-    const today=new Date().toISOString().split("T")[0];
     const myBookings=bookings
       .filter(b=>b.userId===user.id&&b.date===today&&b.status!=="CANCELED")
       .sort((a,b)=>{
@@ -1267,7 +1289,11 @@ async function loadMyBookingsForDate(dateObj){
 
   try {
     showLoader();
-    const bookings = await fetchJsonWithRetry(API_URL+"?page=listBookings");
+    const yearMonth = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+    const cachedData = getCalendarSessionData(yearMonth);
+    const bookings = cachedData && Array.isArray(cachedData.bookings)
+      ? cachedData.bookings
+      : await fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(yearMonth)}&userEmail=${encodeURIComponent(user.email || "")}`);
     hideLoader();
 
     let filtered = [];
@@ -1546,8 +1572,8 @@ async function saveEditBooking(bookingId){
       Swal.fire("Updated","Booking updated successfully!","success").then(()=>{
         closeNewBookingModal();
         loadMyBookings();
-        const iframe=document.getElementById("calendarFrame");
-        if(iframe) iframe.src="calendar.html";
+        invalidateCalendarSessionCache();
+        refreshCalendarFrame();
       });
     } else if (data.message && data.message.includes("Duplicate")) {
       Swal.fire({
@@ -1667,6 +1693,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
       closeNewBookingModal();
       this.reset();
       loadMyBookings();
+      invalidateCalendarSessionCache();
       refreshCalendarFrame();
       Swal.fire("Success", data.message,"success").then(()=>{
         // The booking list and calendar were refreshed immediately after saving.
@@ -1696,6 +1723,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
         closeNewBookingModal();
         this.reset();
         loadMyBookings();
+        invalidateCalendarSessionCache();
         refreshCalendarFrame();
         Swal.fire("Success", "Booking successful", "success");
       } else {
@@ -1769,8 +1797,8 @@ async function cancelBooking(bookingId) {
       Swal.fire("Canceled", data.message, "success").then(() => {
         loadMyBookings();
         renderAllMyBookings();
-        const iframe = document.getElementById("calendarFrame");
-        if (iframe) iframe.src = "calendar.html";
+        invalidateCalendarSessionCache();
+        refreshCalendarFrame();
         document.getElementById("myModal").style.display = "none";
         closeNewBookingModal();
       });

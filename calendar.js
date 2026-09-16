@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxVMM2pS32JG5XuJj9yiw9wCgOIiVsGjffZt4Oiid_xzYSzIT6Y2TisipEU1Z1y5ck/exec";
 
 async function fetchJson(url, retries = 1) {
   let lastError;
@@ -88,6 +88,13 @@ async function fetchBookings(month = currentMonth, year = currentYear) {
   spinner.style.display = 'block';
   try {
     const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+    const cached = sessionStorage.getItem(`calendarData:${yearMonth}`);
+    if (cached) {
+      const cachedData = JSON.parse(cached);
+      allBookings = Array.isArray(cachedData.bookings) ? cachedData.bookings : [];
+      calendarFactoryPlans = cachedData.factoryPlans || { i001: {}, i003: {}, i004: {} };
+      return;
+    }
     // Dashboard and Calendar share the same monthly server cache.
     const result = await fetchJson(`${API_URL}?page=getCalendarData&yearMonth=${encodeURIComponent(yearMonth)}`);
     if (!result || !result.success) throw new Error((result && result.message) || "Cannot load calendar");

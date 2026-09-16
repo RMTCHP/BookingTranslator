@@ -1983,7 +1983,7 @@
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbxVMM2pS32JG5XuJj9yiw9wCgOIiVsGjffZt4Oiid_xzYSzIT6Y2TisipEU1Z1y5ck/exec";
     let currentDate=new Date();
     let interpreterPickerMonth = currentDate.getMonth();
     let interpreterPickerYear = currentDate.getFullYear();
@@ -2206,6 +2206,10 @@
       factoryIndicator.innerHTML = `Work at:<span class="${badgeClass} factory-value-badge">${escapeHtml(valueText)}</span>`;
     }
     function refreshCalendarAndDashboardViews() {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key && key.indexOf("calendarData:") === 0) sessionStorage.removeItem(key);
+      }
       const iframe = document.getElementById("calendarFrame");
       if (iframe && jobViewInitialized) iframe.src = "calendar.html?v=" + new Date().getTime();
       Object.keys(dashboardBookingCache).forEach((key) => delete dashboardBookingCache[key]);
@@ -3151,6 +3155,8 @@
         if (!dashboardData || !dashboardData.success) throw new Error((dashboardData && dashboardData.message) || "Cannot load dashboard data");
         const bookedRows = Array.isArray(dashboardData.bookings) ? dashboardData.bookings : [];
         const factoryPlans = dashboardData.factoryPlans || {};
+        const calendarBookings = Array.isArray(dashboardData.calendarBookings) ? dashboardData.calendarBookings : bookedRows;
+        sessionStorage.setItem(`calendarData:${ym}`, JSON.stringify({ bookings: calendarBookings, factoryPlans }));
         dashboardBookingCache[ym] = Promise.resolve(bookedRows);
         dashboardFactoryPlansCache[ym] = Promise.resolve(factoryPlans);
         const workAtByInterpreter = getDashboardWorkAtFromPlans(factoryPlans, ymd);
@@ -3218,8 +3224,12 @@
       updateInterpreterDateButton();
       try{
         const indicatorTask = updateFactoryIndicator();
-        const res = await fetch(API_URL+"?page=listBookings");
-        const bookings = await res.json();
+        const ym = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+        let cachedData = null;
+        try { cachedData = JSON.parse(sessionStorage.getItem(`calendarData:${ym}`) || "null"); } catch (_) {}
+        const bookings = cachedData && Array.isArray(cachedData.bookings)
+          ? cachedData.bookings
+          : await fetch(API_URL+`?page=listBookings&yearMonth=${encodeURIComponent(ym)}`).then((res) => res.json());
         await indicatorTask;
         hideLoader();
         const myBookings=bookings.filter(b=>b.interpreterEmail===user.email);
