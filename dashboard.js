@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxVMM2pS32JG5XuJj9yiw9wCgOIiVsGjffZt4Oiid_xzYSzIT6Y2TisipEU1Z1y5ck/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec"; 
 
 async function fetchJsonWithRetry(url, options = {}, retries = 1) {
   let lastError;
@@ -39,7 +39,8 @@ function logout(){ localStorage.removeItem("loggedInUser"); window.location.href
 
 function refreshCalendarFrame() {
   const iframe = document.getElementById("calendarFrame");
-  if (iframe) iframe.src = "calendar.html";
+  // A unique URL guarantees a new calendar document after a booking mutation.
+  if (iframe) iframe.src = `calendar.html?refresh=${Date.now()}`;
 }
 
 function invalidateCalendarSessionCache() {
@@ -56,6 +57,22 @@ function getCalendarSessionData(yearMonth) {
   } catch (_) {
     return null;
   }
+}
+
+function addBookingToCalendarSession(booking) {
+  const yearMonth = String(booking && booking.date || "").slice(0, 7);
+  const cached = getCalendarSessionData(yearMonth);
+  if (!cached || !Array.isArray(cached.bookings)) return;
+  const exists = cached.bookings.some((row) =>
+    String(row.bookingId || "") === String(booking.bookingId || "") ||
+    (String(row.userId || "") === String(booking.userId || "") &&
+      String(row.interpreterId || "") === String(booking.interpreterId || "") &&
+      String(row.date || "") === String(booking.date || "") &&
+      String(row.startTime || "") === String(booking.startTime || "") &&
+      String(row.title || "") === String(booking.title || ""))
+  );
+  if (!exists) cached.bookings.push({ ...booking, status: "BOOKED" });
+  sessionStorage.setItem(`calendarData:${yearMonth}`, JSON.stringify(cached));
 }
 
 const userMenu = document.getElementById("userMenu");
@@ -1692,9 +1709,9 @@ document.getElementById("bookingForm").addEventListener("submit", async function
 
       closeNewBookingModal();
       this.reset();
-      loadMyBookings();
-      invalidateCalendarSessionCache();
+      addBookingToCalendarSession({ ...bookingSnapshot, bookingId: data.bookingId || "" });
       refreshCalendarFrame();
+      loadMyBookings();
       Swal.fire("Success", data.message,"success").then(()=>{
         // The booking list and calendar were refreshed immediately after saving.
       });
@@ -1722,9 +1739,9 @@ document.getElementById("bookingForm").addEventListener("submit", async function
         dashboardNeedsRefresh = true;
         closeNewBookingModal();
         this.reset();
-        loadMyBookings();
-        invalidateCalendarSessionCache();
+        addBookingToCalendarSession(bookingSnapshot);
         refreshCalendarFrame();
+        loadMyBookings();
         Swal.fire("Success", "Booking successful", "success");
       } else {
         Swal.fire("Error", err.message,"error");
