@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwoG3Dv7Up_NCWz37_u1AVGpYjBAmZQa8LoqJMf5dAGo7n-sndA9WgAVOhOdyw1kA/exec";
 
 async function fetchJson(url, retries = 1) {
   let lastError;
