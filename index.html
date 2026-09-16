@@ -240,6 +240,33 @@
       transform: translateY(-1px);
       filter: brightness(1.03);
     }
+    .swal-login-announcement-popup {
+      width: min(500px, calc(100vw - 32px)) !important;
+      border: 1px solid #cbdcf2 !important;
+      border-radius: 18px !important;
+      box-shadow: 0 24px 64px rgba(3, 30, 64, 0.28) !important;
+      padding: 30px 34px 28px !important;
+    }
+    .swal-login-announcement-title { color: #173d70 !important; font-weight: 800 !important; }
+    .swal-login-announcement-html { color: #49627d !important; line-height: 1.65 !important; }
+    .swal-login-announcement-popup .swal2-close { color: #315983 !important; top: 8px !important; right: 12px !important; font-size: 28px !important; }
+    .swal-login-announcement-popup {
+      width: min(860px, calc(100vw - 28px)) !important;
+      padding: 18px 28px 20px !important;
+    }
+    .swal-login-announcement-popup .swal2-icon {
+      width: 3.15em !important;
+      height: 3.15em !important;
+      margin: 0 auto 0.45em !important;
+    }
+    .swal-login-announcement-popup .swal2-icon .swal2-icon-content { font-size: 2.35em !important; }
+    .swal-login-announcement-popup .swal2-title { padding: 0 !important; font-size: 25px !important; line-height: 1.15 !important; }
+    .swal-login-announcement-popup .swal2-html-container { margin: 10px 0 0 !important; }
+    @media (max-height: 760px) {
+      .swal-login-announcement-popup .swal2-icon { width: 2.7em !important; height: 2.7em !important; margin-bottom: 0.25em !important; }
+      .swal-login-announcement-popup { padding: 14px 24px 16px !important; }
+      .announcement-content { max-height: 40vh !important; }
+    }
   </style>
 </head>
 <body class="font-body bg-background text-on-background min-h-screen flex flex-col overflow-x-hidden overflow-y-hidden">
@@ -328,8 +355,10 @@
 
   <div id="loader"></div>
 
+  <script src="login-announcement.js?v=20260916-1"></script>
+
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec";
 
     function showLoader() {
       document.getElementById("loader").style.display = "flex";
@@ -337,6 +366,7 @@
     function hideLoader() {
       document.getElementById("loader").style.display = "none";
     }
+
 
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -399,6 +429,8 @@
         loginBtn.disabled = false;
       }
     });
+      // Let the login page finish its entrance animation before showing the notice.
+    window.setTimeout(showLoginAnnouncement, 350);
   </script>
 </body>
 </html>

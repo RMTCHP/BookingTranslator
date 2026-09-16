@@ -284,6 +284,37 @@
       box-shadow: 0 0 0 3px rgba(67, 134, 206, 0.16);
       outline: none;
     }
+    .recipient-help {
+      margin: -4px 0 16px;
+      color: #60758e;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .recipient-editor {
+      display: grid;
+      gap: 12px;
+      max-width: 720px;
+    }
+    .recipient-editor label {
+      color: #234a78;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .recipient-editor textarea {
+      min-height: 210px;
+      width: 100%;
+      resize: vertical;
+      border: 1px solid #c6d9ef;
+      border-radius: 10px;
+      padding: 12px;
+      color: #1c3556;
+      font: 500 14px/1.55 Manrope, sans-serif;
+      outline: none;
+    }
+    .recipient-editor textarea:focus {
+      border-color: #78a7dc;
+      box-shadow: 0 0 0 3px rgba(67, 134, 206, 0.16);
+    }
   </style>
 </head>
 <body>
@@ -344,6 +375,14 @@
           </svg>
         </span>
       </button>
+      <button type="button" id="navEmailRecipients" class="side-nav-btn" aria-label="Email Recipients" title="Email Recipients" data-tooltip="Email Recipients">
+        <span class="side-nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4.5 7L12 12.5L19.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
     </aside>
 
     <div class="workspace-content">
@@ -380,7 +419,7 @@
 
         <!-- Calendar -->
         <div class="calendar-box">
-          <iframe id="calendarFrame" src="calendar.html"></iframe>
+          <iframe id="calendarFrame" src="about:blank" title="Booking calendar"></iframe>
         </div>
       </div>
 
@@ -538,6 +577,20 @@
           </div>
         </div>
       </section>
+
+      <section id="emailRecipientsView" class="admin-view">
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h2>Email Recipients</h2>
+            <button type="button" class="admin-action-btn primary" id="saveEmailRecipientsBtn">Save recipients</button>
+          </div>
+          <p class="recipient-help">These addresses receive a CC for new, updated, and canceled bookings. The booking requester is always included automatically. Enter one email address per line.</p>
+          <div class="recipient-editor">
+            <label for="notificationRecipientEmails">Additional CC recipients</label>
+            <textarea id="notificationRecipientEmails" placeholder="manager.one@resonac.com&#10;manager.two@resonac.com" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -686,11 +739,12 @@
     </div>
   </div>
 
-<script src="dashboard.js?v=20260406-2"></script>
+<script src="dashboard.js?v=20260916-1"></script>
 <script src="manual.js?v=20260402-3"></script>
 <script>
   let adminReportRows = [];
   let adminUsers = [];
+  let adminNotificationRecipients = [];
   const ADMIN_ACTIVE_INTERPRETERS = ["i001", "i003", "i004"];
 
   function adminEscape(v) {
@@ -703,7 +757,7 @@
   }
 
   function adminSetActiveNav(view) {
-    const ids = ["navDashboard", "navMyBooking", "navReport", "navUserManagement"];
+    const ids = ["navDashboard", "navMyBooking", "navReport", "navUserManagement", "navEmailRecipients"];
     ids.forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.classList.toggle("active", id === view);
@@ -715,10 +769,12 @@
     const dashboardView = document.getElementById("dashboardView");
     const reportView = document.getElementById("reportView");
     const userView = document.getElementById("userManagementView");
-    if (!bookingView || !dashboardView || !reportView || !userView) return;
+    const emailView = document.getElementById("emailRecipientsView");
+    if (!bookingView || !dashboardView || !reportView || !userView || !emailView) return;
 
     reportView.style.display = "none";
     userView.style.display = "none";
+    emailView.style.display = "none";
 
     if (view === "navDashboard") {
       switchWorkspaceView("dashboard");
@@ -742,6 +798,12 @@
       userView.style.display = "block";
       adminSetActiveNav("navUserManagement");
       loadUserManagement();
+      return;
+    }
+    if (view === "navEmailRecipients") {
+      emailView.style.display = "block";
+      adminSetActiveNav("navEmailRecipients");
+      loadNotificationRecipients();
     }
   }
 
@@ -782,7 +844,14 @@
   async function searchReportSummary() {
     showLoader();
     try {
-      const res = await fetch(`${API_URL}?page=listBookings`);
+      const interpreter = String(document.getElementById("reportInterpreter")?.value || "").trim();
+      const startDate = String(document.getElementById("reportStartDate")?.value || "").trim();
+      const endDate = String(document.getElementById("reportEndDate")?.value || "").trim();
+      const params = new URLSearchParams({ page: "listBookings" });
+      if (interpreter) params.set("interpreterId", interpreter);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      const res = await fetch(`${API_URL}?${params.toString()}`);
       const rows = await res.json();
       adminReportRows = (Array.isArray(rows) ? rows : []).filter((r) =>
         ADMIN_ACTIVE_INTERPRETERS.includes(String(r.interpreterId || "").trim())
@@ -930,6 +999,43 @@
     Object.entries(params || {}).forEach(([k, v]) => form.append(k, String(v ?? "")));
     const res = await fetch(API_URL, { method: "POST", body: form });
     return res.json();
+  }
+
+  async function loadNotificationRecipients() {
+    showLoader();
+    try {
+      const res = await fetch(`${API_URL}?page=listNotificationRecipients`);
+      const rows = await res.json();
+      adminNotificationRecipients = Array.isArray(rows) ? rows : [];
+      const input = document.getElementById("notificationRecipientEmails");
+      if (input) input.value = adminNotificationRecipients.map((row) => String(row.email || "").trim()).filter(Boolean).join("\n");
+    } catch (err) {
+      Swal.fire("Error", err.message || "Cannot load email recipients", "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  async function saveNotificationRecipients() {
+    const input = document.getElementById("notificationRecipientEmails");
+    const actor = getAdminUser();
+    if (!input) return;
+    try {
+      showLoader();
+      const result = await adminPost({
+        page: "saveNotificationRecipients",
+        actorEmail: actor && actor.email ? actor.email : "",
+        emails: input.value
+      });
+      if (!result.success) throw new Error(result.message || "Cannot save email recipients");
+      adminNotificationRecipients = Array.isArray(result.data) ? result.data : [];
+      input.value = adminNotificationRecipients.map((row) => String(row.email || "").trim()).filter(Boolean).join("\n");
+      Swal.fire("Saved", "Email recipients have been updated.", "success");
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    } finally {
+      hideLoader();
+    }
   }
 
   async function openAddUserSwal() {
@@ -1103,20 +1209,24 @@
 
     const navReport = document.getElementById("navReport");
     const navUser = document.getElementById("navUserManagement");
+    const navEmailRecipients = document.getElementById("navEmailRecipients");
     const navDashboard = document.getElementById("navDashboard");
     const navMyBooking = document.getElementById("navMyBooking");
     if (navDashboard) navDashboard.addEventListener("click", () => adminShowView("navDashboard"));
     if (navMyBooking) navMyBooking.addEventListener("click", () => adminShowView("navMyBooking"));
     if (navReport) navReport.addEventListener("click", () => adminShowView("navReport"));
     if (navUser) navUser.addEventListener("click", () => adminShowView("navUserManagement"));
+    if (navEmailRecipients) navEmailRecipients.addEventListener("click", () => adminShowView("navEmailRecipients"));
 
     const reportSearchBtn = document.getElementById("reportSearchBtn");
     const reportExportBtn = document.getElementById("reportExportBtn");
     const addUserBtn = document.getElementById("addUserBtn");
+    const saveEmailRecipientsBtn = document.getElementById("saveEmailRecipientsBtn");
     const userSearchUsername = document.getElementById("userSearchUsername");
     if (reportSearchBtn) reportSearchBtn.addEventListener("click", searchReportSummary);
     if (reportExportBtn) reportExportBtn.addEventListener("click", exportReportExcel);
     if (addUserBtn) addUserBtn.addEventListener("click", openAddUserSwal);
+    if (saveEmailRecipientsBtn) saveEmailRecipientsBtn.addEventListener("click", saveNotificationRecipients);
     if (userSearchUsername) userSearchUsername.addEventListener("input", renderUserManagementTable);
   });
 </script>

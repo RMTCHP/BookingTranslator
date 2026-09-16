@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec";
 
 const INTERPRETER_MAP = {
   i001: "somSan",
@@ -46,12 +46,7 @@ const months = [
 let allBookings = [];
 let calendarRenderToken = 0;
 let calendarDayWorkAtMap = {};
-const CALENDAR_INTERPRETERS = [
-  { id: "i001", name: "SOM SAN", email: "teeraporn.sanyaprachasakul.xijqx@resonac.com" },
-  { id: "i003", name: "POOKY SAN", email: "waraporn.yokao.xlbmb@resonac.com" },
-  { id: "i004", name: "L SAN", email: "prataksara.poolsawad.xmpuh@resonac.com" }
-];
-const factoryPlanCache = {};
+let calendarFactoryPlans = { i001: {}, i003: {}, i004: {} };
 
 function normalizeFactoryValue(raw) {
   const v = String(raw || "").trim().toUpperCase();
@@ -63,31 +58,6 @@ function normalizeFactoryValue(raw) {
   return "Not set";
 }
 
-function fetchFactoryPlan(interpreterEmail, yearMonth) {
-  const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(yearMonth)}`;
-  return fetch(url).then((r) => r.json());
-}
-
-async function getFactoryPlanByInterpreterForMonth(yearMonth) {
-  if (!/^\d{4}-\d{2}$/.test(String(yearMonth || ""))) return {};
-  const pairs = await Promise.all(
-    CALENDAR_INTERPRETERS.map(async (it) => {
-      const key = `${it.email}|${yearMonth}`;
-      if (factoryPlanCache[key]) return [it.id, factoryPlanCache[key]];
-      try {
-        const result = await fetchFactoryPlan(it.email, yearMonth);
-        const map = result && result.success && result.data ? result.data : {};
-        factoryPlanCache[key] = map;
-        return [it.id, map];
-      } catch (_) {
-        factoryPlanCache[key] = {};
-        return [it.id, {}];
-      }
-    })
-  );
-  return Object.fromEntries(pairs);
-}
-
 function animateMonth(direction) {
   if (!calendarDays) return;
   calendarDays.classList.remove("month-slide-left", "month-slide-right");
@@ -97,11 +67,15 @@ function animateMonth(direction) {
 }
 
 // =================== FETCH BOOKINGS ===================
-async function fetchBookings() {
+async function fetchBookings(month = currentMonth, year = currentYear) {
   spinner.style.display = 'block';
   try {
-    const res = await fetch(API_URL + "?page=listBookings");
-    allBookings = await res.json();
+    const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+    const res = await fetch(`${API_URL}?page=getCalendarMonth&yearMonth=${encodeURIComponent(yearMonth)}`);
+    const result = await res.json();
+    if (!result || !result.success) throw new Error((result && result.message) || "Cannot load calendar");
+    allBookings = Array.isArray(result.bookings) ? result.bookings : [];
+    calendarFactoryPlans = result.factoryPlans || { i001: {}, i003: {}, i004: {} };
   } catch (err) {
     console.error("❌ fetchBookings error:", err);
   } finally {
@@ -114,7 +88,7 @@ async function renderCalendar(month, year, slideDirection = "") {
   calendarDays.innerHTML = '';
   monthYear.textContent = `${months[month]} ${year}`;
   const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
-  const factoryByInterpreter = await getFactoryPlanByInterpreterForMonth(monthKey);
+  const factoryByInterpreter = calendarFactoryPlans;
   calendarDayWorkAtMap = {};
   const leaveByInterpreter = {
     i001: new Set(),
@@ -135,6 +109,16 @@ async function renderCalendar(month, year, slideDirection = "") {
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  // Index the selected month once instead of scanning every booking for every day.
+  const eventsByDate = new Map();
+  (allBookings || []).forEach((booking) => {
+    const date = String(booking && booking.date ? booking.date : "");
+    const status = String(booking && booking.status ? booking.status : "").toUpperCase();
+    if (!date.startsWith(monthKey + "-") || (status !== "BOOKED" && status !== "UNAVAILABLE")) return;
+    const events = eventsByDate.get(date) || [];
+    events.push(booking);
+    eventsByDate.set(date, events);
+  });
 
   const today = new Date();
   const todayDate = today.getDate();
@@ -160,10 +144,7 @@ async function renderCalendar(month, year, slideDirection = "") {
     }
 
     // ✅ รวมทั้ง Booked และ Unavailable (ไม่สนตัวพิมพ์ใหญ่/เล็ก)
-    const events = allBookings.filter(b => {
-      const status = (b.status || '').toUpperCase();
-      return b.date === dateStr && (status === "BOOKED" || status === "UNAVAILABLE");
-    });
+    const events = eventsByDate.get(dateStr) || [];
 
     const i001Factory = leaveByInterpreter.i001.has(dateStr)
       ? "Leave"
@@ -336,6 +317,7 @@ async function changeMonth(offset) {
   currentMonth += offset;
   if (currentMonth < 0) { currentMonth = 11; currentYear -= 1; }
   else if (currentMonth > 11) { currentMonth = 0; currentYear += 1; }
+  await fetchBookings(currentMonth, currentYear);
   await renderCalendarWithLoader(currentMonth, currentYear, offset > 0 ? "left" : "right");
 }
 
@@ -361,6 +343,7 @@ function renderMonthPicker() {
       const newIndex = pickerYear * 12 + idx;
       currentYear = pickerYear;
       currentMonth = idx;
+      await fetchBookings(currentMonth, currentYear);
       await renderCalendarWithLoader(currentMonth, currentYear, newIndex > oldIndex ? "left" : "right");
       toggleMonthPicker(false);
     });
@@ -419,7 +402,7 @@ if (monthYearNext) {
 
 // =================== INIT ===================
 async function init(){
-  await fetchBookings();
+  await fetchBookings(currentMonth, currentYear);
   await renderCalendarWithLoader(currentMonth, currentYear);
 }
 init();

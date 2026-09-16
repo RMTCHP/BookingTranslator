@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec"; 
 
 function showLoader(){ document.getElementById("loader").style.display="flex"; }
 function hideLoader(){ document.getElementById("loader").style.display="none"; }
@@ -37,6 +37,7 @@ let newBookingWorkAtByInterpreter = {};
 const calendarWorkAtCacheByMonth = {};
 const leaveInterpreterCacheByMonth = {};
 const dashboardFactoryPlanCache = new Map();
+const dashboardBookingCache = new Map();
 
 const dashMonthPickerWrap = document.getElementById("dashMonthPickerWrap");
 const dashMonthPickerBtn = document.getElementById("dashMonthPickerBtn");
@@ -210,7 +211,10 @@ function switchWorkspaceView(view) {
     if (!dashLoaded || dashboardNeedsRefresh) {
       showLoader();
       dashLoaded = false;
-      if (dashboardNeedsRefresh) dashboardFactoryPlanCache.clear();
+      if (dashboardNeedsRefresh) {
+        dashboardFactoryPlanCache.clear();
+        dashboardBookingCache.clear();
+      }
       loadDashboardPanel();
     }
     return;
@@ -256,38 +260,35 @@ function dashLocalDateParts() {
 async function getDashboardWorkAtByInterpreter(ymd) {
   const monthKey = String(ymd || "").slice(0, 7);
   if (!/^\d{4}-\d{2}$/.test(monthKey)) return {};
-
-  const pairs = await Promise.all(
-    DASH_INTERPRETERS.map(async (iid) => {
-      const interpreterEmail = getInterpreterEmail(iid);
-      if (!interpreterEmail) return [iid, "-"];
-      try {
-        const cacheKey = `${String(interpreterEmail).toLowerCase()}|${monthKey}`;
-        if (!dashboardFactoryPlanCache.has(cacheKey)) {
-          const req = (async () => {
-            const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(monthKey)}`;
-            const res = await fetch(url);
-            const result = await res.json();
-            return result && result.success && result.data ? result.data : {};
-          })().catch(() => ({}));
-          dashboardFactoryPlanCache.set(cacheKey, req);
-        }
-        const map = await dashboardFactoryPlanCache.get(cacheKey);
-        const raw = String(map[ymd] || "").trim().toUpperCase();
-        const normalized = (raw === "CHP" || raw === "G1P" || raw === "CHP | G1P" || raw === "G1P | CHP")
-          ? raw
-          : "-";
-        return [iid, normalized];
-      } catch (_) {
-        return [iid, "-"];
-      }
-    })
-  );
-  return Object.fromEntries(pairs);
+  if (!dashboardFactoryPlanCache.has(monthKey)) {
+    const request = fetch(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(monthKey)}`)
+      .then((res) => res.json())
+      .then((result) => result && result.success && result.data ? result.data : {})
+      .catch(() => ({}));
+    dashboardFactoryPlanCache.set(monthKey, request);
+  }
+  const plans = await dashboardFactoryPlanCache.get(monthKey);
+  return Object.fromEntries(DASH_INTERPRETERS.map((iid) => {
+    const raw = String(plans[iid] && plans[iid][ymd] || "").trim().toUpperCase();
+    const normalized = (raw === "CHP" || raw === "G1P" || raw === "CHP | G1P" || raw === "G1P | CHP") ? raw : "-";
+    return [iid, normalized];
+  }));
 }
 
-function computeMonthChartData(ym) {
-  const monthRows = dashAllBookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
+async function getDashboardBookingsForMonth(ym, forceReload = false) {
+  if (forceReload) dashboardBookingCache.delete(ym);
+  if (!dashboardBookingCache.has(ym)) {
+    const request = fetch(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}`)
+      .then((res) => res.json())
+      .then((rows) => Array.isArray(rows) ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED") : [])
+      .catch(() => []);
+    dashboardBookingCache.set(ym, request);
+  }
+  return dashboardBookingCache.get(ym);
+}
+
+function computeMonthChartData(ym, rows = dashAllBookedRows) {
+  const monthRows = (Array.isArray(rows) ? rows : []).filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
   const perDayTotals = {};
   const monthCategoryCounts = { CHP: 0, G1P: 0, "MS Team": 0, Other: 0 };
 
@@ -327,14 +328,16 @@ function renderDashboardInterpreterCards(todayRows, workAtByInterpreter = null) 
   });
 }
 
-function renderDashboardChartsForMonth(ym) {
+async function renderDashboardChartsForMonth(ym) {
   if (!ym) return;
   dashSelectedMonth = ym;
   const monthLabel = formatDashMonthLabel(ym);
   if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = monthLabel;
   const dashChannelMonthLabel = document.getElementById("dashChannelMonthLabel");
   if (dashChannelMonthLabel) dashChannelMonthLabel.textContent = monthLabel;
-  const { perDayTotals, monthCategoryCounts } = computeMonthChartData(ym);
+  const monthRows = await getDashboardBookingsForMonth(ym);
+  if (dashSelectedMonth !== ym) return;
+  const { perDayTotals, monthCategoryCounts } = computeMonthChartData(ym, monthRows);
   buildDashboardDailyChart(perDayTotals, ym);
   buildDashboardInterpreterChart(monthCategoryCounts);
 }
@@ -517,14 +520,10 @@ async function loadDashboardPanel() {
   try {
     const { ymd, ym } = dashLocalDateParts();
     const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
-    const res = await fetch(`${API_URL}?page=listBookings`);
-    const rows = await res.json();
-    const bookedRows = Array.isArray(rows)
-      ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED")
-      : [];
+    const bookedRows = await getDashboardBookingsForMonth(ym, dashboardNeedsRefresh);
     dashAllBookedRows = bookedRows;
 
-    const monthRows = bookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
+    const monthRows = bookedRows;
     const todayRows = bookedRows
       .filter((r) => String(r.date || "").replace(/^'/, "") === ymd)
       .sort((a, b) => String(a.startTime || "").localeCompare(String(b.startTime || "")));

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Interpreter Dashboard - Resonac Booking</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="chart.min.js"></script>
   <style>
     :root {
       --bg: #f5f7fb;
@@ -1884,7 +1884,7 @@
         </div>
 
         <div class="calendar-box">
-          <iframe id="calendarFrame" src="calendar.html"></iframe>
+          <iframe id="calendarFrame" src="about:blank" title="Booking calendar"></iframe>
         </div>
       </div>
 
@@ -1983,7 +1983,7 @@
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbzQL4inr6RI8Mm7O0nsXF20i4b106su38ofLyfAIpAYwPhFlolfaltN7-VLiasJ_l8/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbzfgxED3Nl_aMts6HbhEnSIXKAKkO_DW5snGs2q4KoxiivbdEno3lfn-oEon6gYtyg/exec";
     let currentDate=new Date();
     let interpreterPickerMonth = currentDate.getMonth();
     let interpreterPickerYear = currentDate.getFullYear();
@@ -2015,11 +2015,14 @@
     let dashInterpreterChart = null;
     let dashLoaded = false;
     let dashboardNeedsRefresh = false;
+    let jobViewInitialized = false;
     let dashAllBookedRows = [];
     let dashSelectedMonth = "";
     let dashPickerYear = new Date().getFullYear();
     const calendarWorkAtCacheByMonth = {};
     const interpreterFactoryPlanCache = {};
+    const dashboardFactoryPlansCache = {};
+    const dashboardBookingCache = {};
     const dashMonthPickerWrap = document.getElementById("dashMonthPickerWrap");
     const dashMonthPickerBtn = document.getElementById("dashMonthPickerBtn");
     const dashMonthPickerPopover = document.getElementById("dashMonthPickerPopover");
@@ -2204,7 +2207,8 @@
     }
     function refreshCalendarAndDashboardViews() {
       const iframe = document.getElementById("calendarFrame");
-      if (iframe) iframe.src = "calendar.html?v=" + new Date().getTime();
+      if (iframe && jobViewInitialized) iframe.src = "calendar.html?v=" + new Date().getTime();
+      Object.keys(dashboardBookingCache).forEach((key) => delete dashboardBookingCache[key]);
       dashboardNeedsRefresh = true;
       const dashboardVisible = !!(dashboardView && getComputedStyle(dashboardView).display !== "none");
       if (dashboardVisible) {
@@ -2463,6 +2467,7 @@
         const emailKey = String(user.email || "").trim().toLowerCase();
         const cacheKey = `${emailKey}|${monthKey}`;
         interpreterFactoryPlanCache[cacheKey] = { ...cleaned };
+        delete dashboardFactoryPlansCache[monthKey];
         const userId = getInterpreterIdByEmail(user.email);
         if (userId) {
           if (!calendarWorkAtCacheByMonth[monthKey]) calendarWorkAtCacheByMonth[monthKey] = {};
@@ -2895,6 +2900,12 @@
         dashLoaded = false;
         loadDashboardPanel();
       }
+      if (!isDashboard && !jobViewInitialized) {
+        jobViewInitialized = true;
+        const iframe = document.getElementById("calendarFrame");
+        if (iframe) iframe.src = "calendar.html";
+        loadMyBookings();
+      }
     }
 
     function bindInterpreterSidebar(){
@@ -2913,27 +2924,32 @@
     async function getDashboardWorkAtByInterpreter(ymd) {
       const monthKey = String(ymd || "").slice(0, 7);
       if (!/^\d{4}-\d{2}$/.test(monthKey)) return {};
-      const pairs = await Promise.all(
-        DASH_INTERPRETERS.map(async (iid) => {
-          const interpreterEmail = getInterpreterEmail(iid);
-          if (!interpreterEmail) return [iid, "-"];
-          try {
-            const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(monthKey)}`;
-            const res = await fetch(url);
-            const result = await res.json();
-            const map = result && result.success && result.data ? result.data : {};
-            const normalized = normalizeFactoryValue(map[ymd] || "", false);
-            return [iid, normalized];
-          } catch (_) {
-            return [iid, "-"];
-          }
-        })
-      );
-      return Object.fromEntries(pairs);
+      if (!dashboardFactoryPlansCache[monthKey]) {
+        dashboardFactoryPlansCache[monthKey] = fetch(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(monthKey)}`)
+          .then((res) => res.json())
+          .then((result) => result && result.success && result.data ? result.data : {})
+          .catch(() => ({}));
+      }
+      const plans = await dashboardFactoryPlansCache[monthKey];
+      return Object.fromEntries(DASH_INTERPRETERS.map((iid) => {
+        const normalized = normalizeFactoryValue(plans[iid] && plans[iid][ymd] || "", false);
+        return [iid, normalized || "-"];
+      }));
     }
 
-    function computeMonthChartData(ym) {
-      const monthRows = dashAllBookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
+    async function getDashboardBookingsForMonth(ym, forceReload = false) {
+      if (forceReload) delete dashboardBookingCache[ym];
+      if (!dashboardBookingCache[ym]) {
+        dashboardBookingCache[ym] = fetch(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}`)
+          .then((res) => res.json())
+          .then((rows) => Array.isArray(rows) ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED") : [])
+          .catch(() => []);
+      }
+      return dashboardBookingCache[ym];
+    }
+
+    function computeMonthChartData(ym, rows = dashAllBookedRows) {
+      const monthRows = (Array.isArray(rows) ? rows : []).filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
       const perDayTotals = {};
       const monthCategoryCounts = { CHP: 0, G1P: 0, "MS Team": 0, Other: 0 };
       monthRows.forEach((r) => {
@@ -2955,14 +2971,16 @@
       return new Date(y, m - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
     }
 
-    function renderDashboardChartsForMonth(ym) {
+    async function renderDashboardChartsForMonth(ym) {
       if (!ym) return;
       dashSelectedMonth = ym;
       const monthLabel = formatDashMonthLabel(ym);
       if (dashMonthPickerBtn) dashMonthPickerBtn.textContent = monthLabel;
       const dashChannelMonthLabel = document.getElementById("dashChannelMonthLabel");
       if (dashChannelMonthLabel) dashChannelMonthLabel.textContent = monthLabel;
-      const { perDayTotals, monthCategoryCounts } = computeMonthChartData(ym);
+      const monthRows = await getDashboardBookingsForMonth(ym);
+      if (dashSelectedMonth !== ym) return;
+      const { perDayTotals, monthCategoryCounts } = computeMonthChartData(ym, monthRows);
       buildDashboardDailyChart(perDayTotals, ym);
       buildDashboardInterpreterChart(monthCategoryCounts);
     }
@@ -3117,13 +3135,11 @@
       try {
         const { ymd, ym } = dashLocalDateParts();
         const workAtPromise = getDashboardWorkAtByInterpreter(ymd);
-        const res = await fetch(`${API_URL}?page=listBookings`);
-        const rows = await res.json();
+        const bookedRows = await getDashboardBookingsForMonth(ym, dashboardNeedsRefresh);
         const workAtByInterpreter = await workAtPromise;
-        const bookedRows = Array.isArray(rows) ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED") : [];
         dashAllBookedRows = bookedRows;
 
-        const monthRows = bookedRows.filter((r) => String(r.date || "").replace(/^'/, "").startsWith(ym));
+        const monthRows = bookedRows;
         const todayRows = bookedRows
           .filter((r) => String(r.date || "").replace(/^'/, "") === ymd)
           .sort((a, b) => String(a.startTime || "").localeCompare(String(b.startTime || "")));
@@ -3625,7 +3641,6 @@
     bindInterpreterSidebar();
     bindInterpreterDatePicker();
     switchInterpreterView("dashboard");
-    loadMyBookings();
   </script>
 </body>
 </html>
