@@ -50,6 +50,13 @@ function invalidateCalendarSessionCache() {
   }
 }
 
+function refreshBookingDataAfterMutation() {
+  // Reload the date currently displayed, not just today's booking list.
+  invalidateCalendarSessionCache();
+  refreshCalendarFrame();
+  return loadMyBookingsForDate(currentViewDate);
+}
+
 function getCalendarSessionData(yearMonth) {
   try {
     const raw = sessionStorage.getItem(`calendarData:${yearMonth}`);
@@ -209,8 +216,7 @@ async function openChangePasswordDialog() {
     form.append("username", user.username);
     form.append("passwordHash", passwordHash);
 
-    const res = await fetch(API_URL, { method: "POST", body: form });
-    const result = await res.json();
+    const result = await fetchJsonWithRetry(API_URL, { method: "POST", body: form }, 0);
     hideLoader();
 
     if (result.success) Swal.fire("Success", result.message || "Password updated.", "success");
@@ -327,8 +333,7 @@ async function getDashboardWorkAtByInterpreter(ymd) {
   const monthKey = String(ymd || "").slice(0, 7);
   if (!/^\d{4}-\d{2}$/.test(monthKey)) return {};
   if (!dashboardFactoryPlanCache.has(monthKey)) {
-    const request = fetch(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(monthKey)}`)
-      .then((res) => res.json())
+    const request = fetchJsonWithRetry(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(monthKey)}`)
       .then((result) => result && result.success && result.data ? result.data : {})
       .catch(() => ({}));
     dashboardFactoryPlanCache.set(monthKey, request);
@@ -344,8 +349,7 @@ async function getDashboardWorkAtByInterpreter(ymd) {
 async function getDashboardBookingsForMonth(ym, forceReload = false) {
   if (forceReload) dashboardBookingCache.delete(ym);
   if (!dashboardBookingCache.has(ym)) {
-    const request = fetch(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}`)
-      .then((res) => res.json())
+    const request = fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}`)
       .then((rows) => Array.isArray(rows) ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED") : [])
       .catch(() => []);
     dashboardBookingCache.set(ym, request);
@@ -768,8 +772,7 @@ async function getLeaveInterpreterIdsByDate(ymd) {
   const monthKey = dateStr.slice(0, 7);
   if (!leaveInterpreterCacheByMonth[monthKey]) {
     try {
-      const res = await fetch(`${API_URL}?page=listBookings`);
-      const rows = await res.json();
+      const rows = await fetchJsonWithRetry(`${API_URL}?page=listBookings`);
       const monthMap = {};
       (Array.isArray(rows) ? rows : []).forEach((r) => {
         const iid = String(r && r.interpreterId ? r.interpreterId : "").trim();
@@ -1313,6 +1316,10 @@ async function loadMyBookingsForDate(dateObj){
       : await fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(yearMonth)}&userEmail=${encodeURIComponent(user.email || "")}`);
     hideLoader();
 
+    // The edit action resolves its bookingId from this list. Refresh it whenever
+    // the user changes the date/month, including future months.
+    window.allMyBookings = bookings.filter((b) => b.userId === user.id);
+
     let filtered = [];
     if (viewMode === "monthly") {
       const year = dateObj.getFullYear();
@@ -1466,9 +1473,17 @@ function bindMyDatePicker() {
   syncMyPickerToCurrentDate();
 }
 
+let isOpeningEditBooking = false;
+
 async function openEditBooking(id){
+  if (isOpeningEditBooking) return;
   const data = window.allMyBookings.find(x => x.bookingId === id);
   if(!data) return;
+
+  isOpeningEditBooking = true;
+  showLoader();
+
+  try {
 
   const modal = document.getElementById("newBookingModal");
   const header = modal.querySelector(".modal-header");
@@ -1513,6 +1528,12 @@ async function openEditBooking(id){
   document.getElementById("saveEditBtn").onclick = () => saveEditBooking(id);
 
   modal.style.display = "block";
+  } catch (err) {
+    Swal.fire("Error", err.message || "Cannot open the booking editor.", "error");
+  } finally {
+    hideLoader();
+    isOpeningEditBooking = false;
+  }
 }
 
 // ✅ ล้าง email ไม่ให้มี ' หรือช่องว่าง
@@ -1580,17 +1601,14 @@ async function saveEditBooking(bookingId){
 
   try {
     showLoader();
-    const res = await fetch(API_URL, { method:"POST", body:form });
-    const data = await res.json();
+    const data = await fetchJsonWithRetry(API_URL, { method:"POST", body:form }, 0);
     hideLoader();
 
     if(data.success){
       dashboardNeedsRefresh = true;
       Swal.fire("Updated","Booking updated successfully!","success").then(()=>{
         closeNewBookingModal();
-        loadMyBookings();
-        invalidateCalendarSessionCache();
-        refreshCalendarFrame();
+        refreshBookingDataAfterMutation();
       });
     } else if (data.message && data.message.includes("Duplicate")) {
       Swal.fire({
@@ -1694,8 +1712,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
 
   try {
     showLoader();
-    const res = await fetch(API_URL, { method:"POST", body:form });
-    const data = await res.json();
+    const data = await fetchJsonWithRetry(API_URL, { method:"POST", body:form }, 0);
     hideLoader();
 
     // ✅ ตรวจสอบผลลัพธ์จาก backend
@@ -1710,8 +1727,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
       closeNewBookingModal();
       this.reset();
       addBookingToCalendarSession({ ...bookingSnapshot, bookingId: data.bookingId || "" });
-      refreshCalendarFrame();
-      loadMyBookings();
+      refreshBookingDataAfterMutation();
       Swal.fire("Success", data.message,"success").then(()=>{
         // The booking list and calendar were refreshed immediately after saving.
       });
@@ -1740,8 +1756,7 @@ document.getElementById("bookingForm").addEventListener("submit", async function
         closeNewBookingModal();
         this.reset();
         addBookingToCalendarSession(bookingSnapshot);
-        refreshCalendarFrame();
-        loadMyBookings();
+        refreshBookingDataAfterMutation();
         Swal.fire("Success", "Booking successful", "success");
       } else {
         Swal.fire("Error", err.message,"error");
@@ -1805,19 +1820,15 @@ async function cancelBooking(bookingId) {
 
   try {
     showLoader();
-    const res = await fetch(API_URL, { method: "POST", body: form });
-    const data = await res.json();
+    const data = await fetchJsonWithRetry(API_URL, { method: "POST", body: form }, 0);
     hideLoader();
 
     if (data.success) {
       dashboardNeedsRefresh = true;
       Swal.fire("Canceled", data.message, "success").then(() => {
-        loadMyBookings();
-        renderAllMyBookings();
-        invalidateCalendarSessionCache();
-        refreshCalendarFrame();
         document.getElementById("myModal").style.display = "none";
         closeNewBookingModal();
+        refreshBookingDataAfterMutation();
       });
     } else {
       Swal.fire("Error", data.message, "error");

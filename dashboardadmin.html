@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -390,7 +390,7 @@
         <!-- My Bookings -->
         <div class="mybooking">
           <button class="new-booking-btn" onclick="openNewBookingModal()" aria-label="New Booking" title="New Booking">
-            <span class="new-booking-icon">＋</span>
+            <span class="new-booking-icon">+</span>
           </button>
           <div class="mybooking-header">
             <h3 id="myBookingTitle">My Bookings</h3>
@@ -444,7 +444,7 @@
               <div class="dashboard-card">
                 <h3>Active Interpreters</h3>
                 <p id="dashTotalInterpreter">3</p>
-                <span class="sub">SOM SAN • POOKY SAN • L SAN</span>
+                <span class="sub">SOM SAN � POOKY SAN � L SAN</span>
               </div>
             </div>
 
@@ -704,7 +704,7 @@
           </div>
         </div>
 
-        <!-- âœ… à¹€à¸žà¸´à¹ˆà¸¡ Title Meeting -->
+        <!-- ✅ เพิ่ม Title Meeting -->
         <label for="title">Title Meeting:</label>
         <input type="text" id="title" name="title" required>
         
@@ -739,7 +739,7 @@
     </div>
   </div>
 
-<script src="dashboard.js?v=20260916-12"></script>
+<script src="dashboard.js?v=20260924-3"></script>
 <script src="manual.js?v=20260402-3"></script>
 <script>
   let adminReportRows = [];
@@ -851,8 +851,7 @@
       if (interpreter) params.set("interpreterId", interpreter);
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
-      const res = await fetch(`${API_URL}?${params.toString()}`);
-      const rows = await res.json();
+      const rows = await fetchJsonWithRetry(`${API_URL}?${params.toString()}`);
       adminReportRows = (Array.isArray(rows) ? rows : []).filter((r) =>
         ADMIN_ACTIVE_INTERPRETERS.includes(String(r.interpreterId || "").trim())
       );
@@ -983,8 +982,7 @@
   async function loadUserManagement() {
     showLoader();
     try {
-      const res = await fetch(`${API_URL}?page=listUsers`);
-      const rows = await res.json();
+      const rows = await fetchJsonWithRetry(`${API_URL}?page=listUsers`);
       adminUsers = Array.isArray(rows) ? rows : [];
       renderUserManagementTable();
     } catch (err) {
@@ -997,15 +995,13 @@
   async function adminPost(params) {
     const form = new URLSearchParams();
     Object.entries(params || {}).forEach(([k, v]) => form.append(k, String(v ?? "")));
-    const res = await fetch(API_URL, { method: "POST", body: form });
-    return res.json();
+    return fetchJsonWithRetry(API_URL, { method: "POST", body: form }, 0);
   }
 
   async function loadNotificationRecipients() {
     showLoader();
     try {
-      const res = await fetch(`${API_URL}?page=listNotificationRecipients`);
-      const rows = await res.json();
+      const rows = await fetchJsonWithRetry(`${API_URL}?page=listNotificationRecipients`);
       adminNotificationRecipients = Array.isArray(rows) ? rows : [];
       const input = document.getElementById("notificationRecipientEmails");
       if (input) input.value = adminNotificationRecipients.map((row) => String(row.email || "").trim()).filter(Boolean).join("\n");
