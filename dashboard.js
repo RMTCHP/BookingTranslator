@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxB-dhWa4k37XtAF4Z9m6rPFYZNxC_dBYTSGCQdHrDACRAOk7qszm127D2WM_BahLg/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbwc-GTV5RdSjy0kojW2cKKJoDDbeO5OasJMApEzC_py67aNw7bKe6po9xKM_04zLdo/exec"; 
 
 async function fetchJsonWithRetry(url, options = {}, retries = 1) {
   let lastError;
