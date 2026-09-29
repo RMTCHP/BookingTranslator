@@ -284,36 +284,154 @@
       box-shadow: 0 0 0 3px rgba(67, 134, 206, 0.16);
       outline: none;
     }
-    .recipient-help {
-      margin: -4px 0 16px;
+    .recipient-panel {
+      padding: 22px;
+      overflow: hidden;
+    }
+    .recipient-panel-head {
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .recipient-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .recipient-heading-icon {
+      display: grid;
+      width: 46px;
+      height: 46px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid #bcd4ee;
+      border-radius: 14px;
+      color: #1f5c9e;
+      background: linear-gradient(145deg, #f2f8ff, #e4effc);
+    }
+    .recipient-heading-icon svg { width: 24px; height: 24px; }
+    .recipient-panel h2 { margin: 0; }
+    .recipient-heading p {
+      margin: 4px 0 0;
       color: #60758e;
       font-size: 13px;
-      line-height: 1.55;
+      line-height: 1.45;
     }
-    .recipient-editor {
+    .recipient-layout {
       display: grid;
-      gap: 12px;
-      max-width: 720px;
+      grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+      gap: 18px;
+      max-width: 1080px;
     }
-    .recipient-editor label {
-      color: #234a78;
+    .recipient-info-card,
+    .recipient-editor-card {
+      border: 1px solid #d5e3f3;
+      border-radius: 14px;
+    }
+    .recipient-info-card {
+      padding: 18px;
+      color: #365372;
+      background: linear-gradient(155deg, #f0f7ff 0%, #f9fcff 100%);
+    }
+    .recipient-info-card h3 {
+      margin: 0 0 8px;
+      color: #173b68;
+      font-size: 16px;
       font-weight: 800;
-      font-size: 13px;
     }
-    .recipient-editor textarea {
-      min-height: 210px;
+    .recipient-info-card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .recipient-event-list {
+      display: grid;
+      gap: 7px;
+      margin: 16px 0;
+      padding: 0;
+      list-style: none;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .recipient-event-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .recipient-event-list li::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2d9a5b;
+      box-shadow: 0 0 0 3px rgba(45, 154, 91, 0.12);
+      content: "";
+    }
+    .recipient-requester-note {
+      margin-top: 16px;
+      padding: 11px 12px;
+      border: 1px solid #cfe0f3;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.78);
+      font-size: 12px;
+    }
+    .recipient-requester-note span { display: block; color: #60758e; margin-bottom: 3px; }
+    .recipient-requester-note strong { color: #17477d; }
+    .recipient-editor-card {
+      padding: 18px;
+      background: #fff;
+    }
+    .recipient-editor-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .recipient-editor-top label {
+      color: #234a78;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .recipient-count {
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: #285789;
+      background: #edf5ff;
+      border: 1px solid #c6d9ef;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .recipient-editor-card textarea {
+      min-height: 236px;
       width: 100%;
+      box-sizing: border-box;
       resize: vertical;
       border: 1px solid #c6d9ef;
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 11px;
+      padding: 13px 14px;
       color: #1c3556;
-      font: 500 14px/1.55 Manrope, sans-serif;
+      background: #fcfdff;
+      font: 500 14px/1.6 Manrope, sans-serif;
       outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
     }
-    .recipient-editor textarea:focus {
+    .recipient-editor-card textarea:focus {
       border-color: #78a7dc;
       box-shadow: 0 0 0 3px rgba(67, 134, 206, 0.16);
+      background: #fff;
+    }
+    .recipient-field-note {
+      margin: 9px 0 0;
+      color: #69809a;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    @media (max-width: 760px) {
+      .recipient-panel { padding: 16px; }
+      .recipient-panel-head { align-items: center; }
+      .recipient-heading-icon { display: none; }
+      .recipient-layout { grid-template-columns: 1fr; }
+      .recipient-editor-card textarea { min-height: 185px; }
     }
   </style>
 </head>
@@ -579,15 +697,44 @@
       </section>
 
       <section id="emailRecipientsView" class="admin-view">
-        <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h2>Email Recipients</h2>
+        <div class="admin-panel recipient-panel">
+          <div class="admin-panel-head recipient-panel-head">
+            <div class="recipient-heading">
+              <span class="recipient-heading-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M4.5 7L12 12.5L19.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <div>
+                <h2>Email Recipients</h2>
+                <p>Manage the additional recipients copied on booking notifications.</p>
+              </div>
+            </div>
             <button type="button" class="admin-action-btn primary" id="saveEmailRecipientsBtn">Save recipients</button>
           </div>
-          <p class="recipient-help">These addresses receive a CC for new, updated, and canceled bookings. The booking requester is always included automatically. Enter one email address per line.</p>
-          <div class="recipient-editor">
-            <label for="notificationRecipientEmails">Additional CC recipients</label>
-            <textarea id="notificationRecipientEmails" placeholder="manager.one@resonac.com&#10;manager.two@resonac.com" spellcheck="false"></textarea>
+          <div class="recipient-layout">
+            <aside class="recipient-info-card">
+              <h3>Booking notifications</h3>
+              <p>These recipients receive a CC whenever a booking is changed.</p>
+              <ul class="recipient-event-list">
+                <li>New booking</li>
+                <li>Booking updated</li>
+                <li>Booking canceled</li>
+              </ul>
+              <div class="recipient-requester-note">
+                <span>Booking requester</span>
+                <strong>Always included automatically</strong>
+              </div>
+            </aside>
+            <div class="recipient-editor-card">
+              <div class="recipient-editor-top">
+                <label for="notificationRecipientEmails">Additional CC recipients</label>
+                <span class="recipient-count" id="recipientCount">0 recipients</span>
+              </div>
+              <textarea id="notificationRecipientEmails" placeholder="manager.one@resonac.com&#10;manager.two@resonac.com" spellcheck="false"></textarea>
+              <p class="recipient-field-note">Enter one company email address per line. Duplicate addresses are removed automatically when saved.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -998,6 +1145,14 @@
     return fetchJsonWithRetry(API_URL, { method: "POST", body: form }, 0);
   }
 
+  function updateRecipientCount() {
+    const input = document.getElementById("notificationRecipientEmails");
+    const count = document.getElementById("recipientCount");
+    if (!input || !count) return;
+    const emails = input.value.split(/[\n,;]+/).map((value) => value.trim()).filter(Boolean);
+    count.textContent = `${emails.length} recipient${emails.length === 1 ? "" : "s"}`;
+  }
+
   async function loadNotificationRecipients() {
     showLoader();
     try {
@@ -1005,6 +1160,7 @@
       adminNotificationRecipients = Array.isArray(rows) ? rows : [];
       const input = document.getElementById("notificationRecipientEmails");
       if (input) input.value = adminNotificationRecipients.map((row) => String(row.email || "").trim()).filter(Boolean).join("\n");
+      updateRecipientCount();
     } catch (err) {
       Swal.fire("Error", err.message || "Cannot load email recipients", "error");
     } finally {
@@ -1026,6 +1182,7 @@
       if (!result.success) throw new Error(result.message || "Cannot save email recipients");
       adminNotificationRecipients = Array.isArray(result.data) ? result.data : [];
       input.value = adminNotificationRecipients.map((row) => String(row.email || "").trim()).filter(Boolean).join("\n");
+      updateRecipientCount();
       Swal.fire("Saved", "Email recipients have been updated.", "success");
     } catch (err) {
       Swal.fire("Error", err.message, "error");
@@ -1223,6 +1380,7 @@
     if (reportExportBtn) reportExportBtn.addEventListener("click", exportReportExcel);
     if (addUserBtn) addUserBtn.addEventListener("click", openAddUserSwal);
     if (saveEmailRecipientsBtn) saveEmailRecipientsBtn.addEventListener("click", saveNotificationRecipients);
+    if (document.getElementById("notificationRecipientEmails")) document.getElementById("notificationRecipientEmails").addEventListener("input", updateRecipientCount);
     if (userSearchUsername) userSearchUsername.addEventListener("input", renderUserManagementTable);
   });
 </script>
