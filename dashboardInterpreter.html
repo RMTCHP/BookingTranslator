@@ -1983,7 +1983,23 @@
   <div id="loader"><div></div></div>
 
   <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec";
+    const API_URL="https://script.google.com/macros/s/AKfycbxB-dhWa4k37XtAF4Z9m6rPFYZNxC_dBYTSGCQdHrDACRAOk7qszm127D2WM_BahLg/exec";
+    async function apiJson(url, options = {}, retries = 1) {
+      let lastError;
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const response = await fetch(url, { cache: "no-store", ...options });
+          const body = await response.text();
+          if (!response.ok) throw new Error(`Request failed (${response.status})`);
+          try { return JSON.parse(body); }
+          catch (_) { throw new Error("Service returned an invalid response. Please try again."); }
+        } catch (err) {
+          lastError = err;
+          if (attempt < retries) await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+      throw lastError;
+    }
     let currentDate=new Date();
     let interpreterPickerMonth = currentDate.getMonth();
     let interpreterPickerYear = currentDate.getFullYear();
@@ -2127,7 +2143,7 @@
     }
     function fetchFactoryPlan(interpreterEmail, yearMonth) {
       const url = `${API_URL}?page=getFactoryPlan&interpreterEmail=${encodeURIComponent(interpreterEmail)}&yearMonth=${encodeURIComponent(yearMonth)}`;
-      return fetch(url).then((r) => r.json());
+      return apiJson(url);
     }
     function getInterpreterIdByEmail(email) {
       const target = String(email || "").trim().toLowerCase();
@@ -2177,8 +2193,7 @@
       payload.append("interpreterEmail", interpreterEmail);
       payload.append("yearMonth", yearMonth);
       payload.append("plans", JSON.stringify(plans || {}));
-      const res = await fetch(API_URL, { method: "POST", body: payload });
-      return res.json();
+      return apiJson(API_URL, { method: "POST", body: payload }, 0);
     }
     async function updateFactoryIndicator() {
       if (!factoryIndicator) return;
@@ -2720,8 +2735,7 @@
         form.append("username", user.username);
         form.append("passwordHash", passwordHash);
 
-        const res = await fetch(API_URL, { method: "POST", body: form });
-        const result = await res.json();
+        const result = await apiJson(API_URL, { method: "POST", body: form }, 0);
         hideLoader();
 
         if (result.success) Swal.fire("Success", result.message || "Password updated.", "success");
@@ -2929,8 +2943,7 @@
       const monthKey = String(ymd || "").slice(0, 7);
       if (!/^\d{4}-\d{2}$/.test(monthKey)) return {};
       if (!dashboardFactoryPlansCache[monthKey]) {
-        dashboardFactoryPlansCache[monthKey] = fetch(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(monthKey)}`)
-          .then((res) => res.json())
+        dashboardFactoryPlansCache[monthKey] = apiJson(`${API_URL}?page=getFactoryPlans&yearMonth=${encodeURIComponent(monthKey)}`)
           .then((result) => result && result.success && result.data ? result.data : {})
           .catch(() => ({}));
       }
@@ -2944,8 +2957,7 @@
     async function getDashboardBookingsForMonth(ym, forceReload = false) {
       if (forceReload) delete dashboardBookingCache[ym];
       if (!dashboardBookingCache[ym]) {
-        dashboardBookingCache[ym] = fetch(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}`)
-          .then((res) => res.json())
+        dashboardBookingCache[ym] = apiJson(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(ym)}`)
           .then((rows) => Array.isArray(rows) ? rows.filter((r) => String(r.status || "").toUpperCase() === "BOOKED") : [])
           .catch(() => []);
       }
@@ -3150,8 +3162,7 @@
           delete dashboardFactoryPlansCache[ym];
           delete dashboardBookingCache[ym];
         }
-        const res = await fetch(`${API_URL}?page=getDashboardData&yearMonth=${encodeURIComponent(ym)}`);
-        const dashboardData = await res.json();
+        const dashboardData = await apiJson(`${API_URL}?page=getDashboardData&yearMonth=${encodeURIComponent(ym)}`);
         if (!dashboardData || !dashboardData.success) throw new Error((dashboardData && dashboardData.message) || "Cannot load dashboard data");
         const bookedRows = Array.isArray(dashboardData.bookings) ? dashboardData.bookings : [];
         const factoryPlans = dashboardData.factoryPlans || {};
@@ -3229,7 +3240,7 @@
         try { cachedData = JSON.parse(sessionStorage.getItem(`calendarData:${ym}`) || "null"); } catch (_) {}
         const bookings = cachedData && Array.isArray(cachedData.bookings)
           ? cachedData.bookings
-          : await fetch(API_URL+`?page=listBookings&yearMonth=${encodeURIComponent(ym)}`).then((res) => res.json());
+          : await apiJson(API_URL+`?page=listBookings&yearMonth=${encodeURIComponent(ym)}`);
         await indicatorTask;
         hideLoader();
         const myBookings=bookings.filter(b=>b.interpreterEmail===user.email);
@@ -3330,8 +3341,7 @@
         payload.append("status", "BOOKED");
         payload.append("createdAt", new Date().toISOString());
 
-        const res = await fetch(API_URL, { method: "POST", body: payload });
-        const result = await res.json();
+        const result = await apiJson(API_URL, { method: "POST", body: payload }, 0);
         hideLoader();
 
         if (result.success || result.status === "success") {
@@ -3378,8 +3388,7 @@
         payload.append("endTime", form.end);
         payload.append("title", "Take leave");
         payload.append("location", "-");
-        const res = await fetch(API_URL, { method: "POST", body: payload });
-        const result = await res.json();
+        const result = await apiJson(API_URL, { method: "POST", body: payload }, 0);
         hideLoader();
         if (result.success || result.status === "success") {
           Swal.fire("Saved", "Leave updated successfully.", "success");
@@ -3402,8 +3411,7 @@
         const payload = new URLSearchParams();
         payload.append("page", "cancelBooking");
         payload.append("bookingId", String(bookingId || ""));
-        const res = await fetch(API_URL, { method: "POST", body: payload });
-        const result = await res.json();
+        const result = await apiJson(API_URL, { method: "POST", body: payload }, 0);
         hideLoader();
         if (result.success || result.status === "success") {
           Swal.fire("Canceled", "Leave canceled successfully.", "success");

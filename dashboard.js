@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxDgutzXx6tIZjjIhvKqlOVIAZHBVwaEKwjlB0-irOusy3uHuDK5r6wl1xu4wCLkME/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxB-dhWa4k37XtAF4Z9m6rPFYZNxC_dBYTSGCQdHrDACRAOk7qszm127D2WM_BahLg/exec"; 
 
 async function fetchJsonWithRetry(url, options = {}, retries = 1) {
   let lastError;
@@ -772,7 +772,7 @@ async function getLeaveInterpreterIdsByDate(ymd) {
   const monthKey = dateStr.slice(0, 7);
   if (!leaveInterpreterCacheByMonth[monthKey]) {
     try {
-      const rows = await fetchJsonWithRetry(`${API_URL}?page=listBookings`);
+      const rows = await fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(monthKey)}`);
       const monthMap = {};
       (Array.isArray(rows) ? rows : []).forEach((r) => {
         const iid = String(r && r.interpreterId ? r.interpreterId : "").trim();
