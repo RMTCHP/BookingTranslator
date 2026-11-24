@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwc-GTV5RdSjy0kojW2cKKJoDDbeO5OasJMApEzC_py67aNw7bKe6po9xKM_04zLdo/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbyBmMecXl-X-McN3caMzJLrOzxDQYUrHsPIsxsI5yGt6T-2xCKWVtVoeJk9QfgQEdo/exec"; 
 
 async function fetchJsonWithRetry(url, options = {}, retries = 1) {
   let lastError;
@@ -50,9 +50,37 @@ function invalidateCalendarSessionCache() {
   }
 }
 
-function refreshBookingDataAfterMutation() {
-  // Reload the date currently displayed, not just today's booking list.
+const bookingWorkspaceRequests = new Map();
+
+async function ensureBookingWorkspaceMonth(yearMonth, forceReload = false) {
+  const month = String(yearMonth || "");
+  if (!/^\d{4}-\d{2}$/.test(month)) return null;
+  if (!forceReload) {
+    const cached = getCalendarSessionData(month);
+    if (cached && Array.isArray(cached.bookings)) return cached;
+  }
+  if (!forceReload && bookingWorkspaceRequests.has(month)) return bookingWorkspaceRequests.get(month);
+
+  const request = fetchJsonWithRetry(`${API_URL}?page=getCalendarData&yearMonth=${encodeURIComponent(month)}`, {}, 1)
+    .then((result) => {
+      if (!result || !result.success) throw new Error((result && result.message) || "Cannot load booking data");
+      const data = {
+        bookings: Array.isArray(result.bookings) ? result.bookings : [],
+        factoryPlans: result.factoryPlans || { i001: {}, i003: {}, i004: {}, i005: {} }
+      };
+      sessionStorage.setItem(`calendarData:${month}`, JSON.stringify(data));
+      return data;
+    })
+    .finally(() => bookingWorkspaceRequests.delete(month));
+  bookingWorkspaceRequests.set(month, request);
+  return request;
+}
+
+async function refreshBookingDataAfterMutation() {
+  // Fetch once, then let the booking list and iframe consume the same payload.
   invalidateCalendarSessionCache();
+  const month = toYmdLocal(currentViewDate).slice(0, 7);
+  try { await ensureBookingWorkspaceMonth(month, true); } catch (_) { /* Calendar falls back to its own request. */ }
   refreshCalendarFrame();
   return loadMyBookingsForDate(currentViewDate);
 }
@@ -90,12 +118,13 @@ const bookingView = document.getElementById("bookingView");
 const dashboardView = document.getElementById("dashboardView");
 const navMyBooking = document.getElementById("navMyBooking");
 const navDashboard = document.getElementById("navDashboard");
-const DASH_INTERPRETERS = ["i001", "i003", "i004"];
-const NEW_BOOKING_INTERPRETERS = ["i001", "i003", "i004"];
+const DASH_INTERPRETERS = ["i001", "i003", "i004", "i005"];
+const NEW_BOOKING_INTERPRETERS = ["i001", "i003", "i004", "i005"];
 const DASH_INTERPRETER_NAMES = {
   i001: "SOM SAN",
   i003: "POOKY SAN",
-  i004: "L SAN"
+  i004: "L SAN",
+  i005: "PAI SAN"
 };
 let dashDailyChart = null;
 let dashInterpreterChart = null;
@@ -307,8 +336,18 @@ function switchWorkspaceView(view) {
 
   if (!bookingViewInitialized) {
     bookingViewInitialized = true;
-    refreshCalendarFrame();
-    loadMyBookings();
+    const month = dashLocalDateParts().ym;
+    showLoader();
+    ensureBookingWorkspaceMonth(month)
+      .catch(() => null)
+      .finally(() => {
+        hideLoader();
+        refreshCalendarFrame();
+        loadMyBookings();
+      });
+  } else {
+    const iframe = document.getElementById("calendarFrame");
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: "refresh-calendar" }, location.origin);
   }
 }
 
@@ -846,7 +885,9 @@ async function validateInterpreterFactoryBeforeSubmit(dateVal, interpreterId, lo
   return false;
 }
 
+let interpreterOptionsRequestId = 0;
 async function updateNewBookingInterpreterByDate(dateStr, selectedId = "") {
+  const requestId = ++interpreterOptionsRequestId;
   const ymd = String(dateStr || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
     renderInterpreterOptionsForNewBooking({}, "");
@@ -868,17 +909,192 @@ async function updateNewBookingInterpreterByDate(dateStr, selectedId = "") {
   try {
     const workAtMap = await getDashboardWorkAtByInterpreter(ymd);
     const leaveIds = await getLeaveInterpreterIdsByDate(ymd);
+    if (requestId !== interpreterOptionsRequestId) return;
     leaveIds.forEach((iid) => { workAtMap[iid] = "Leave"; });
     newBookingWorkAtByInterpreter = { ...workAtMap };
     renderInterpreterOptionsForNewBooking(workAtMap, selectedId);
   } catch (_) {
+    if (requestId !== interpreterOptionsRequestId) return;
     newBookingWorkAtByInterpreter = {};
     renderInterpreterOptionsForNewBooking({}, selectedId);
   }
   setNewBookingInputsDisabled(false);
 }
 
-function openNewBookingModal(){ 
+async function openNewBookingModal() {
+  await Swal.fire({
+    title: "Create Booking",
+    html: `
+      <p class="booking-type-intro">Choose the booking type that matches your request.</p>
+      <div class="booking-type-actions">
+        <button type="button" class="booking-type-card booking-type-single" data-booking-type="single">
+          <span class="booking-type-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 17h6"/></svg></span>
+          <span class="booking-type-copy"><strong>Single Booking</strong><small>Book one interpreter for one date and time.</small></span>
+          <span class="booking-type-cta">Start booking <b aria-hidden="true">→</b></span>
+        </button>
+        <button type="button" class="booking-type-card booking-type-multiple" data-booking-type="multiple">
+          <span class="booking-type-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M9 14h4M16.5 15.5a3.5 3.5 0 0 1-5.9 2.5M7.5 18.5v-2.8h2.8M7.5 15.5a3.5 3.5 0 0 1 5.9-2.5M16.5 12.5v2.8h-2.8"/></svg></span>
+          <span class="booking-type-copy"><strong>Multiple Booking</strong><small>Schedule one request across recurring dates.</small></span>
+          <span class="booking-type-cta">Set recurrence <b aria-hidden="true">→</b></span>
+        </button>
+      </div>`,
+    showConfirmButton: false,
+    showCloseButton: true,
+    customClass: { popup: "booking-type-popup", title: "booking-type-title" },
+    didOpen: (popup) => {
+      popup.querySelectorAll("[data-booking-type]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const bookingType = button.getAttribute("data-booking-type");
+          Swal.close();
+          openBookingForm(bookingType);
+        });
+      });
+    }
+  });
+}
+
+function readMultipleBookingDates(form) {
+  try {
+    const dates = JSON.parse(form.dataset.multipleSelectedDates || "[]");
+    return Array.isArray(dates)
+      ? dates.filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(String(date))).sort()
+      : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function renderMultipleDatePicker(form, panel, year, month) {
+  const selectedDates = new Set(readMultipleBookingDates(form));
+  const safeDate = new Date(year, month, 1);
+  const pickerYear = safeDate.getFullYear();
+  const pickerMonth = safeDate.getMonth();
+  const firstDay = new Date(pickerYear, pickerMonth, 1).getDay();
+  const daysInMonth = new Date(pickerYear, pickerMonth + 1, 0).getDate();
+  const monthLabel = safeDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const cells = [];
+  for (let i = 0; i < firstDay; i += 1) cells.push('<span class="multiple-date-picker-empty" aria-hidden="true"></span>');
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const ymd = `${pickerYear}-${String(pickerMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const selected = selectedDates.has(ymd);
+    cells.push(`<button type="button" class="multiple-date-picker-day${selected ? " is-selected" : ""}" data-multiple-date="${ymd}" aria-pressed="${selected}">${day}</button>`);
+  }
+  panel.dataset.pickerYear = String(pickerYear);
+  panel.dataset.pickerMonth = String(pickerMonth);
+  panel.innerHTML = `
+    <div class="multiple-date-picker-toolbar">
+      <button type="button" class="multiple-date-picker-nav" data-multiple-picker-nav="prev" aria-label="Previous month">‹</button>
+      <strong>${monthLabel}</strong>
+      <button type="button" class="multiple-date-picker-nav" data-multiple-picker-nav="next" aria-label="Next month">›</button>
+    </div>
+    <div class="multiple-date-picker-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+    <div class="multiple-date-picker-grid">${cells.join("")}</div>
+    <div class="multiple-date-picker-footer"><span><b>${selectedDates.size}</b> date${selectedDates.size === 1 ? "" : "s"} selected</span><button type="button" class="multiple-date-picker-clear" ${selectedDates.size ? "" : "disabled"}>Clear selection</button></div>`;
+
+  panel.querySelectorAll("[data-multiple-picker-nav]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const offset = button.dataset.multiplePickerNav === "prev" ? -1 : 1;
+      renderMultipleDatePicker(form, panel, pickerYear, pickerMonth + offset);
+    });
+  });
+  panel.querySelectorAll("[data-multiple-date]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const interpreter = form.querySelector("#interpreterId");
+      if (interpreter && interpreter.value) form.dataset.multipleInterpreterId = interpreter.value;
+      const ymd = button.dataset.multipleDate;
+      const dates = new Set(readMultipleBookingDates(form));
+      if (dates.has(ymd)) {
+        dates.delete(ymd);
+      } else {
+        if (dates.size >= 60) {
+          Swal.fire("Maximum reached", "A multiple booking is limited to 60 dates.", "warning");
+          return;
+        }
+        dates.add(ymd);
+      }
+      form.dataset.multipleSelectedDates = JSON.stringify([...dates].sort());
+      const activeDate = [...dates].sort()[0] || "";
+      const dateInput = form.querySelector("#date");
+      if (dateInput) dateInput.value = activeDate;
+      renderMultipleDatePicker(form, panel, pickerYear, pickerMonth);
+      updateNewBookingInterpreterByDate(activeDate, form.dataset.multipleInterpreterId || "");
+    });
+  });
+  panel.querySelector(".multiple-date-picker-clear")?.addEventListener("click", async () => {
+    const interpreter = form.querySelector("#interpreterId");
+    if (interpreter && interpreter.value) form.dataset.multipleInterpreterId = interpreter.value;
+    form.dataset.multipleSelectedDates = "[]";
+    const dateInput = form.querySelector("#date");
+    if (dateInput) dateInput.value = "";
+    await updateNewBookingInterpreterByDate("");
+    renderMultipleDatePicker(form, panel, pickerYear, pickerMonth);
+  });
+}
+
+function configureMultipleBookingDates(form, bookingType) {
+  const dateInput = form.querySelector("#date");
+  const dateLabel = dateInput ? dateInput.previousElementSibling : null;
+  const existing = document.getElementById("multipleBookingDates");
+  const existingLayout = form.querySelector("#multipleBookingLayout");
+  const modal = form.closest("#newBookingModal");
+  if (bookingType !== "multiple") {
+    if (existingLayout) {
+      const detailPanel = existingLayout.querySelector(".multiple-booking-details");
+      detailPanel?.querySelector(".multiple-section-heading")?.remove();
+      while (detailPanel && detailPanel.firstChild) form.insertBefore(detailPanel.firstChild, existingLayout);
+      existingLayout.remove();
+    }
+    if (existing) existing.remove();
+    form.classList.remove("multiple-booking-mode");
+    if (modal) modal.classList.remove("is-multiple");
+    if (dateInput) {
+      dateInput.style.display = "";
+      dateInput.disabled = false;
+    }
+    if (dateLabel && dateLabel.tagName === "LABEL") dateLabel.style.display = "";
+    delete form.dataset.multipleSelectedDates;
+    delete form.dataset.multipleInterpreterId;
+    interpreterOptionsRequestId++;
+    return;
+  }
+
+  form.classList.add("multiple-booking-mode");
+  if (modal) modal.classList.add("is-multiple");
+  if (dateInput) {
+    dateInput.style.display = "none";
+    dateInput.disabled = true;
+  }
+  if (dateLabel && dateLabel.tagName === "LABEL") dateLabel.style.display = "none";
+  if (!existing && dateInput) {
+    dateInput.insertAdjacentHTML("afterend", `
+      <div id="multipleBookingDates" class="multiple-booking-dates">
+        <div class="multiple-section-heading"><span>1</span><div><strong>Select booking dates</strong><small>Click each date you want to include in this booking.</small></div></div>
+        <div id="multipleDatePicker" class="multiple-date-picker"></div>
+        <p>Select at least two dates. You can select up to 60 dates.</p>
+      </div>
+    `);
+    const recurrencePanel = document.getElementById("multipleBookingDates");
+    const layout = document.createElement("div");
+    const detailPanel = document.createElement("div");
+    layout.id = "multipleBookingLayout";
+    layout.className = "multiple-booking-layout";
+    detailPanel.className = "multiple-booking-details";
+    detailPanel.innerHTML = '<div class="multiple-section-heading"><span>2</span><div><strong>Booking details</strong><small>Choose the interpreter, time, and meeting information.</small></div></div>';
+    recurrencePanel.parentNode.insertBefore(layout, recurrencePanel);
+    layout.appendChild(recurrencePanel);
+    layout.appendChild(detailPanel);
+    [
+      form.querySelector('label[for="interpreterId"]'), form.querySelector("#interpreterId"),
+      form.querySelector(".time-row"), form.querySelector('label[for="title"]'), form.querySelector("#title"),
+      form.querySelector('label[for="location"]'), form.querySelector("#location"), form.querySelector("#locationSpecify"),
+      form.querySelector('button[type="submit"]')
+    ].filter(Boolean).forEach((element) => detailPanel.appendChild(element));
+    form.dataset.multipleSelectedDates = "[]";
+    renderMultipleDatePicker(form, document.getElementById("multipleDatePicker"), new Date().getFullYear(), new Date().getMonth());
+  }
+}
+
+function openBookingForm(bookingType) {
   const modal = document.getElementById("newBookingModal");
   const header = modal.querySelector(".modal-header");
   const title = header.querySelector("h3");
@@ -887,6 +1103,7 @@ function openNewBookingModal(){
   // ✅ รีเซ็ตฟอร์มและโหมด
   form.reset();
   form.setAttribute("data-mode", "new");
+  form.setAttribute("data-booking-type", bookingType || "single");
   form.removeAttribute("data-id");
 
   // ✅ ลบปุ่ม Save/Edit ออกถ้ามี
@@ -895,11 +1112,12 @@ function openNewBookingModal(){
 
   // New mode style
   modal.classList.remove("is-edit");
-  title.innerText = "New Booking";
+  title.innerText = bookingType === "multiple" ? "Multiple Booking" : "New Booking";
   newBookingWorkAtByInterpreter = {};
+  configureMultipleBookingDates(form, bookingType);
   setNewBookingInputsDisabled(true);
   const dateInput = form.querySelector("#date");
-  if (dateInput) dateInput.disabled = false;
+  if (dateInput && bookingType !== "multiple") dateInput.disabled = false;
   renderInterpreterOptionsForNewBooking({}, "");
   toggleLocationSpecifyInput(form, false);
 
@@ -915,6 +1133,13 @@ function closeNewBookingModal(){
   // Reset to new mode style
   modal.classList.remove("is-edit");
   title.innerText = "New Booking";
+  const form = document.getElementById("bookingForm");
+  if (form) {
+    configureMultipleBookingDates(form, "single");
+    form.setAttribute("data-booking-type", "single");
+    form.removeAttribute("data-edit-scope");
+    form.removeAttribute("data-booking-group-id");
+  }
 
   // ✅ แสดงปุ่ม Submit กลับมา
   if (submitBtn) submitBtn.style.display = "inline-block";
@@ -1008,7 +1233,8 @@ const INTERPRETERS = {
   i001: { name: "SOM SAN",  email: "teeraporn.sanyaprachasakul.xijqx@resonac.com" },
   i002: { name: "GOOK SAN", email: "boonnak.songnok.xijmk@resonac.com" },
   i003: { name: "POOKY SAN",email: "waraporn.yokao.xlbmb@resonac.com" },
-  i004: { name: "L SAN",    email: "prataksara.poolsawad.xmpuh@resonac.com" }
+  i004: { name: "L SAN",    email: "prataksara.poolsawad.xmpuh@resonac.com" },
+  i005: { name: "PAI SAN",  email: "pathaikan.thimyaingam@resonac.com" }
 };
 function getInterpreterEmail(id){ return (INTERPRETERS[id] && INTERPRETERS[id].email) || ""; }
 function getInterpreterName(id){ return (INTERPRETERS[id] && INTERPRETERS[id].name) || id; }
@@ -1024,7 +1250,8 @@ const SLOT_INDEX_BY_START = Object.fromEntries(SLOT_STARTS.map((s, i) => [s, i])
 const CALENDAR_COLUMNS = [
   { id: "i001", label: "SOM SAN" },
   { id: "i003", label: "POOKY SAN" },
-  { id: "i004", label: "L SAN" }
+  { id: "i004", label: "L SAN" },
+  { id: "i005", label: "PAI SAN" }
 ];
 
 function escapeHtml(value) {
@@ -1063,11 +1290,12 @@ function openCalendarDetailsSwal(dateStr, events, workAtByInterpreter = null) {
   const headerWorkAt = {
     i001: normalizeHeaderWorkAt(workAt.i001),
     i003: normalizeHeaderWorkAt(workAt.i003),
-    i004: normalizeHeaderWorkAt(workAt.i004)
+    i004: normalizeHeaderWorkAt(workAt.i004),
+    i005: normalizeHeaderWorkAt(workAt.i005)
   };
   const slotMap = {};
   CALENDAR_SLOT_KEYS.forEach((slot) => {
-    slotMap[slot] = { i001: [], i003: [], i004: [] };
+    slotMap[slot] = { i001: [], i003: [], i004: [], i005: [] };
   });
 
   const normalizeHHMM = (t) => String(t || "").slice(0, 5).replace(":", "");
@@ -1153,6 +1381,7 @@ function openCalendarDetailsSwal(dateStr, events, workAtByInterpreter = null) {
               <th>SOM SAN [${escapeHtml(headerWorkAt.i001)}]</th>
               <th>POOKY SAN [${escapeHtml(headerWorkAt.i003)}]</th>
               <th>L SAN [${escapeHtml(headerWorkAt.i004)}]</th>
+              <th>PAI SAN [${escapeHtml(headerWorkAt.i005)}]</th>
             </tr>
           </thead>
           <tbody>${bodyHtml}</tbody>
@@ -1505,6 +1734,9 @@ async function openEditBooking(id){
   // ✅ ใส่ค่าเดิมในช่อง
   f.setAttribute("data-mode","edit");
   f.setAttribute("data-id", id);
+  f.removeAttribute("data-edit-scope");
+  f.removeAttribute("data-booking-group-id");
+  configureMultipleBookingDates(f, "single");
   f.date.value = data.date;
   const dateInput = f.querySelector("#date");
   if (dateInput) dateInput.disabled = false;
@@ -1587,7 +1819,7 @@ async function saveEditBooking(bookingId){
 
   // ✅ เตรียมข้อมูลส่งแก้ไข
   const form = new URLSearchParams();
-  form.append("page","editBooking");
+  form.append("page", "editBooking");
   form.append("bookingId", bookingId);
   form.append("userId", user.id);
   form.append("userEmail", sanitizeEmail(user.email));
@@ -1606,7 +1838,7 @@ async function saveEditBooking(bookingId){
 
     if(data.success){
       dashboardNeedsRefresh = true;
-      Swal.fire("Updated","Booking updated successfully!","success").then(()=>{
+      Swal.fire("Updated", "Booking updated successfully!","success").then(()=>{
         closeNewBookingModal();
         refreshBookingDataAfterMutation();
       });
@@ -1639,10 +1871,120 @@ async function saveEditBooking(bookingId){
 
 
 // ---------------------- 🔹 SUBMIT NEW BOOKING (FINAL VERSION) 🔹 ----------------------
+function getMultipleBookingDates(form) {
+  return readMultipleBookingDates(form);
+}
+
+function bookingTimeMinutes(value) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || ""));
+  if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return NaN;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+async function validateMultipleBookingDates(dates, interpreterId, locationValue, startTime, endTime) {
+  const locationFactory = getFactoryCodeFromLocation(locationValue);
+  const leaveRowsByMonth = new Map();
+  const startMinutes = bookingTimeMinutes(startTime);
+  const endMinutes = bookingTimeMinutes(endTime) + 1;
+  for (const date of dates) {
+    const month = date.slice(0, 7);
+    if (!leaveRowsByMonth.has(month)) {
+      const rows = await fetchJsonWithRetry(`${API_URL}?page=listBookings&yearMonth=${encodeURIComponent(month)}`);
+      if (!Array.isArray(rows)) throw new Error("Cannot check interpreter leave. Please try again.");
+      leaveRowsByMonth.set(month, rows);
+    }
+    const overlappingLeave = leaveRowsByMonth.get(month).find((row) => {
+      if (String(row.interpreterId || "") !== interpreterId || String(row.date || "") !== date) return false;
+      if (String(row.title || "").trim().toLowerCase() !== "take leave") return false;
+      if (["CANCELED", "CANCELLED"].includes(String(row.status || "").toUpperCase())) return false;
+      const leaveStart = bookingTimeMinutes(row.startTime);
+      const leaveEnd = bookingTimeMinutes(row.endTime);
+      if (!Number.isFinite(leaveStart) || !Number.isFinite(leaveEnd)) return true;
+      return startMinutes < leaveEnd + 1 && endMinutes > leaveStart;
+    });
+    if (overlappingLeave) {
+      await Swal.fire("Interpreter unavailable", `The selected interpreter has leave overlapping the requested time on ${date}.`, "warning");
+      return false;
+    }
+    if (!locationFactory) continue;
+    const workAtMap = await getDashboardWorkAtByInterpreter(date);
+    const effectiveFactory = resolveFactoryByStartTime(workAtMap[interpreterId], startTime);
+    if ((effectiveFactory === "CHP" || effectiveFactory === "G1P") && effectiveFactory !== locationFactory) {
+      await Swal.fire("Factory mismatch", `The selected interpreter is assigned to ${effectiveFactory} on ${date}.`, "warning");
+      return false;
+    }
+  }
+  return true;
+}
+
+async function submitMultipleBooking(formElement) {
+  const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+  const submitBtn = formElement.querySelector("button[type='submit']");
+  const dates = getMultipleBookingDates(formElement);
+  const interpreterId = String(formElement.interpreterId.value || "");
+  const startTime = String(formElement.timeFrom.value || "");
+  const endTime = String(formElement.timeTo.value || "");
+  const title = String(formElement.title.value || "").trim();
+  const location = getResolvedLocationValue(formElement);
+  if (!user || dates.length < 2 || !interpreterId || !startTime || !endTime || !title || !location) {
+    Swal.fire("Warning", "Select at least two dates and complete all booking fields.", "warning");
+    return;
+  }
+  if (dates.length > 60) {
+    Swal.fire("Warning", "A multiple booking is limited to 60 dates.", "warning");
+    return;
+  }
+  if (!Number.isFinite(bookingTimeMinutes(startTime)) || !Number.isFinite(bookingTimeMinutes(endTime)) || bookingTimeMinutes(startTime) > bookingTimeMinutes(endTime)) {
+    Swal.fire("Warning", "Start time must be less than end time.", "warning");
+    return;
+  }
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Checking dates...";
+  try {
+    const allowed = await validateMultipleBookingDates(dates, interpreterId, location, startTime, endTime);
+    if (!allowed) return;
+    const confirm = await Swal.fire({
+      title: "Confirm multiple booking",
+      text: `Create ${dates.length} bookings from ${dates[0]} to ${dates[dates.length - 1]}?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Create bookings"
+    });
+    if (!confirm.isConfirmed) return;
+    submitBtn.innerText = "Creating bookings...";
+    const bookings = dates.map((date) => ({
+      userId: user.id, userEmail: user.email, interpreterId,
+      interpreterEmail: getInterpreterEmail(interpreterId), date,
+      startTime, endTime, title, location, status: "BOOKED", createdAt: new Date().toISOString()
+    }));
+    const payload = new URLSearchParams();
+    payload.append("page", "newBookingBatch");
+    payload.append("bookings", JSON.stringify(bookings));
+    showLoader();
+    const result = await fetchJsonWithRetry(API_URL, { method: "POST", body: payload }, 0);
+    if (!result.success) throw new Error(result.message || "Cannot create multiple bookings");
+    dashboardNeedsRefresh = true;
+    closeNewBookingModal();
+    formElement.reset();
+    refreshBookingDataAfterMutation();
+    Swal.fire("Success", `${result.createdCount || dates.length} bookings created successfully.`, "success");
+  } catch (err) {
+    Swal.fire("Error", err.message || "Cannot create multiple bookings", "error");
+  } finally {
+    hideLoader();
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Submit";
+  }
+}
+
 document.getElementById("bookingForm").addEventListener("submit", async function(e){ 
   e.preventDefault();
   const mode = this.getAttribute("data-mode");
   if(mode === "edit") return;
+  if (this.getAttribute("data-booking-type") === "multiple") {
+    await submitMultipleBooking(this);
+    return;
+  }
 
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   const submitBtn = this.querySelector("button[type='submit']");

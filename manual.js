@@ -22,8 +22,10 @@
           heading: "New Booking",
           image: "images/Booking-shot.jpg",
           items: [
-            ["1) สร้างรายการจอง (New Booking)", "กดปุ่ม + เพื่อสร้างรายการจอง, ต้องเลือกวันที่ก่อน จึงสามารถเลือก Interpreter, Time, Title และ Location ได้"],
-            ["2) ระบุข้อมูลจองล่าม", "ต้องเลือกวันที่ก่อน จึงสามารถเลือก Interpreter, Time, Title และ Location ได้<br>หมายเหตุ:<br>1. ระบบตรวจเวลาเริ่ม/สิ้นสุด และตรวจเงื่อนไข Work at เทียบกับโรงงาน<br>2. ในช่อง Location ,รายการ Specify... สามารถกรอกสถานที่เองได้"]
+            ["1) เลือกประเภทการจอง", "กดปุ่ม + แล้วเลือก Single Booking สำหรับจองวันเดียว หรือ Multiple Booking สำหรับจองหลายวัน"],
+            ["2) Single Booking", "เลือกวันที่ก่อน จากนั้นเลือก Interpreter และ Time แล้วกรอก Title และ Location"],
+            ["3) Multiple Booking", "คลิกเลือกวันที่ต้องการอย่างน้อย 2 วัน สูงสุด 60 วัน สามารถเลือกข้ามเดือนได้ จากนั้นกรอกรายละเอียดเดียวกันสำหรับทุกวันที่เลือก"],
+            ["4) ตรวจสอบและบันทึก", "ระบบตรวจเวลา งานที่ทับซ้อน และ Work at เทียบกับโรงงานก่อนบันทึก สำหรับ Location สามารถเลือก Specify... เพื่อกรอกสถานที่เองได้"]
           ]
         },
         {
@@ -69,8 +71,10 @@
           heading: "New Booking",
           image: "images/Booking-shot.jpg",
           items: [
-            ["1) Create Booking (New Booking)", "Click + to create a new booking, select date first, then fill Interpreter, Time, Title, and Location."],
-            ["2) Enter Interpreter Booking Details", "You must select the date first before you can choose Interpreter, Time, Title, and Location.<br>Note:<br>1. The system validates start/end time and checks Work at conditions against factory location.<br>2. In the Location field, the Specify... option allows custom location input."]
+            ["1) Choose a booking type", "Click + and select Single Booking for one date or Multiple Booking for several dates."],
+            ["2) Single Booking", "Select a date first, then choose an Interpreter and Time and enter the Title and Location."],
+            ["3) Multiple Booking", "Click to select at least 2 and up to 60 dates, including dates in different months. Enter the same booking details for all selected dates."],
+            ["4) Check and submit", "The system checks the time, overlapping bookings, and Work at against the factory before saving. Select Specify... under Location to enter a custom location."]
           ]
         },
         {
@@ -116,8 +120,10 @@
           heading: "New Booking",
           image: "images/Booking-shot.jpg",
           items: [
-            ["1) 新規予約 (New Booking)", "＋ボタンを押して予約を作成し、先に日付を選択してから Interpreter、Time、Title、Location を入力します。"],
-            ["2) 通訳予約情報の入力", "先に日付を選択してから、Interpreter、Time、Title、Location を選択・入力できます。<br>注:<br>1. システムは開始/終了時刻を検証し、Work at 条件を工場ロケーションと照合します。<br>2. Location 欄の Specify... を選ぶと、場所を自由入力できます。"]
+            ["1) 予約方法の選択", "＋ボタンを押し、1日分の Single Booking または複数日分の Multiple Booking を選択します。"],
+            ["2) Single Booking", "先に日付を選択し、Interpreter と Time を選んでから、Title と Location を入力します。"],
+            ["3) Multiple Booking", "予約する日を2日以上、最大60日まで選択します。異なる月の日付も選択でき、選択したすべての日に同じ予約情報が適用されます。"],
+            ["4) 確認と登録", "保存前に時間、予約の重複、および Work at と工場の条件を確認します。Location の Specify... を選ぶと場所を自由入力できます。"]
           ]
         },
         {

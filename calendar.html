@@ -1,7 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
+  <link rel='icon' type='image/png' href='images/Icon.png'>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Booking Calendar</title>
@@ -247,7 +248,7 @@
     cursor: default;
   }
 
-  /* à¹à¸ªà¸”à¸‡à¹„à¸­à¸„à¸­à¸™à¸«à¸™à¸±à¸‡à¸ªà¸·à¸­à¹€à¸¡à¸·à¹ˆà¸­à¸¡à¸µà¸‡à¸²à¸™ */
+  /* แส�"�?�"อ�"อ�Tห�Tั�?สือ�?มื�^อมี�?า�T */
   .has-event::after {
     content: '\1F4D6';
     position: absolute;
@@ -258,7 +259,7 @@
     color: #4CAF50;
   }
 
-  /* à¸ªà¸µà¸žà¸·à¹‰à¸™à¸«à¸¥à¸±à¸‡à¸‚à¸­à¸‡à¸§à¸±à¸™ Unavailable */
+  /* สี�zื�?�Tหลั�?�,อ�?วั�T Unavailable */
   .unavailable-day {
     background-color: #fff3cd;
     border: 2px solid #ffc107;
@@ -397,7 +398,7 @@
     }
   }
 
-  /* à¸¥à¸”à¸‚à¸™à¸²à¸”à¸Ÿà¸­à¸™à¸•à¹Œà¹€à¸‰à¸žà¸²à¸° modal à¸•à¸²à¸£à¸²à¸‡ */
+  /* ล�"�,�Tา�"�Yอ�T�.�O�?�?�zาะ modal �.ารา�? */
   #eventTable th,
   #eventTable td {
     font-size: 12px;
@@ -408,7 +409,7 @@
     font-size: 20px;
   }
 
-  /* à¸ˆà¸¸à¸”à¸ªà¸–à¸²à¸™à¸°à¹ƒà¸™à¸•à¸²à¸£à¸²à¸‡ */
+  /* �^ุ�"ส�-า�Tะ�f�T�.ารา�? */
   .blue-dot,
   .orange-dot {
     height: 10px;
@@ -419,13 +420,13 @@
     margin: 0 2px;
   }
 
-  /* ðŸ’™ Booked */
+  /* �Y'T Booked */
   .blue-dot {
     background-color: #2196F3;
     box-shadow: 0 0 3px rgba(33, 150, 243, 0.7);
   }
 
-  /* ðŸŸ  Unavailable */
+  /* �YY� Unavailable */
   .orange-dot {
     background-color: #ff9800;
     box-shadow: 0 0 3px rgba(255, 152, 0, 0.7);
@@ -467,7 +468,7 @@
     border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
   }
 
-  /* Legend à¹ƒà¸•à¹‰à¸•à¸²à¸£à¸²à¸‡ */
+  /* Legend �f�.�?�.ารา�? */
   .legend {
     display: flex;
     justify-content: center;
@@ -531,7 +532,7 @@
 
   <div class="spinner" id="spinner"></div>
 
-  <!-- Modal à¸•à¸²à¸£à¸²à¸‡ -->
+  <!-- Modal �.ารา�? -->
   <div id="myModal" class="modal">
     <div class="modal-content">
       <div class="modal-toolbar">
@@ -549,6 +550,7 @@
             <th>GOOK SAN</th>
             <th>POOKY SAN</th>
             <th>L SAN</th>
+            <th>PAI SAN</th>
           </tr>
         </thead>
         <tbody>
@@ -558,6 +560,7 @@
       <td id="gookSan_0700_0730" class="time-slot"></td>
       <td id="pookySan_0700_0730" class="time-slot"></td>
       <td id="lSan_0700_0730" class="time-slot"></td>
+      <td id="paiSan_0700_0730" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">07:30 - 08:00</td>
@@ -565,6 +568,7 @@
       <td id="gookSan_0730_0800" class="time-slot"></td>
       <td id="pookySan_0730_0800" class="time-slot"></td>
       <td id="lSan_0730_0800" class="time-slot"></td>
+      <td id="paiSan_0730_0800" class="time-slot"></td>
     </tr>
       <tr>
       <td class="time-slot bold-text">08:00 - 08:30</td>
@@ -572,6 +576,7 @@
       <td id="gookSan_0800_0830" class="time-slot"></td>
       <td id="pookySan_0800_0830" class="time-slot"></td>
       <td id="lSan_0800_0830" class="time-slot"></td>
+      <td id="paiSan_0800_0830" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">08:30 - 09:00</td>
@@ -579,6 +584,7 @@
       <td id="gookSan_0830_0900" class="time-slot"></td>
       <td id="pookySan_0830_0900" class="time-slot"></td>
       <td id="lSan_0830_0900" class="time-slot"></td>
+      <td id="paiSan_0830_0900" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">09:00 - 09:30</td>
@@ -586,6 +592,7 @@
       <td id="gookSan_0900_0930" class="time-slot"></td>
       <td id="pookySan_0900_0930" class="time-slot"></td>
       <td id="lSan_0900_0930" class="time-slot"></td>
+      <td id="paiSan_0900_0930" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">09:30 - 10:00</td>
@@ -593,6 +600,7 @@
       <td id="gookSan_0930_1000" class="time-slot"></td>
       <td id="pookySan_0930_1000" class="time-slot"></td>
       <td id="lSan_0930_1000" class="time-slot"></td>
+      <td id="paiSan_0930_1000" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">10:00 - 10:30</td>
@@ -600,6 +608,7 @@
       <td id="gookSan_1000_1030" class="time-slot"></td>
       <td id="pookySan_1000_1030" class="time-slot"></td>
       <td id="lSan_1000_1030" class="time-slot"></td>
+      <td id="paiSan_1000_1030" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">10:30 - 11:00</td>
@@ -607,6 +616,7 @@
       <td id="gookSan_1030_1100" class="time-slot"></td>
       <td id="pookySan_1030_1100" class="time-slot"></td>
       <td id="lSan_1030_1100" class="time-slot"></td>
+      <td id="paiSan_1030_1100" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">11:00 - 11:30</td>
@@ -614,6 +624,7 @@
       <td id="gookSan_1100_1130" class="time-slot"></td>
       <td id="pookySan_1100_1130" class="time-slot"></td>
       <td id="lSan_1100_1130" class="time-slot"></td>
+      <td id="paiSan_1100_1130" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">11:30 - 12:00</td>
@@ -621,6 +632,7 @@
       <td id="gookSan_1130_1200" class="time-slot"></td>
       <td id="pookySan_1130_1200" class="time-slot"></td>
       <td id="lSan_1130_1200" class="time-slot"></td>
+      <td id="paiSan_1130_1200" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">12:00 - 12:30</td>
@@ -628,6 +640,7 @@
       <td id="gookSan_1200_1230" class="time-slot"></td>
       <td id="pookySan_1200_1230" class="time-slot"></td>
       <td id="lSan_1200_1230" class="time-slot"></td>
+      <td id="paiSan_1200_1230" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">12:30 - 13:00</td>
@@ -635,6 +648,7 @@
       <td id="gookSan_1230_1300" class="time-slot"></td>
       <td id="pookySan_1230_1300" class="time-slot"></td>
       <td id="lSan_1230_1300" class="time-slot"></td>
+      <td id="paiSan_1230_1300" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">13:00 - 13:30</td>
@@ -642,6 +656,7 @@
       <td id="gookSan_1300_1330" class="time-slot"></td>
       <td id="pookySan_1300_1330" class="time-slot"></td>
       <td id="lSan_1300_1330" class="time-slot"></td>
+      <td id="paiSan_1300_1330" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">13:30 - 14:00</td>
@@ -649,6 +664,7 @@
       <td id="gookSan_1330_1400" class="time-slot"></td>
       <td id="pookySan_1330_1400" class="time-slot"></td>
       <td id="lSan_1330_1400" class="time-slot"></td>
+      <td id="paiSan_1330_1400" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">14:00 - 14:30</td>
@@ -656,6 +672,7 @@
       <td id="gookSan_1400_1430" class="time-slot"></td>
       <td id="pookySan_1400_1430" class="time-slot"></td>
       <td id="lSan_1400_1430" class="time-slot"></td>
+      <td id="paiSan_1400_1430" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">14:30 - 15:00</td>
@@ -663,6 +680,7 @@
       <td id="gookSan_1430_1500" class="time-slot"></td>
       <td id="pookySan_1430_1500" class="time-slot"></td>
       <td id="lSan_1430_1500" class="time-slot"></td>
+      <td id="paiSan_1430_1500" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">15:00 - 15:30</td>
@@ -670,6 +688,7 @@
       <td id="gookSan_1500_1530" class="time-slot"></td>
       <td id="pookySan_1500_1530" class="time-slot"></td>
       <td id="lSan_1500_1530" class="time-slot"></td>
+      <td id="paiSan_1500_1530" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">15:30 - 16:00</td>
@@ -677,6 +696,7 @@
       <td id="gookSan_1530_1600" class="time-slot"></td>
       <td id="pookySan_1530_1600" class="time-slot"></td>
       <td id="lSan_1530_1600" class="time-slot"></td>
+      <td id="paiSan_1530_1600" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">16:00 - 16:30</td>
@@ -684,6 +704,7 @@
       <td id="gookSan_1600_1630" class="time-slot"></td>
       <td id="pookySan_1600_1630" class="time-slot"></td>
       <td id="lSan_1600_1630" class="time-slot"></td>
+      <td id="paiSan_1600_1630" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">16:30 - 17:00</td>
@@ -691,6 +712,7 @@
       <td id="gookSan_1630_1700" class="time-slot"></td>
       <td id="pookySan_1630_1700" class="time-slot"></td>
       <td id="lSan_1630_1700" class="time-slot"></td>
+      <td id="paiSan_1630_1700" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">17:00 - 17:30</td>
@@ -698,6 +720,7 @@
       <td id="gookSan_1700_1730" class="time-slot"></td>
       <td id="pookySan_1700_1730" class="time-slot"></td>
       <td id="lSan_1700_1730" class="time-slot"></td>
+      <td id="paiSan_1700_1730" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">17:30 - 18:00</td>
@@ -705,6 +728,7 @@
       <td id="gookSan_1730_1800" class="time-slot"></td>
       <td id="pookySan_1730_1800" class="time-slot"></td>
       <td id="lSan_1730_1800" class="time-slot"></td>
+      <td id="paiSan_1730_1800" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">18:00 - 18:30</td>
@@ -712,6 +736,7 @@
       <td id="gookSan_1800_1830" class="time-slot"></td>
       <td id="pookySan_1800_1830" class="time-slot"></td>
       <td id="lSan_1800_1830" class="time-slot"></td>
+      <td id="paiSan_1800_1830" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">18:30 - 19:00</td>
@@ -719,6 +744,7 @@
       <td id="gookSan_1830_1900" class="time-slot"></td>
       <td id="pookySan_1830_1900" class="time-slot"></td>
       <td id="lSan_1830_1900" class="time-slot"></td>
+      <td id="paiSan_1830_1900" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">19:00 - 19:30</td>
@@ -726,6 +752,7 @@
       <td id="gookSan_1900_1930" class="time-slot"></td>
       <td id="pookySan_1900_1930" class="time-slot"></td>
       <td id="lSan_1900_1930" class="time-slot"></td>
+      <td id="paiSan_1900_1930" class="time-slot"></td>
     </tr>
     <tr>
       <td class="time-slot bold-text">19:30 - 20:00</td>
@@ -733,13 +760,14 @@
       <td id="gookSan_1930_2000" class="time-slot"></td>
       <td id="pookySan_1930_2000" class="time-slot"></td>
       <td id="lSan_1930_2000" class="time-slot"></td>
+      <td id="paiSan_1930_2000" class="time-slot"></td>
     </tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <script src="calendar.js?v=20260929-1"></script>
+  <script src="calendar.js?v=20261124-2"></script>
 
 </body>
 

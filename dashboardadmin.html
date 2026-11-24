@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <link rel='icon' type='image/png' href='images/Icon.png'>
   <meta charset="UTF-8">
   <title>Resonac Interpreter Booking System</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="chart.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="dashboard.css?v=20260916-1">
+  <link rel="stylesheet" href="dashboard.css?v=20261102-1">
   <link rel="stylesheet" href="manual.css?v=20260402-1">
   <style>
     .admin-view { display: none; }
@@ -561,8 +562,8 @@
               </div>
               <div class="dashboard-card">
                 <h3>Active Interpreters</h3>
-                <p id="dashTotalInterpreter">3</p>
-                <span class="sub">SOM SAN • POOKY SAN • L SAN</span>
+                <p id="dashTotalInterpreter">4</p>
+                <span class="sub">SOM SAN &bull; POOKY SAN &bull; L SAN &bull; PAI SAN</span>
               </div>
             </div>
 
@@ -591,6 +592,13 @@
                     <div class="interpreter-name">L SAN</div>
                     <div class="interpreter-job" id="dashI004Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
                     <div class="interpreter-location" id="dashI004Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
+                  </div>
+                </article>                <article class="interpreter-card">
+                  <img class="interpreter-avatar-img" src="images/PAISAN.jpg" alt="PAI SAN">
+                  <div class="interpreter-info">
+                    <div class="interpreter-name">PAI SAN</div>
+                    <div class="interpreter-job" id="dashI005Job"><span class="interpreter-meta-label">Today's Bookings</span><span class="interpreter-meta-value">0</span></div>
+                    <div class="interpreter-location" id="dashI005Loc"><span class="interpreter-meta-label">Work at</span><span class="work-at-badge empty">Not set</span></div>
                   </div>
                 </article>
               </div>
@@ -886,13 +894,13 @@
     </div>
   </div>
 
-<script src="dashboard.js?v=20260929-2"></script>
-<script src="manual.js?v=20260402-3"></script>
+<script src="dashboard.js?v=20261124-4"></script>
+<script src="manual.js?v=20261124-1"></script>
 <script>
   let adminReportRows = [];
   let adminUsers = [];
   let adminNotificationRecipients = [];
-  const ADMIN_ACTIVE_INTERPRETERS = ["i001", "i003", "i004"];
+  const ADMIN_ACTIVE_INTERPRETERS = ["i001", "i003", "i004", "i005"];
 
   function adminEscape(v) {
     return String(v ?? "")

@@ -15,7 +15,7 @@ const span = document.getElementsByClassName("close")[0];
 const spinner = document.getElementById('spinner');
 const refreshButton = document.querySelector('.refresh');
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwc-GTV5RdSjy0kojW2cKKJoDDbeO5OasJMApEzC_py67aNw7bKe6po9xKM_04zLdo/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyBmMecXl-X-McN3caMzJLrOzxDQYUrHsPIsxsI5yGt6T-2xCKWVtVoeJk9QfgQEdo/exec";
 
 async function fetchJson(url, retries = 1) {
   let lastError;
@@ -38,7 +38,8 @@ const INTERPRETER_MAP = {
   i001: "somSan",
   i002: "gookSan",
   i003: "pookySan",
-  i004: "lSan"
+  i004: "lSan",
+  i005: "paiSan"
 };
 
 const timeSlots = [
@@ -62,8 +63,9 @@ const months = [
 
 let allBookings = [];
 let calendarRenderToken = 0;
+let calendarFetchToken = 0;
 let calendarDayWorkAtMap = {};
-let calendarFactoryPlans = { i001: {}, i003: {}, i004: {} };
+let calendarFactoryPlans = { i001: {}, i003: {}, i004: {}, i005: {} };
 
 function normalizeFactoryValue(raw) {
   const v = String(raw || "").trim().toUpperCase();
@@ -85,27 +87,28 @@ function animateMonth(direction) {
 
 // =================== FETCH BOOKINGS ===================
 async function fetchBookings(month = currentMonth, year = currentYear) {
+  const token = ++calendarFetchToken;
   spinner.style.display = 'block';
   try {
     const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
-    const cached = sessionStorage.getItem(`calendarData:${yearMonth}`);
-    if (cached) {
-      const cachedData = JSON.parse(cached);
-      allBookings = Array.isArray(cachedData.bookings) ? cachedData.bookings : [];
-      calendarFactoryPlans = cachedData.factoryPlans || { i001: {}, i003: {}, i004: {} };
-      return;
-    }
-    // Dashboard and Calendar share the same monthly server cache.
     const result = await fetchJson(`${API_URL}?page=getCalendarData&yearMonth=${encodeURIComponent(yearMonth)}`);
     if (!result || !result.success) throw new Error((result && result.message) || "Cannot load calendar");
+    if (token !== calendarFetchToken) return false;
     allBookings = Array.isArray(result.bookings) ? result.bookings : [];
     calendarFactoryPlans = result.factoryPlans
       ? result.factoryPlans
-      : { i001: {}, i003: {}, i004: {} };
+      : { i001: {}, i003: {}, i004: {}, i005: {} };
+    sessionStorage.setItem(`calendarData:${yearMonth}`, JSON.stringify({ bookings: allBookings, factoryPlans: calendarFactoryPlans }));
+    return true;
   } catch (err) {
     console.error("❌ fetchBookings error:", err);
+    if (token === calendarFetchToken) {
+      calendarDays.setAttribute("aria-label", "Calendar update failed. Displayed data may be out of date.");
+      monthYear.title = "Calendar update failed. Displayed data may be out of date.";
+    }
+    return false;
   } finally {
-    spinner.style.display = 'none';
+    if (token === calendarFetchToken) spinner.style.display = 'none';
   }
 }
 
@@ -119,7 +122,8 @@ async function renderCalendar(month, year, slideDirection = "") {
   const leaveByInterpreter = {
     i001: new Set(),
     i003: new Set(),
-    i004: new Set()
+    i004: new Set(),
+    i005: new Set()
   };
   (allBookings || []).forEach((b) => {
     const iid = String(b && b.interpreterId ? b.interpreterId : "").trim();
@@ -181,18 +185,22 @@ async function renderCalendar(month, year, slideDirection = "") {
     const i004Factory = leaveByInterpreter.i004.has(dateStr)
       ? "Leave"
       : normalizeFactoryValue(factoryByInterpreter.i004 && factoryByInterpreter.i004[dateStr]);
-    calendarDayWorkAtMap[dateStr] = { i001: i001Factory, i003: i003Factory, i004: i004Factory };
+    const i005Factory = leaveByInterpreter.i005.has(dateStr)
+      ? "Leave"
+      : normalizeFactoryValue(factoryByInterpreter.i005 && factoryByInterpreter.i005[dateStr]);
+    calendarDayWorkAtMap[dateStr] = { i001: i001Factory, i003: i003Factory, i004: i004Factory, i005: i005Factory };
 
     if (events.length > 0) {
       dayCell.classList.add('has-event');
 
       // นับจำนวนงานต่อ interpreter
-      const count = { somSan: 0, gookSan: 0, pookySan: 0, lSan: 0 };
+      const count = { somSan: 0, gookSan: 0, pookySan: 0, lSan: 0, paiSan: 0 };
       events.forEach(ev => {
         if (ev.interpreterId === "i001") { count.somSan++; }
         if (ev.interpreterId === "i002") { count.gookSan++; }
         if (ev.interpreterId === "i003") { count.pookySan++; }
         if (ev.interpreterId === "i004") { count.lSan++; }
+        if (ev.interpreterId === "i005") { count.paiSan++; }
       });
 
       const tooltipLine = (name, state, jobs) => {
@@ -205,7 +213,8 @@ async function renderCalendar(month, year, slideDirection = "") {
         `${tooltipLine("SOM SAN", i001Factory, count.somSan)}\n` +
       //  `GOOK SAN = ${count.gookSan} Job\n` +
         `${tooltipLine("POOKY SAN", i003Factory, count.pookySan)}\n` +
-        `${tooltipLine("L SAN", i004Factory, count.lSan)}`;
+        `${tooltipLine("L SAN", i004Factory, count.lSan)}\n` +
+        `${tooltipLine("PAI SAN", i005Factory, count.paiSan)}`;
     }
 
     dayCell.addEventListener('click', () => {
@@ -247,6 +256,8 @@ function loadEventsForDay(dateStr) {
     document.getElementById(`gookSan_${time}`).innerHTML = '';
     document.getElementById(`pookySan_${time}`).innerHTML = '';
     document.getElementById(`lSan_${time}`).innerHTML = '';
+    const paiCell = document.getElementById(`paiSan_${time}`);
+    if (paiCell) paiCell.innerHTML = '';
   });
 
   // ✅ ดึงทั้ง BOOKED + UNAVAILABLE (ไม่สนตัวพิมพ์)
@@ -274,7 +285,7 @@ function loadEventsForDay(dateStr) {
       type: "calendar-day-details",
       date: dateStr,
       events: detailEvents,
-      workAtByInterpreter: calendarDayWorkAtMap[dateStr] || { i001: "Not set", i003: "Not set", i004: "Not set" }
+      workAtByInterpreter: calendarDayWorkAtMap[dateStr] || { i001: "Not set", i003: "Not set", i004: "Not set", i005: "Not set" }
     }, "*");
     return;
   }
@@ -343,8 +354,8 @@ async function changeMonth(offset) {
   currentMonth += offset;
   if (currentMonth < 0) { currentMonth = 11; currentYear -= 1; }
   else if (currentMonth > 11) { currentMonth = 0; currentYear += 1; }
-  await fetchBookings(currentMonth, currentYear);
-  await renderCalendarWithLoader(currentMonth, currentYear, offset > 0 ? "left" : "right");
+  const month = currentMonth, year = currentYear;
+  if (await fetchBookings(month, year)) await renderCalendarWithLoader(month, year, offset > 0 ? "left" : "right");
 }
 
 function toggleMonthPicker(forceOpen = null) {
@@ -369,8 +380,8 @@ function renderMonthPicker() {
       const newIndex = pickerYear * 12 + idx;
       currentYear = pickerYear;
       currentMonth = idx;
-      await fetchBookings(currentMonth, currentYear);
-      await renderCalendarWithLoader(currentMonth, currentYear, newIndex > oldIndex ? "left" : "right");
+      const month = currentMonth, year = currentYear;
+      if (await fetchBookings(month, year)) await renderCalendarWithLoader(month, year, newIndex > oldIndex ? "left" : "right");
       toggleMonthPicker(false);
     });
   });
@@ -428,10 +439,25 @@ if (monthYearNext) {
 
 // =================== INIT ===================
 async function init(){
-  await fetchBookings(currentMonth, currentYear);
-  await renderCalendarWithLoader(currentMonth, currentYear);
+  const month = currentMonth, year = currentYear;
+  if (await fetchBookings(month, year)) await renderCalendarWithLoader(month, year);
 }
 init();
+
+async function refreshVisibleCalendar() {
+  if (document.hidden || !calendarDays.getClientRects().length) return;
+  const month = currentMonth, year = currentYear;
+  if (await fetchBookings(month, year)) {
+    calendarDays.removeAttribute("aria-label");
+    monthYear.title = "";
+    await renderCalendar(month, year);
+  }
+}
+window.addEventListener("message", (event) => {
+  if (event.origin === location.origin && event.source === window.parent && event.data?.type === "refresh-calendar") refreshVisibleCalendar();
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshVisibleCalendar(); });
+setInterval(refreshVisibleCalendar, 30000);
 
 
 

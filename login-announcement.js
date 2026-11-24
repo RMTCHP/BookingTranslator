@@ -10,7 +10,7 @@ const LOGIN_ANNOUNCEMENT = {
         <li><strong>คุณ Som</strong> จะประจำอยู่ที่ <strong>CHP</strong> และรับผิดชอบหลักในการสนับสนุนงานล่ามให้กับ <strong>ACC / DE / PE</strong> (คุณ Nagasaki, คุณ Sakaki และคุณ Takachi)</li>
         <li><strong>คุณ EL</strong> จะยังคงเดินทางระหว่าง <strong>CHP และ G1P</strong> และรับผิดชอบหลักในการสนับสนุนงานล่ามให้กับ <strong>PD - งานสนับสนุน/งานทางอ้อม (Indirect Operations), FM และ SHE</strong> (คุณ Yumiya)</li>
         <li><strong>คุณ Pukky</strong> จะเปลี่ยนไปปฏิบัติงานโดยเดินทางระหว่าง <strong>CHP และ G1P</strong> และรับผิดชอบหลักในการสนับสนุนงานล่ามในพื้นที่การผลิตของ <strong>PD (Production Floor)</strong> (คุณ Yamaguchi และคุณ Ikeda)</li>
-        <li><strong>คุณ Pai</strong> จะรับผิดชอบสนับสนุนงานของ <strong>Kurihara-san</strong> เป็นหลัก รวมถึงทำหน้าที่ล่ามในการประชุมที่เกี่ยวข้องกับงานด้านคุณภาพที่ <strong>Kurihara-san</strong> เข้าร่วมด้วย<br><strong>[รออัปเดตระบบเพื่อจอง]</strong></li>
+        <li><strong>คุณ Pai</strong> จะรับผิดชอบสนับสนุนงานของ <strong>Kurihara-san</strong> เป็นหลัก รวมถึงทำหน้าที่ล่ามในการประชุมที่เกี่ยวข้องกับงานด้านคุณภาพ (คุณ <strong>Kurihara</strong>)</li>
       </ol>
       <p class="announcement-note">จึงขอความร่วมมือจากผู้ที่ประสงค์จะจองล่ามทุกท่าน <strong>โปรดพิจารณาเลือกจองล่ามให้สอดคล้องกับหน่วยงานและลักษณะงานที่ล่ามแต่ละท่านได้รับมอบหมาย</strong> เพื่อให้การสนับสนุนงานล่ามเป็นไปอย่างเหมาะสมและมีประสิทธิภาพ</p>
       <p class="announcement-signoff">ขอแสดงความนับถือ,<br><strong>ฝ่ายทรัพยากรบุคคล (HR)</strong></p>`
@@ -26,7 +26,7 @@ const LOGIN_ANNOUNCEMENT = {
         <li><strong>Som-san</strong> will be stationed at <strong>CHP</strong> and will primarily support interpretation for <strong>ACC / DE / PE</strong> (Nagasaki-san, Sakaki-san, and Takachi-san).</li>
         <li><strong>EL-san</strong> will continue to travel between <strong>CHP and G1P</strong> and will primarily support interpretation for <strong>PD - Indirect Operations, FM, and SHE</strong> (Yumiya-san).</li>
         <li><strong>Pukky-san</strong> will travel between <strong>CHP and G1P</strong> and will primarily support interpretation for the <strong>PD Production Floor</strong> (Yamaguchi-san and Ikeda-san).</li>
-        <li><strong>Pai-san</strong> will primarily support <strong>Kurihara-san</strong>, including interpretation for quality-related meetings attended by <strong>Kurihara-san</strong>.<br><strong>[Booking system update pending]</strong></li>
+        <li><strong>Pai-san</strong> will primarily support <strong>Kurihara-san</strong>, including interpretation for quality-related meetings (Kurihara-san).</li>
       </ol>
       <p class="announcement-note">We kindly ask all employees who request interpreter support to <strong>select an interpreter according to the department and type of work assigned to each interpreter</strong>, in order to ensure appropriate and efficient interpretation support.</p>
       <p class="announcement-signoff">Best regards,<br><strong>Human Resources Department (HR)</strong></p>`
@@ -42,7 +42,7 @@ const LOGIN_ANNOUNCEMENT = {
         <li><strong>Somさん</strong>は<strong>CHP</strong>に常駐し、主に<strong>ACC / DE / PE</strong>（長崎さん、榊さん、高地さん）の通訳支援を担当します。</li>
         <li><strong>ELさん</strong>は引き続き<strong>CHPとG1P</strong>の間を移動し、主に<strong>PD間接業務、FM、SHE</strong>（弓谷さん）の通訳支援を担当します。</li>
         <li><strong>Pukkyさん</strong>は<strong>CHPとG1P</strong>の間を移動し、主に<strong>PD生産現場</strong>（山口さん、池田さん）の通訳支援を担当します。</li>
-        <li><strong>Paiさん</strong>は主に<strong>Kuriharaさん</strong>の業務を支援し、<strong>Kuriharaさん</strong>が参加する品質関連会議の通訳も担当します。<br><strong>[予約システムの更新待ち]</strong></li>
+        <li><strong>Paiさん</strong>は主に<strong>Kuriharaさん</strong>の業務を支援し、品質関連会議の通訳も担当します（Kuriharaさん）。</li>
       </ol>
       <p class="announcement-note">通訳をご依頼の際は、適切かつ効率的な通訳支援のため、<strong>各通訳者に割り当てられた部署および業務内容に応じて通訳者を選択</strong>していただきますようお願いいたします。</p>
       <p class="announcement-signoff">よろしくお願いいたします。<br><strong>人事部（HR）</strong></p>`
